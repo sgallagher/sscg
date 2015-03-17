@@ -5,14 +5,16 @@
 %endif
 %endif
 
-Name:           python-sscg
+%global srcname sscg
+
+Name:           python-%{srcname}
 Version:        0.2
 Release:        1%{?dist}
 Summary:        Self-signed certificate generator
 
-License:        PSF
-URL:            https://github.com/sgallagher/sscg
-Source0:        https://github.com/sgallagher/sscg/releases/download/sscg-%{version}/sscg-%{version}.tar.gz
+License:        BSD
+URL:            https://github.com/sgallagher/%{srcname}
+Source0:        https://github.com/sgallagher/%{srcname}/releases/download/%{srcname}-%{version}/%{srcname}-%{version}.tar.gz
 
 BuildArch:      noarch
 Requires:       pyOpenSSL
@@ -31,7 +33,7 @@ up a full PKI environment and without exposing the machine to a risk of
 false signatures from the service certificate.
 
 %if 0%{?with_python3}
-%package -n python3-sscg
+%package -n python3-%{srcname}
 Summary: Self-signed certificate generator
 Requires:       python3-pyOpenSSL
 Requires:       python3-pyasn1
@@ -40,7 +42,7 @@ BuildRequires:  python3-setuptools
 BuildRequires:  python3-pyOpenSSL
 BuildRequires:  python3-pyasn1
 
-%description -n python3-sscg
+%description -n python3-%{srcname}
 A utility to aid in the creation of more secure "self-signed"
 certificates. The certificates created by this tool are generated in a
 way so as to create a CA certificate that can be safely imported into a
@@ -50,63 +52,80 @@ false signatures from the service certificate.
 %endif #0%{?with_python3}
 
 %prep
-%setup -q -n sscg-%{version}
+%setup -qc -n %{srcname}-%{version}
+
+mv %{srcname}-%{version} python2
+find python2 -name '*.py' | xargs sed -i '1s|^#!python|#!%{__python2}|'
 
 %if 0%{?with_python3}
-rm -rf %{py3dir}
-cp -a . %{py3dir}
+rm -rf python3
+cp -a python2 python3
+find python3 -name '*.py' | xargs sed -i '1s|^#!python|#!%{__python3}|'
 %endif #0%{?with_python3}
 
 %build
-# Remove CFLAGS=... for noarch packages (unneeded)
-CFLAGS="$RPM_OPT_FLAGS" %{__python2} setup.py build
+# Ensure egg-info is regenerated
+rm -rf src/*.egg-info
+
+pushd python2
+%{__python2} setup.py build
+popd
 
 %if 0%{?with_python3}
-pushd %{py3dir}
-CFLAGS="$RPM_OPT_FLAGS" %{__python3} setup.py build
+pushd python3
+%{__python3} setup.py build
 popd
 %endif # with_python3
 
 %install
 rm -rf $RPM_BUILD_ROOT
+
+pushd python2
 %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
-mv $RPM_BUILD_ROOT/%{_bindir}/sscg \
-   $RPM_BUILD_ROOT/%{_bindir}/sscg-%{python2_version}
+mv $RPM_BUILD_ROOT/%{_bindir}/%{srcname} \
+   $RPM_BUILD_ROOT/%{_bindir}/%{srcname}-%{python2_version}
+popd
 
 %if 0%{?with_python3}
-pushd %{py3dir}
+pushd python3
 %{__python3} setup.py install --skip-build --root $RPM_BUILD_ROOT
-mv $RPM_BUILD_ROOT/%{_bindir}/sscg \
-   $RPM_BUILD_ROOT/%{_bindir}/sscg-%{python3_version}
+mv $RPM_BUILD_ROOT/%{_bindir}/%{srcname} \
+   $RPM_BUILD_ROOT/%{_bindir}/%{srcname}-%{python3_version}
+popd
 %endif # with_python3
 
 # On platforms where python3 is preferred, symlink that version
-# to /usr/bin/sscg
+# to /usr/bin/%{srcname}
 %if 0%{?use_python3}
-ln -s sscg-%{python3_version} $RPM_BUILD_ROOT/%{_bindir}/sscg
+ln -s %{srcname}-%{python3_version} $RPM_BUILD_ROOT/%{_bindir}/%{srcname}
 %else
-ln -s sscg-%{python2_version} $RPM_BUILD_ROOT/%{_bindir}/sscg
+ln -s %{srcname}-%{python2_version} $RPM_BUILD_ROOT/%{_bindir}/%{srcname}
 %endif #use_python3
  
 %files
 %doc
 # For noarch packages: sitelib
 %{python2_sitelib}/*
-%{_bindir}/sscg-%{python2_version}
+%{_bindir}/%{srcname}-%{python2_version}
 %if !0%{?use_python3}
-%{_bindir}/sscg
+%{_bindir}/%{srcname}
 %endif
 
 %if 0%{?with_python3}
-%files -n python3-sscg
+%files -n python3-%{srcname}
 %{python3_sitelib}/*
-%{_bindir}/sscg-%{python3_version}
+%{_bindir}/%{srcname}-%{python3_version}
 %if 0%{?use_python3}
-%{_bindir}/sscg
+%{_bindir}/%{srcname}
 %endif #use_python3
 %endif #with_python3
 
 %changelog
+* Tue Mar 17 2015 Stephen Gallagher <sgallagh@redhat.com> 0.2-1
+- Add support for namedConstraints
+- Add support for subjectAltNames
+- Fix packaging issues from Fedora package review
+
 * Mon Mar 16 2015 Stephen Gallagher <sgallagh@redhat.com> 0.1-2
 - Update BuildRequires
 
