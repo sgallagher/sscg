@@ -28,7 +28,7 @@ service certificate and then destroy the signing key. This allows the
 temporary CA certificate to be imported safely to a trust store so that client
 applications can trust this certificate without skipping validation. 
 """,
-    license="PSF",
+    license="BSD",
     keywords="certificates openssl x509",
     url="https://github.com/sgallagher/sscg",  # project home page, if any
 
