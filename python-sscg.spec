@@ -6,8 +6,8 @@
 %endif
 
 Name:           python-sscg
-Version:        0.1
-Release:        2%{?dist}
+Version:        0.2
+Release:        1%{?dist}
 Summary:        Self-signed certificate generator
 
 License:        PSF
