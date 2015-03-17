@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sscg",
-    version="0.2",
+    version="0.2.1",
     use_2to3=True,
 
     entry_points="""\
@@ -29,6 +29,8 @@ temporary CA certificate to be imported safely to a trust store so that client
 applications can trust this certificate without skipping validation. 
 """,
     license="BSD",
+    package_data={"": ["LICENSE"]},
+
     keywords="certificates openssl x509",
     url="https://github.com/sgallagher/sscg",  # project home page, if any
 
