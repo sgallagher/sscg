@@ -73,10 +73,20 @@ def create_temp_ca(options):
                                  subject=ca_cert,
                                  issuer=ca_cert)])
 
+    # This is a CA certificate
     ca_cert.add_extensions([
             crypto.X509Extension(b"basicConstraints",
                                  False,
                                  b"CA:TRUE",
+                                 subject=ca_cert,
+                                 issuer=ca_cert)])
+
+    # Limit this certificate to signing only the requested hostname
+    nameconstraint = "permitted;DNS:{}".format(options.hostname).encode()
+    ca_cert.add_extensions([
+            crypto.X509Extension(b"nameConstraints",
+                                 True,
+                                 nameconstraint,
                                  subject=ca_cert,
                                  issuer=ca_cert)])
 
