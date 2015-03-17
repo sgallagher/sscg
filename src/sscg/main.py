@@ -80,6 +80,10 @@ def parse_cmdline():
                         help=_("The valid hostname of the certificate. Must be an FQDN. Default: system hostname"),
                         default=gethostname())
 
+    cert_args.add_argument("--subject-alt-names",
+                           help=_("One or more additional valid hostnames for the certificate"),
+                           nargs="+")
+
     # SSL Organization Configuration
     cert_args.add_argument("--country",
                        help=_("Certificate DN: Country (C)"),
@@ -100,8 +104,6 @@ def parse_cmdline():
     cert_args.add_argument("--organizational-unit",
                         help=_("Certificate DN: Organizational Unit (OU)"),
                         required=True)
-
-    # TODO: Support subjectAltName
 
     options = parser.parse_args()
     if options.cert_format == "PEM":

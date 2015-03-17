@@ -54,6 +54,16 @@ def create_service_cert(options, ca_cert, ca_key):
                                  subject=svc_cert,
                                  issuer=ca_cert)])
 
+    # If any subjectAltNames have been provided, include them
+    for name in options.subject_alt_names:
+        altname = "DNS:{}".format(name).encode()
+        svc_cert.add_extensions([
+            crypto.X509Extension(b"subjectAltName",
+                                 False,
+                                 altname,
+                                 subject=svc_cert,
+                                 issuer=ca_cert)])
+
     svc_cert.sign(ca_key, options.hash_alg)
 
     return svc_cert, k
