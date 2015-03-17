@@ -12,7 +12,7 @@ Summary:        Self-signed certificate generator
 
 License:        PSF
 URL:            https://github.com/sgallagher/sscg
-Source0:        sscg-%{version}.tar.gz
+Source0:        https://github.com/sgallagher/sscg/releases/download/sscg-%{version}/sscg-%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python-devel
