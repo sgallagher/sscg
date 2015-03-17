@@ -9,7 +9,7 @@
 
 Name:           python-%{srcname}
 Version:        0.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Self-signed certificate generator
 
 License:        BSD
@@ -103,7 +103,7 @@ ln -s %{srcname}-%{python2_version} $RPM_BUILD_ROOT/%{_bindir}/%{srcname}
 %endif #use_python3
  
 %files
-%doc
+%license LICENSE
 # For noarch packages: sitelib
 %{python2_sitelib}/*
 %{_bindir}/%{srcname}-%{python2_version}
@@ -113,6 +113,7 @@ ln -s %{srcname}-%{python2_version} $RPM_BUILD_ROOT/%{_bindir}/%{srcname}
 
 %if 0%{?with_python3}
 %files -n python3-%{srcname}
+%license LICENSE
 %{python3_sitelib}/*
 %{_bindir}/%{srcname}-%{python3_version}
 %if 0%{?use_python3}
@@ -121,6 +122,9 @@ ln -s %{srcname}-%{python2_version} $RPM_BUILD_ROOT/%{_bindir}/%{srcname}
 %endif #with_python3
 
 %changelog
+* Tue Mar 17 2015 Stephen Gallagher <sgallagh@redhat.com> 0.2-2
+- Include the license in the build RPMs
+
 * Tue Mar 17 2015 Stephen Gallagher <sgallagh@redhat.com> 0.2-1
 - Add support for namedConstraints
 - Add support for subjectAltNames
