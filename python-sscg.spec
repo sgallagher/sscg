@@ -7,7 +7,7 @@
 
 Name:           python-sscg
 Version:        0.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Self-signed certificate generator
 
 License:        PSF
@@ -15,8 +15,12 @@ URL:            https://github.com/sgallagher/sscg
 Source0:        https://github.com/sgallagher/sscg/releases/download/sscg-%{version}/sscg-%{version}.tar.gz
 
 BuildArch:      noarch
+Requires:       pyOpenSSL
+Requires:       python-pyasn1
 BuildRequires:  python-devel
+BuildRequires:  python-setuptools
 BuildRequires:  pyOpenSSL
+BuildRequires:  python-pyasn1
 
 %description
 A utility to aid in the creation of more secure "self-signed"
@@ -29,8 +33,12 @@ false signatures from the service certificate.
 %if 0%{?with_python3}
 %package -n python3-sscg
 Summary: Self-signed certificate generator
-Requires: python3-pyOpenSSL
-BuildRequireS: python3-devel
+Requires:       python3-pyOpenSSL
+Requires:       python3-pyasn1
+BuildRequires:  python3-devel
+BuildRequires:  python3-setuptools
+BuildRequires:  python3-pyOpenSSL
+BuildRequires:  python3-pyasn1
 
 %description -n python3-sscg
 A utility to aid in the creation of more secure "self-signed"
@@ -99,5 +107,8 @@ ln -s sscg-%{python2_version} $RPM_BUILD_ROOT/%{_bindir}/sscg
 %endif #with_python3
 
 %changelog
-* Tue Mar 17 2015 Stephen Gallagher <sgallagh@redhat.com>
+* Mon Mar 16 2015 Stephen Gallagher <sgallagh@redhat.com> 0.1-2
+- Update BuildRequires
+
+* Mon Mar 16 2015 Stephen Gallagher <sgallagh@redhat.com> 0.1-1
 - First packaging
