@@ -6,8 +6,7 @@ import gettext
 from OpenSSL import crypto
 from socket import gethostname
 from sscg import DEFAULT_CA_CERT, DEFAULT_KEY_STRENGTH, DEFAULT_LIFESPAN, \
-                 DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_certificate,\
-    write_certificate_key
+                 DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_secure_file
 from sscg.authority import create_temp_ca
 from sscg.service import create_service_cert
 
@@ -138,13 +137,19 @@ def main():
 
     try:
         # Write out the CA Certificate
-        write_certificate(options, ca_cert, options.ca_file)
+        write_secure_file(options,
+                          options.ca_file,
+                          crypto.dump_certificate(options.cert_format, ca_cert))
         
         # Write out the Service Certificate
-        write_certificate(options, svc_cert, options.cert_file)
+        write_secure_file(options,
+                          options.cert_file,
+                          crypto.dump_certificate(options.cert_format, svc_cert))
     
         # Write out the Service Private Key
-        write_certificate_key(options, svc_key, options.cert_key_file)
+        write_secure_file(options,
+                          options.cert_key_file,
+                          crypto.dump_privatekey(options.cert_format, svc_key))
     except:
         print (_("Error writing certificate files: {}").format(sys.exc_info()[1]),
                file=sys.stderr)
