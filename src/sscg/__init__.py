@@ -36,7 +36,7 @@ def write_certificate(options, cert, destination):
 
         f.write(crypto.dump_certificate(options.cert_format, cert).decode("UTF-8"))
         f.close()
-    except:
+    except IOError:
         # Something went wrong. Remove the temporary file before failing.
         print(_("Could not write to {0}. Error: {1}").format(
               fpath, sys.exc_info()[1]),
@@ -52,7 +52,7 @@ def write_certificate(options, cert, destination):
         if options.debug:
             print(_("Renaming {} to {}".format(fpath, destination)))
         os.rename(fpath, destination)
-    except:
+    except IOError:
         # Something went wrong. Remove the temporary file before failing.
         print(_("Could not rename to {0}. Error: {1}").format(
               destination, sys.exc_info()[1]))
@@ -80,7 +80,7 @@ def write_certificate_key(options, key, destination, cipher=None, passphrase=Non
 
         f.write(crypto.dump_privatekey(options.cert_format, key, cipher, passphrase).decode("UTF-8"))
         f.close()
-    except:
+    except IOError:
         # Something went wrong. Remove the temporary file before failing.
         print(_("Could not write to {0}. Error: {1}").format(
               fpath, sys.exc_info()[1]),
@@ -96,7 +96,7 @@ def write_certificate_key(options, key, destination, cipher=None, passphrase=Non
         if options.debug:
             print(_("Renaming {} to {}").format(fpath, destination))
         os.rename(fpath, destination)
-    except:
+    except IOError:
         # Something went wrong. Remove the temporary file before failing.
         print(_("Could not rename to {0}. Error: {1}").format(
               destination, sys.exc_info()[1]))

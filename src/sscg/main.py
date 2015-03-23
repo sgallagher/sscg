@@ -152,9 +152,12 @@ def main():
         for file in [options.ca_file, options.cert_file, options.cert_key_file]:
             try:
                 os.unlink(file)
-            except:
-                # Nothing we can do if we get an error
+            except IOError:
+                # Nothing we can do if we get an IOError
+                # For all other errors, we'll allow the traceback
                 pass
+
+        sys.exit(1)
     
 
 
