@@ -31,15 +31,15 @@ def write_certificate(options, cert, destination):
     try:
         (fd, fpath) = tempfile.mkstemp(dir=os.path.dirname(destination))
         if options.debug:
-            print(_("Creating temporary certificate file at {}".format(fpath)))
+            print(_("Creating temporary certificate file at {}").format(fpath))
         f = os.fdopen(fd, "w")
 
         f.write(crypto.dump_certificate(options.cert_format, cert).decode("UTF-8"))
         f.close()
     except:
         # Something went wrong. Remove the temporary file before failing.
-        print(_("Could not write to {0}. Error: {1}".format(
-              fpath, sys.exc_info()[1])),
+        print(_("Could not write to {0}. Error: {1}").format(
+              fpath, sys.exc_info()[1]),
               file=sys.stderr)
         os.unlink(fpath)
         raise
@@ -54,8 +54,8 @@ def write_certificate(options, cert, destination):
         os.rename(fpath, destination)
     except:
         # Something went wrong. Remove the temporary file before failing.
-        print(_("Could not rename to {0}. Error: {1}".format(
-              destination, sys.exc_info()[1])))
+        print(_("Could not rename to {0}. Error: {1}").format(
+              destination, sys.exc_info()[1]))
         os.unlink(fpath)
         raise
 
@@ -74,7 +74,7 @@ def write_certificate_key(options, key, destination, cipher=None, passphrase=Non
     try:
         (fd, fpath) = tempfile.mkstemp(dir=os.path.dirname(destination))
         if options.debug:
-            print(_("Creating temporary keyfile at {}".format(fpath)))
+            print(_("Creating temporary keyfile at {}").format(fpath))
 
         f = os.fdopen(fd, "w")
 
@@ -82,8 +82,8 @@ def write_certificate_key(options, key, destination, cipher=None, passphrase=Non
         f.close()
     except:
         # Something went wrong. Remove the temporary file before failing.
-        print(_("Could not write to {0}. Error: {1}".format(
-              fpath, sys.exc_info()[1])),
+        print(_("Could not write to {0}. Error: {1}").format(
+              fpath, sys.exc_info()[1]),
               file=sys.stderr)
         os.unlink(fpath)
         raise
@@ -94,11 +94,11 @@ def write_certificate_key(options, key, destination, cipher=None, passphrase=Non
     # destination are on different filesystems, but this should not be the case.
     try:
         if options.debug:
-            print(_("Renaming {} to {}".format(fpath, destination)))
+            print(_("Renaming {} to {}").format(fpath, destination))
         os.rename(fpath, destination)
     except:
         # Something went wrong. Remove the temporary file before failing.
-        print(_("Could not rename to {0}. Error: {1}".format(
-              destination, sys.exc_info()[1])))
+        print(_("Could not rename to {0}. Error: {1}").format(
+              destination, sys.exc_info()[1]))
         os.unlink(fpath)
         raise

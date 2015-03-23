@@ -17,8 +17,8 @@ def create_temp_ca(options):
     # The worst-case here is that we create a certificate
     # that fails validation.
     if "." not in options.hostname:
-        print (_("{host} is not a valid FQDN".format(
-                  host=options.hostname)),
+        print (_("{host} is not a valid FQDN").format(
+                  host=options.hostname),
                file=sys.stderr)
         sys.exit(1)
 

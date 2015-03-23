@@ -10,8 +10,8 @@ def create_service_cert(options, ca_cert, ca_key):
     # The worst-case here is that we create a certificate
     # that fails validation.
     if "." not in options.hostname:
-        print (_("{hostname} is not a valid FQDN".format(
-                  subject=options.hostname)),
+        print (_("{hostname} is not a valid FQDN").format(
+                  subject=options.hostname),
                file=sys.stderr)
         sys.exit(1)
 

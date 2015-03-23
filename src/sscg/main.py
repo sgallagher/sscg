@@ -62,8 +62,8 @@ def parse_cmdline():
 
     # Output files
     output_args.add_argument("--ca-file",
-                             help=_("Path where the public CA certificate will be stored. Default: {}".format(
-                                    DEFAULT_CA_CERT)),
+                             help=_("Path where the public CA certificate will be stored. Default: {}").format(
+                                    DEFAULT_CA_CERT),
                              default=DEFAULT_CA_CERT)
 
     output_args.add_argument("--cert-file",
@@ -116,7 +116,7 @@ def parse_cmdline():
 
     if options.debug:
         # Dump all of the options so we see their values, including defaults
-        print (_("Options: {}".format(repr(options))))
+        print (_("Options: {}").format(repr(options)))
 
     return options
 
@@ -146,7 +146,7 @@ def main():
         # Write out the Service Private Key
         write_certificate_key(options, svc_key, options.cert_key_file)
     except:
-        print (_("Error writing certificate files: {}".format(sys.exc_info()[1])),
+        print (_("Error writing certificate files: {}").format(sys.exc_info()[1]),
                file=sys.stderr)
 
         for file in [options.ca_file, options.cert_file, options.cert_key_file]:
