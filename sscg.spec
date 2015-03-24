@@ -30,6 +30,7 @@ BuildRequires:  python-setuptools
 BuildRequires:  pyOpenSSL
 BuildRequires:  python-pyasn1
 %endif
+BuildRequires: gettext
 
 %description
 A utility to aid in the creation of more secure "self-signed"
@@ -41,13 +42,6 @@ false signatures from the service certificate.
 
 %prep
 %setup -q -n %{srcname}-%{version}
-
-# Set any script hashbangs to the appropriate python version
-%if 0%{?use_python3}
-find . -name '*.py' | xargs sed -i '1s|^#!python|#!%{__python3}|'
-%else
-find . -name '*.py' | xargs sed -i '1s|^#!python|#!%{__python2}|'
-%endif #0%{?use_python3}
 
 %build
 # Ensure egg-info is regenerated
@@ -73,10 +67,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/%{srcname}
 
 %if 0%{?use_python3}
-%{python3_sitelib}/%{srcname}/*
+%{python3_sitelib}/%{srcname}/
 %{python3_sitelib}/%{srcname}-%{version}-py%{python3_version}.egg-info/
 %else
-%{python2_sitelib}/%{srcname}/*
+%{python2_sitelib}/%{srcname}/
 %{python2_sitelib}/%{srcname}-%{version}-py%{python2_version}.egg-info/
 %endif #use_python3
 
