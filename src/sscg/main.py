@@ -39,7 +39,7 @@ from socket import getfqdn
 from OpenSSL import crypto
 
 from sscg import DEFAULT_CA_CERT, DEFAULT_KEY_STRENGTH, DEFAULT_LIFESPAN, \
-    DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_secure_file
+    DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_secure_file, SSCGIOError
 from sscg.authority import create_temp_ca
 from sscg.service import create_service_cert
 
@@ -185,7 +185,7 @@ def main():
         write_secure_file(options,
                           options.cert_key_file,
                           crypto.dump_privatekey(options.cert_format, svc_key))
-    except:
+    except SSCGIOError:
         print(_("Error writing certificate files: {}").format(sys.exc_info()[1]),
               file=sys.stderr)
 

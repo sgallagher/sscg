@@ -46,6 +46,10 @@ DEFAULT_KEY_STRENGTH = 2048  # 2048-bit encryption
 DEFAULT_HASH_ALG = "sha256"
 
 
+class SSCGIOError(Exception):
+    pass
+
+
 def write_secure_file(options, destination, data):
     """
     Write out the certificate or key to a temporary file first, then atomically
@@ -79,4 +83,4 @@ def write_secure_file(options, destination, data):
         os.rename(f.name, destination)
     except IOError as e:
         os.unlink(f.name)
-        raise Exception(_("Could not rename to {0}. Error: {1}").format(destination, e))
+        raise SSCGIOError(_("Could not rename to {0}. Error: {1}").format(destination, e))
