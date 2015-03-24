@@ -31,16 +31,13 @@
 
 from __future__ import print_function
 import os
-import sys
 import tempfile
 import gettext
-from OpenSSL import crypto
 
 PACKAGE = 'sscg'
 LOCALEDIR = '/usr/share/locale'
 translation = gettext.translation(PACKAGE, LOCALEDIR, fallback=True)
 _ = translation.gettext
-
 
 DEFAULT_CERT_FORMAT = "PEM"
 DEFAULT_CA_CERT = "/etc/pki/ca-trust/source/anchors"

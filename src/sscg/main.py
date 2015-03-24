@@ -34,12 +34,15 @@ import os
 import sys
 import argparse
 import gettext
-from OpenSSL import crypto
 from socket import gethostname
+
+from OpenSSL import crypto
+
 from sscg import DEFAULT_CA_CERT, DEFAULT_KEY_STRENGTH, DEFAULT_LIFESPAN, \
-                 DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_secure_file
+    DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_secure_file
 from sscg.authority import create_temp_ca
 from sscg.service import create_service_cert
+
 
 # Translation header
 PACKAGE = 'sscg'
@@ -47,16 +50,17 @@ LOCALEDIR = '/usr/share/locale'
 translation = gettext.translation(PACKAGE, LOCALEDIR, fallback=True)
 _ = translation.gettext
 
+
 def parse_cmdline():
     parser = argparse.ArgumentParser(description="Generate a self-signed service certificate")
 
     parser.add_argument("--debug",
-                             help=_("Enable logging of debug messages."),
-                             action="store_true")
+                        help=_("Enable logging of debug messages."),
+                        action="store_true")
 
     # ==== Output Arguments ====
     output_args = parser.add_argument_group('Output')
-    
+
     output_args.add_argument("--cert-format",
                              help=_("Certificate file format. Default=PEM"),
                              choices=("PEM", "ASN1"),
@@ -93,13 +97,13 @@ def parse_cmdline():
     # Output files
     output_args.add_argument("--ca-file",
                              help=_("Path where the public CA certificate will be stored. Default: {}").format(
-                                    DEFAULT_CA_CERT),
+                                 DEFAULT_CA_CERT),
                              default=DEFAULT_CA_CERT)
 
     output_args.add_argument("--cert-file",
                              help=_("Path where the public service certificate will be stored."),
                              required=True)
-    
+
     output_args.add_argument("--cert-key-file",
                              help=_("Path where the private key of the service certificate will be stored"),
                              required=True)
@@ -107,8 +111,8 @@ def parse_cmdline():
     # Subject
     cert_args = parser.add_argument_group('Certificate Details')
     cert_args.add_argument("--hostname",
-                        help=_("The valid hostname of the certificate. Must be an FQDN. Default: system hostname"),
-                        default=gethostname())
+                           help=_("The valid hostname of the certificate. Must be an FQDN. Default: system hostname"),
+                           default=gethostname())
 
     cert_args.add_argument("--subject-alt-names",
                            help=_("One or more additional valid hostnames for the certificate"),
@@ -116,24 +120,24 @@ def parse_cmdline():
 
     # SSL Organization Configuration
     cert_args.add_argument("--country",
-                       help=_("Certificate DN: Country (C)"),
-                       required=True)
+                           help=_("Certificate DN: Country (C)"),
+                           required=True)
 
     cert_args.add_argument("--state",
-                       help=_("Certificate DN: State (ST)"),
-                       required=True)
+                           help=_("Certificate DN: State (ST)"),
+                           required=True)
 
     cert_args.add_argument("--locality",
-                       help=_("Certificate DN: Locality (L)"),
-                       required=True)
+                           help=_("Certificate DN: Locality (L)"),
+                           required=True)
 
     cert_args.add_argument("--organization",
-                        help=_("Certificate DN: Organization (O)"),
-                        required=True)
+                           help=_("Certificate DN: Organization (O)"),
+                           required=True)
 
     cert_args.add_argument("--organizational-unit",
-                        help=_("Certificate DN: Organizational Unit (OU)"),
-                        required=True)
+                           help=_("Certificate DN: Organizational Unit (OU)"),
+                           required=True)
 
     options = parser.parse_args()
     if options.cert_format == "PEM":
@@ -141,12 +145,12 @@ def parse_cmdline():
     elif options.cert_format == "ASN1":
         options.cert_format = crypto.FILETYPE_ASN1
     else:
-        print (_("Certificate file must be PEM or ASN.1"),
-               file=sys.stderr)
+        print(_("Certificate file must be PEM or ASN.1"),
+              file=sys.stderr)
 
     if options.debug:
         # Dump all of the options so we see their values, including defaults
-        print (_("Options: {}").format(repr(options)))
+        print(_("Options: {}").format(repr(options)))
 
     return options
 
@@ -156,34 +160,34 @@ def main():
 
     (ca_cert, ca_key) = create_temp_ca(options)
     if options.debug:
-        print (_("CA Certificate - Public Key"))
-        print (crypto.dump_certificate(options.cert_format, ca_cert).decode("UTF-8"))
+        print(_("CA Certificate - Public Key"))
+        print(crypto.dump_certificate(options.cert_format, ca_cert).decode("UTF-8"))
 
     (svc_cert, svc_key) = create_service_cert(options, ca_cert, ca_key)
     if options.debug:
-        print (_("Service Certificate - Public Key"))
-        print (crypto.dump_certificate(options.cert_format, svc_cert).decode("UTF-8"))
-        print (_("Service Certificate - Private Key"))
-        print (crypto.dump_privatekey(options.cert_format, svc_key).decode("UTF-8"))
+        print(_("Service Certificate - Public Key"))
+        print(crypto.dump_certificate(options.cert_format, svc_cert).decode("UTF-8"))
+        print(_("Service Certificate - Private Key"))
+        print(crypto.dump_privatekey(options.cert_format, svc_key).decode("UTF-8"))
 
     try:
         # Write out the CA Certificate
         write_secure_file(options,
                           options.ca_file,
                           crypto.dump_certificate(options.cert_format, ca_cert))
-        
+
         # Write out the Service Certificate
         write_secure_file(options,
                           options.cert_file,
                           crypto.dump_certificate(options.cert_format, svc_cert))
-    
+
         # Write out the Service Private Key
         write_secure_file(options,
                           options.cert_key_file,
                           crypto.dump_privatekey(options.cert_format, svc_key))
     except:
-        print (_("Error writing certificate files: {}").format(sys.exc_info()[1]),
-               file=sys.stderr)
+        print(_("Error writing certificate files: {}").format(sys.exc_info()[1]),
+              file=sys.stderr)
 
         for file in [options.ca_file, options.cert_file, options.cert_key_file]:
             try:
@@ -194,7 +198,6 @@ def main():
                 pass
 
         sys.exit(1)
-    
 
 
 if __name__ == "__main__":

@@ -48,9 +48,9 @@ def create_service_cert(options, ca_cert, ca_key):
     # The worst-case here is that we create a certificate
     # that fails validation.
     if "." not in options.hostname:
-        print (_("{hostname} is not a valid FQDN").format(
-                  subject=options.hostname),
-               file=sys.stderr)
+        print(_("{hostname} is not a valid FQDN").format(
+            subject=options.hostname),
+            file=sys.stderr)
         sys.exit(1)
 
     # Create a keypair for the service certificate
@@ -65,8 +65,8 @@ def create_service_cert(options, ca_cert, ca_key):
     try:
         svc_cert_name.C = str(options.country)
     except crypto.Error:
-        print (_("Country codes must be two characters"),
-               file=sys.stderr)
+        print(_("Country codes must be two characters"),
+              file=sys.stderr)
         sys.exit(1)
     svc_cert_name.ST = options.state
     svc_cert_name.L = options.locality
@@ -78,7 +78,7 @@ def create_service_cert(options, ca_cert, ca_key):
     svc_cert.set_issuer(ca_cert.get_subject())
 
     # Set serial and lifespan
-    svc_cert.set_serial_number(struct.unpack("Q", rand.bytes(8))[0]);
+    svc_cert.set_serial_number(struct.unpack("Q", rand.bytes(8))[0])
     svc_cert.gmtime_adj_notBefore(0)
     svc_cert.gmtime_adj_notAfter(options.lifetime * 24 * 60 * 60)
 
@@ -86,11 +86,11 @@ def create_service_cert(options, ca_cert, ca_key):
 
     # Set constraint extensions
     svc_cert.add_extensions([
-            crypto.X509Extension(b"basicConstraints",
-                                 False,
-                                 b"CA:FALSE",
-                                 subject=svc_cert,
-                                 issuer=ca_cert)])
+        crypto.X509Extension(b"basicConstraints",
+                             False,
+                             b"CA:FALSE",
+                             subject=svc_cert,
+                             issuer=ca_cert)])
 
     # If any subjectAltNames have been provided, include them
     for name in options.subject_alt_names:

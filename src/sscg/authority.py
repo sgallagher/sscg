@@ -56,9 +56,9 @@ def create_temp_ca(options):
     # The worst-case here is that we create a certificate
     # that fails validation.
     if "." not in options.hostname:
-        print (_("{host} is not a valid FQDN").format(
-                  host=options.hostname),
-               file=sys.stderr)
+        print(_("{host} is not a valid FQDN").format(
+            host=options.hostname),
+            file=sys.stderr)
         sys.exit(1)
 
     # Create a keypair for the temporary CA
@@ -73,8 +73,8 @@ def create_temp_ca(options):
     try:
         ca_cert_name.C = str(options.country)
     except crypto.Error:
-        print (_("Country codes must be two characters"),
-               file=sys.stderr)
+        print(_("Country codes must be two characters"),
+              file=sys.stderr)
         sys.exit(1)
     ca_cert_name.ST = options.state
     ca_cert_name.L = options.locality
@@ -86,7 +86,7 @@ def create_temp_ca(options):
     ca_cert.set_subject(ca_cert_name)
 
     # Set serial and lifespan
-    ca_cert.set_serial_number(struct.unpack("Q", rand.bytes(8))[0]);
+    ca_cert.set_serial_number(struct.unpack("Q", rand.bytes(8))[0])
     ca_cert.gmtime_adj_notBefore(0)
     ca_cert.gmtime_adj_notAfter(options.lifetime * 24 * 60 * 60)
 
@@ -100,33 +100,33 @@ def create_temp_ca(options):
     # authorityKeyIdentifier will fail to find the
     # subjectKeyIdentifier
     ca_cert.add_extensions([
-            crypto.X509Extension(b"subjectKeyIdentifier",
-                                 False,
-                                 b"hash",
-                                 subject=ca_cert,
-                                 issuer=ca_cert)])
+        crypto.X509Extension(b"subjectKeyIdentifier",
+                             False,
+                             b"hash",
+                             subject=ca_cert,
+                             issuer=ca_cert)])
     ca_cert.add_extensions([
-            crypto.X509Extension(b"authorityKeyIdentifier",
-                                 False,
-                                 b"keyid:always,issuer",
-                                 subject=ca_cert,
-                                 issuer=ca_cert)])
+        crypto.X509Extension(b"authorityKeyIdentifier",
+                             False,
+                             b"keyid:always,issuer",
+                             subject=ca_cert,
+                             issuer=ca_cert)])
 
     # This is a CA certificate
     ca_cert.add_extensions([
-            crypto.X509Extension(b"basicConstraints",
-                                 False,
-                                 b"CA:TRUE",
-                                 subject=ca_cert,
-                                 issuer=ca_cert)])
+        crypto.X509Extension(b"basicConstraints",
+                             False,
+                             b"CA:TRUE",
+                             subject=ca_cert,
+                             issuer=ca_cert)])
 
     # Limit this certificate to signing only the requested hostname
     nameconstraint = "permitted;DNS:{}".format(options.hostname).encode()
     ca_cert.add_extensions([
-            crypto.X509Extension(b"nameConstraints",
-                                 True,
-                                 nameconstraint,
-                                 subject=ca_cert,
-                                 issuer=ca_cert)])
+        crypto.X509Extension(b"nameConstraints",
+                             True,
+                             nameconstraint,
+                             subject=ca_cert,
+                             issuer=ca_cert)])
 
     return ca_cert, k
