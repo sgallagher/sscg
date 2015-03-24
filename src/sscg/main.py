@@ -34,7 +34,7 @@ import os
 import sys
 import argparse
 import gettext
-from socket import gethostname
+from socket import getfqdn
 
 from OpenSSL import crypto
 
@@ -112,7 +112,7 @@ def parse_cmdline():
     cert_args = parser.add_argument_group('Certificate Details')
     cert_args.add_argument("--hostname",
                            help=_("The valid hostname of the certificate. Must be an FQDN. Default: system hostname"),
-                           default=gethostname())
+                           default=getfqdn())
 
     cert_args.add_argument("--subject-alt-names",
                            help=_("One or more additional valid hostnames for the certificate"),
