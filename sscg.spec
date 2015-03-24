@@ -5,8 +5,8 @@
 %global srcname sscg
 
 Name:           %{srcname}
-Version:        0.3.0
-Release:        1%{?dist}
+Version:        0.4.0
+Release:        0%{?dist}
 Summary:        Self-signed certificate generator
 
 License:        BSD
@@ -81,6 +81,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif #use_python3
 
 %changelog
+* Tue Mar 24 2015 Stephen Gallagher <sgallagh@redhat.com> 0.4.0-0
+- In development
+
 * Mon Mar 23 2015 Stephen Gallagher <sgallagh@redhat.com> 0.3.0-1
 - Rename to sscg
 - Only build with default python interpreter
