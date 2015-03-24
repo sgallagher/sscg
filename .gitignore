@@ -1,0 +1,12 @@
+*.py[oc]
+*.egg-info
+*.pydevproject
+*.project
+*.cproject
+*.settings
+*~
+*.swp
+build
+dist
+*.patch
+.idea/*
