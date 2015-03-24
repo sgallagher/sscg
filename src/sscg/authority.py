@@ -32,7 +32,15 @@
 from __future__ import print_function
 import sys
 import struct
+import gettext
 from OpenSSL import crypto, rand
+
+# Translation header
+PACKAGE = 'sscg'
+LOCALEDIR = '/usr/share/locale'
+translation = gettext.translation(PACKAGE, LOCALEDIR, fallback=True)
+_ = translation.gettext
+
 
 def create_temp_ca(options):
     """
