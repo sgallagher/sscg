@@ -36,6 +36,8 @@ import gettext
 from OpenSSL import crypto, rand
 
 # Translation header
+from sscg import SSCGBadInputError
+
 PACKAGE = 'sscg'
 LOCALEDIR = '/usr/share/locale'
 translation = gettext.translation(PACKAGE, LOCALEDIR, fallback=True)
@@ -70,16 +72,26 @@ def create_temp_ca(options):
     ca_cert_name = ca_cert.get_subject()
 
     # Create the DER name for the certificate
-    try:
-        ca_cert_name.C = str(options.country)
-    except crypto.Error:
-        print(_("Country codes must be two characters"),
-              file=sys.stderr)
-        sys.exit(1)
-    ca_cert_name.ST = options.state
-    ca_cert_name.L = options.locality
-    ca_cert_name.O = options.organization
+    if options.country:
+        try:
+            ca_cert_name.C = str(options.country)
+        except crypto.Error:
+            raise SSCGBadInputError(_("Bad input for country: "
+                                      "Country codes must be two characters."))
+
+    if options.state:
+        ca_cert_name.ST = options.state
+
+    if options.locality:
+        ca_cert_name.L = options.locality
+
+    if options.organization:
+        ca_cert_name.O = options.organization
+
+    # The package option is mandatory
     ca_cert_name.OU = options.package
+
+    # CN is mandatory
     ca_cert_name.CN = "{}.{}".format(options.package,
                                      options.hostname)
 

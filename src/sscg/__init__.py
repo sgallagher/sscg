@@ -50,6 +50,10 @@ class SSCGIOError(Exception):
     pass
 
 
+class SSCGBadInputError(Exception):
+    pass
+
+
 def write_secure_file(options, destination, data):
     """
     Write out the certificate or key to a temporary file first, then atomically

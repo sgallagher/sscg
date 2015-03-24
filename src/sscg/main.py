@@ -39,7 +39,7 @@ from socket import getfqdn
 from OpenSSL import crypto
 
 from sscg import DEFAULT_CA_CERT, DEFAULT_KEY_STRENGTH, DEFAULT_LIFESPAN, \
-    DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_secure_file, SSCGIOError
+    DEFAULT_CERT_FORMAT, DEFAULT_HASH_ALG, write_secure_file, SSCGIOError, SSCGBadInputError
 from sscg.authority import create_temp_ca
 from sscg.service import create_service_cert
 
@@ -121,23 +121,23 @@ def parse_cmdline():
     # SSL Organization Configuration
     cert_args.add_argument("--country",
                            help=_("Certificate DN: Country (C)"),
-                           required=True)
+                           required=False)
 
     cert_args.add_argument("--state",
                            help=_("Certificate DN: State (ST)"),
-                           required=True)
+                           required=False)
 
     cert_args.add_argument("--locality",
                            help=_("Certificate DN: Locality (L)"),
-                           required=True)
+                           required=False)
 
     cert_args.add_argument("--organization",
                            help=_("Certificate DN: Organization (O)"),
-                           required=True)
+                           required=False)
 
     cert_args.add_argument("--organizational-unit",
                            help=_("Certificate DN: Organizational Unit (OU)"),
-                           required=True)
+                           required=False)
 
     options = parser.parse_args()
     if options.cert_format == "PEM":
@@ -158,7 +158,13 @@ def parse_cmdline():
 def main():
     options = parse_cmdline()
 
-    (ca_cert, ca_key) = create_temp_ca(options)
+    try:
+        (ca_cert, ca_key) = create_temp_ca(options)
+    except SSCGBadInputError:
+        print(_("Invalid input received for the CA certificate"),
+              file=sys.stderr)
+        sys.exit(1)
+
     if options.debug:
         print(_("CA Certificate - Public Key"))
         print(crypto.dump_certificate(options.cert_format, ca_cert).decode("UTF-8"))

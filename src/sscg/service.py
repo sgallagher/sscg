@@ -34,6 +34,7 @@ import sys
 import struct
 import gettext
 from OpenSSL import crypto, rand
+from sscg import SSCGBadInputError
 
 PACKAGE = 'sscg'
 LOCALEDIR = '/usr/share/locale'
@@ -62,16 +63,28 @@ def create_service_cert(options, ca_cert, ca_key):
     svc_cert_name = svc_cert.get_subject()
 
     # Create the DER name for the certificate
-    try:
-        svc_cert_name.C = str(options.country)
-    except crypto.Error:
-        print(_("Country codes must be two characters"),
-              file=sys.stderr)
-        sys.exit(1)
-    svc_cert_name.ST = options.state
-    svc_cert_name.L = options.locality
-    svc_cert_name.O = options.organization
-    svc_cert_name.OU = options.organizational_unit
+    if options.country:
+        try:
+            svc_cert_name.C = str(options.country)
+        except crypto.Error:
+            raise SSCGBadInputError(_("Bad input for country: "
+                                      "Country codes must be two characters."))
+        except AttributeError:
+            # If we don't have this option, just skip it
+            pass
+
+    if options.state:
+        svc_cert_name.ST = options.state
+
+    if options.locality:
+        svc_cert_name.L = options.locality
+
+    if options.organization:
+        svc_cert_name.O = options.organization
+
+    if options.organizational_unit:
+        svc_cert_name.OU = options.organizational_unit
+
     svc_cert_name.CN = options.hostname
 
     svc_cert.set_subject(svc_cert_name)
@@ -93,14 +106,15 @@ def create_service_cert(options, ca_cert, ca_key):
                              issuer=ca_cert)])
 
     # If any subjectAltNames have been provided, include them
-    for name in options.subject_alt_names:
-        altname = "DNS:{}".format(name).encode()
-        svc_cert.add_extensions([
-            crypto.X509Extension(b"subjectAltName",
-                                 False,
-                                 altname,
-                                 subject=svc_cert,
-                                 issuer=ca_cert)])
+    if options.subject_alt_names:
+        for name in options.subject_alt_names:
+            altname = "DNS:{}".format(name).encode()
+            svc_cert.add_extensions([
+                crypto.X509Extension(b"subjectAltName",
+                                     False,
+                                     altname,
+                                     subject=svc_cert,
+                                     issuer=ca_cert)])
 
     svc_cert.sign(ca_key, options.hash_alg)
 
