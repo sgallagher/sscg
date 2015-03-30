@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sscg",
-    version="0.4.0",
+    version="0.4.1",
 
     entry_points="""\
     [console_scripts]
