@@ -96,9 +96,10 @@ def parse_cmdline():
 
     # Output files
     output_args.add_argument("--ca-file",
-                             help=_("Path where the public CA certificate will be stored. Default: {}").format(
-                                 DEFAULT_CA_CERT),
-                             default=DEFAULT_CA_CERT)
+                             help=_("Path where the public CA certificate will "
+                                    "be stored. Default: ca.crt in service "
+                                    "certificate directory"),
+                             default=None)
 
     output_args.add_argument("--cert-file",
                              help=_("Path where the public service certificate will be stored."),
@@ -147,6 +148,9 @@ def parse_cmdline():
     else:
         print(_("Certificate file must be PEM or ASN.1"),
               file=sys.stderr)
+
+    if not options.ca_file:
+        options.ca_file = "{}/ca.crt".format(os.path.dirname(options.cert_file))
 
     if options.debug:
         # Dump all of the options so we see their values, including defaults
