@@ -149,8 +149,17 @@ def parse_cmdline():
         print(_("Certificate file must be PEM or ASN.1"),
               file=sys.stderr)
 
+    # We must be passed a full path including target file
+    if not os.path.basename(options.cert_file):
+        raise SSCGBadInputError("Cert file path must include filename")
+
+    if not os.path.basename(options.cert_key_file):
+        raise SSCGBadInputError("Key file path must include filename")
+
     if not options.ca_file:
         options.ca_file = "{}/ca.crt".format(os.path.dirname(options.cert_file))
+    elif not os.path.basename(options.ca_file):
+        raise SSCGBadInputError("CA path must include filename")
 
     if options.debug:
         # Dump all of the options so we see their values, including defaults
@@ -160,7 +169,11 @@ def parse_cmdline():
 
 
 def main():
-    options = parse_cmdline()
+    try:
+        options = parse_cmdline()
+    except SSCGBadInputError:
+        print(_("Bad input on the command-line: {}".format(sys.exc_info()[1])))
+        sys.exit(1)
 
     try:
         (ca_cert, ca_key) = create_temp_ca(options)
