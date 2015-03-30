@@ -31,6 +31,7 @@
 
 from __future__ import print_function
 import os
+import sys
 import tempfile
 import gettext
 
@@ -65,15 +66,20 @@ def write_secure_file(options, destination, data):
     # Create the temporary file in the same directory as the destination
     # This ensures that we can atomically move it to the final name.
 
-    f = tempfile.NamedTemporaryFile(dir=os.path.dirname(destination),
-                                    delete=False)
+    try:
+        f = tempfile.NamedTemporaryFile(dir=os.path.dirname(destination),
+                                        delete=False)
+    except PermissionError:
+        raise SSCGIOError(_("Could not create tempfile in {0}. Error: {1}").format(
+                            os.path.dirname(destination), sys.exc_info()[1]))
+
     try:
         f.write(data)
         f.flush()
     except IOError as e:
         f.close()
         os.unlink(f.name)
-        raise Exception(_("Could not write to {0}. Error: {1}").format(f.name, e))
+        raise SSCGIOError(_("Could not write to {0}. Error: {1}").format(f.name, e))
 
     # Now atomically move the temporary file into place.
     # We use os.rename because this is guaranteed to be atomic if it succeeds
