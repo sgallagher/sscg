@@ -11,3 +11,6 @@ build
 dist
 *.patch
 .idea/*
+/sscg
+/*.crt
+/*.pem
