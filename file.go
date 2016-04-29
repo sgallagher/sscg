@@ -142,17 +142,31 @@ func (sc *SscgConfig) AppendToFile(dest string, data []byte) error {
 func (sc *SscgConfig) SamePath(src string, dest string) (bool, error) {
 	DebugLogger.Printf("Comparing %s to %s\n", src, dest)
 
+	// If the actual filenames aren't the same, then we treat these as
+	// separate files. There is an edge-case here where one of them could
+	// already exist and be a dangling symlink pointing to the other one,
+	// but honestly if that is happening then the user has made a mistake
+	// on the command-line and can deal with it.
+	if filepath.Base(src) != filepath.Base(dest) {
+		return false, nil
+	}
+
+	// If the filenames are the same, we need to see if they exist in the
+	// same directory as well. We need to figure out their real path,
+	// without symlinks or relative paths (like '.' and '..'), so we will
+	// normalize them before comparing.
+
 	// First, get the absolute paths
-	absoluteSrcPath, err := filepath.Abs(src)
+	absoluteSrcPath, err := filepath.Abs(filepath.Dir(src))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting absolute path for %s", src)
+		fmt.Fprintf(os.Stderr, "Error getting absolute path for %s", filepath.Dir(src))
 		return false, err
 	}
 	DebugLogger.Printf("Absolute src path: %s\n", absoluteSrcPath)
 
-	absoluteDestPath, err := filepath.Abs(dest)
+	absoluteDestPath, err := filepath.Abs(filepath.Dir(dest))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting absolute path for %s", dest)
+		fmt.Fprintf(os.Stderr, "Error getting absolute path for %s", filepath.Dir(dest))
 		return false, err
 	}
 	DebugLogger.Printf("Absolute dest path: %s\n", absoluteDestPath)
@@ -160,14 +174,14 @@ func (sc *SscgConfig) SamePath(src string, dest string) (bool, error) {
 	// Next, evaluate any symlinks
 	deSymlinkedSrcPath, err := filepath.EvalSymlinks(absoluteSrcPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error evaluating symlinks for %s", absoluteSrcPath)
+		fmt.Fprintf(os.Stderr, "Error evaluating symlinks for %s: %v", absoluteSrcPath, err)
 		return false, err
 	}
 	DebugLogger.Printf("Absolute src path following symlinks: %s\n", deSymlinkedSrcPath)
 
 	deSymlinkedDestPath, err := filepath.EvalSymlinks(absoluteDestPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error evaluating symlinks for %s", absoluteDestPath)
+		fmt.Fprintf(os.Stderr, "Error evaluating symlinks for %s: %v", absoluteDestPath, err)
 		return false, err
 	}
 	DebugLogger.Printf("Absolute dest path following symlinks: %s\n", deSymlinkedDestPath)
