@@ -80,10 +80,6 @@ func parseArgs(sc *SscgConfig) error {
 	// --version
 	flag.BoolVar(&sc.printVersion, "version", false, "Display the version number and exit")
 
-	// --cert-key-format
-	sc.certKeyFormat = CertKeyFormatPEM
-	flag.Var(&sc.certKeyFormat, "cert-key-format", "Certificate key file format {PEM,ASN1}.\n\t")
-
 	// --lifetime
 	flag.UintVar(&sc.lifetime, "lifetime", 3650, "Certificate lifetime (days).\n\t")
 
@@ -216,18 +212,11 @@ func main() {
 	StandardLogger.Printf("Service public certificate written to %s.\n", sc.certFile)
 
 	// Write the service private key
-	switch sc.certKeyFormat {
-	case CertKeyFormatPEM:
-		if data, err = sc.svcCertificateKey.MarshalPKCS1PrivateKeyPEM(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting service certificate data: %v\n", err)
-			os.Exit(1)
-		}
-	case CertKeyFormatASN1:
-		if data, err = sc.svcCertificateKey.MarshalPKCS1PrivateKeyDER(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting service certificate data: %v\n", err)
-			os.Exit(1)
-		}
+	if data, err = sc.svcCertificateKey.MarshalPKCS1PrivateKeyPEM(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting service certificate data: %v\n", err)
+		os.Exit(1)
 	}
+
 	err = sc.WriteSecureFile(sc.certKeyFile, data)
 	if err != nil {
 		os.Exit(1)

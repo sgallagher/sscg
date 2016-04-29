@@ -47,7 +47,6 @@ type SscgConfig struct {
 	cwd          string
 
 	// Output information
-	certKeyFormat CertKeyFormatType
 	lifetime      uint
 	keyStrength   KeyStrengthType
 	hashAlgorithm HashAlgorithmType
@@ -72,38 +71,6 @@ type SscgConfig struct {
 // SscgNIDNameConstraints X.509 extension to limit
 // signing validity to specific names
 const SscgNIDNameConstraints = 666
-
-// CertKeyFormatType An enum containing the supported file formats
-type CertKeyFormatType uint32
-
-// File formats for certificates
-const (
-	CertKeyFormatPEM  CertKeyFormatType = iota /* PEM File format */
-	CertKeyFormatASN1                          /* ASN.1 File Format */
-)
-
-var certKeyFormatStrings = [...]string{
-	"PEM",
-	"ASN.1",
-}
-
-func (certKeyFormatType *CertKeyFormatType) String() string {
-	return certKeyFormatStrings[*certKeyFormatType]
-}
-
-// Set This is part of the Value interface. It checks that a valid
-//     option was provided.
-func (certKeyFormatType *CertKeyFormatType) Set(value string) error {
-	switch value {
-	case "PEM":
-		*certKeyFormatType = CertKeyFormatPEM
-	case "ASN1":
-		*certKeyFormatType = CertKeyFormatASN1
-	default:
-		return errors.New("Certificate format must be PEM or ASN1.")
-	}
-	return nil
-}
 
 // KeyStrengthType An enum containing the list of supported key lengths
 type KeyStrengthType int
