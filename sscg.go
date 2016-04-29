@@ -157,6 +157,14 @@ func main() {
 
 	DebugLogger.Printf("%+#v\n", sc)
 
+	// Compare the cert-file and cert-key-file arguments
+	// We don't want to write anything out if this comparison fails
+
+	matched, err := sc.SamePath(sc.certFile, sc.certKeyFile)
+	if err != nil {
+		os.Exit(1)
+	}
+
 	// Create a private CA to sign the certificate
 	VerboseLogger.Printf("Generating private CA")
 	err = sc.createPrivateCA()
@@ -217,15 +225,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	switch {
-	// TODO: Check for absolute path rather than string comparison
-	case sc.certFile == sc.certKeyFile:
+	if matched {
 		// If they are the same file, append to it
 		err = sc.AppendToFile(sc.certKeyFile, data)
 		if err != nil {
 			os.Exit(1)
 		}
-	default:
+	} else {
 		// Otherwise, create it as normal
 		err = sc.WriteSecureFile(sc.certKeyFile, data)
 		if err != nil {

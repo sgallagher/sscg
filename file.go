@@ -138,3 +138,49 @@ func (sc *SscgConfig) AppendToFile(dest string, data []byte) error {
 
 	return nil
 }
+
+func (sc *SscgConfig) SamePath(src string, dest string) (bool, error) {
+	DebugLogger.Printf("Comparing %s to %s\n", src, dest)
+
+	// First, get the absolute paths
+	absoluteSrcPath, err := filepath.Abs(src)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting absolute path for %s", src)
+		return false, err
+	}
+	DebugLogger.Printf("Absolute src path: %s\n", absoluteSrcPath)
+
+	absoluteDestPath, err := filepath.Abs(dest)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting absolute path for %s", dest)
+		return false, err
+	}
+	DebugLogger.Printf("Absolute dest path: %s\n", absoluteDestPath)
+
+	// Next, evaluate any symlinks
+	deSymlinkedSrcPath, err := filepath.EvalSymlinks(absoluteSrcPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error evaluating symlinks for %s", absoluteSrcPath)
+		return false, err
+	}
+	DebugLogger.Printf("Absolute src path following symlinks: %s\n", deSymlinkedSrcPath)
+
+	deSymlinkedDestPath, err := filepath.EvalSymlinks(absoluteDestPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error evaluating symlinks for %s", absoluteDestPath)
+		return false, err
+	}
+	DebugLogger.Printf("Absolute dest path following symlinks: %s\n", deSymlinkedDestPath)
+
+	// Finally, clean up any cruft
+	cleanedSrcPath := filepath.Clean(deSymlinkedSrcPath)
+	DebugLogger.Printf("Cleaned src path: %s\n", cleanedSrcPath)
+
+	cleanedDestPath := filepath.Clean(deSymlinkedDestPath)
+	DebugLogger.Printf("Cleaned dest path: %s\n", cleanedDestPath)
+
+	matched := cleanedSrcPath == cleanedDestPath
+	DebugLogger.Printf("Paths match: %t\n", matched)
+
+	return matched, nil
+}
