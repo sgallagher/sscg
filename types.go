@@ -44,7 +44,6 @@ type SscgConfig struct {
 	verbose      bool
 	debug        bool
 	printVersion bool
-	cwd          string
 
 	// Output information
 	lifetime      uint

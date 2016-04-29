@@ -62,12 +62,6 @@ var StandardLogger *log.Logger
 func parseArgs(sc *SscgConfig) error {
 	var err error
 
-	// Store the current working directory to use in defaults
-	sc.cwd, err = os.Getwd()
-	if err != nil {
-		return err
-	}
-
 	// --quiet
 	flag.BoolVar(&sc.quiet, "quiet", false, "Display no output unless there is an error.")
 
@@ -95,16 +89,13 @@ func parseArgs(sc *SscgConfig) error {
 	flag.StringVar(&sc.packagename, "package", "Unknown", "The name of the package needing a certificate\n\t")
 
 	// --ca-file
-	sc.caFile = fmt.Sprintf("%s/ca.crt", sc.cwd)
-	flag.StringVar(&sc.caFile, "ca-file", sc.caFile, "Path where the public CA certificate will be stored.\n\t")
+	flag.StringVar(&sc.caFile, "ca-file", "ca.crt", "Path where the public CA certificate will be stored.\n\t")
 
 	// --cert-file
-	sc.certFile = fmt.Sprintf("%s/service.pem", sc.cwd)
-	flag.StringVar(&sc.certFile, "cert-file", sc.certFile, "Path where the public service certificate will be stored.\n\t")
+	flag.StringVar(&sc.certFile, "cert-file", "service.pem", "Path where the public service certificate will be stored.\n\t")
 
 	// --cert-key-file
-	sc.certKeyFile = fmt.Sprintf("%s/service-key.pem", sc.cwd)
-	flag.StringVar(&sc.certKeyFile, "cert-key-file", sc.certKeyFile, "Path where the public service certificate will be stored.\n\t")
+	flag.StringVar(&sc.certKeyFile, "cert-key-file", "service-key.pem", "Path where the service's private key will be stored.\n\t")
 
 	// --hostname
 	hostname, err := os.Hostname()
