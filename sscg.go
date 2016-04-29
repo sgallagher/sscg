@@ -217,9 +217,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = sc.WriteSecureFile(sc.certKeyFile, data)
-	if err != nil {
-		os.Exit(1)
+	switch {
+	// TODO: Check for absolute path rather than string comparison
+	case sc.certFile == sc.certKeyFile:
+		// If they are the same file, append to it
+		err = sc.AppendToFile(sc.certKeyFile, data)
+		if err != nil {
+			os.Exit(1)
+		}
+	default:
+		// Otherwise, create it as normal
+		err = sc.WriteSecureFile(sc.certKeyFile, data)
+		if err != nil {
+			os.Exit(1)
+		}
 	}
 	StandardLogger.Printf("Service certificate private key written to %s.\n", sc.certKeyFile)
 }

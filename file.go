@@ -108,3 +108,33 @@ func (sc *SscgConfig) WriteSecureFile(dest string, data []byte) error {
 
 	return nil
 }
+
+func (sc *SscgConfig) AppendToFile(dest string, data []byte) error {
+	outputFile, err := os.OpenFile(dest, os.O_RDWR|os.O_APPEND, 0600)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not open %s for appending.", dest)
+		return err
+	}
+	defer func() {
+		if cerr := outputFile.Close(); cerr != nil {
+			fmt.Fprintf(os.Stderr, "Could not close %s: %v\n", dest, cerr)
+			if err == nil {
+				// We were fine until this happened, so return this as the
+				// error. Otherwise, we don't want to clobber the real reason
+				// we are failing.
+				err = cerr
+			}
+		}
+	}()
+
+	DebugLogger.Printf("%s opened for appending.", dest)
+
+	_, err = outputFile.Write(data)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing to %s: %v\n", dest, err)
+		return err
+	}
+	DebugLogger.Printf("File contents appended to %s", dest)
+
+	return nil
+}
