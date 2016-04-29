@@ -1,0 +1,27 @@
+{
+	"ImportPath": "github.com/sgallagher/sscg",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v62",
+	"Packages": [
+		"sscg"
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/spacemonkeygo/openssl",
+			"Rev": "fb0c387e74932c5ac3da434bfee75e32e7961601"
+		},
+		{
+			"ImportPath": "github.com/spacemonkeygo/openssl/utils",
+			"Rev": "fb0c387e74932c5ac3da434bfee75e32e7961601"
+		},
+		{
+			"ImportPath": "github.com/spacemonkeygo/spacelog",
+			"Rev": "ae95ccc1eb0c8ce2496c43177430efd61930f7e4"
+		},
+		{
+			"ImportPath": "sscg",
+			"Comment": "sscg-0.4.1-5-gcc29643",
+			"Rev": "cc29643c29cdb9a5f544946ea7c941b8f284b9a0"
+		}
+	]
+}
