@@ -36,9 +36,9 @@ import (
 	"path/filepath"
 )
 
-func (sc *SscgConfig) writeTemporaryFile(dest string, data []byte) (string, error) {
+func (sc *SscgConfig) writeTemporaryFile(destDir string, data []byte) (string, error) {
 	DebugLogger.Printf("Opening temporary file")
-	tempFile, err := ioutil.TempFile(filepath.Dir(dest), "sscg-")
+	tempFile, err := ioutil.TempFile(destDir, "sscg-")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error opening temporary file: %v\n", err)
 		return "", err
