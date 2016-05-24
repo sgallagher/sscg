@@ -100,6 +100,13 @@ func (sc *SscgConfig) CreateNewCertificate(serial *big.Int, commonName string) (
 		return nil, nil, nil, err
 	}
 
+	// All certificates created by SSCG must be x509v3 certificates
+	err = cert.SetVersion(openssl.X509_V3)
+	if err != nil {
+		DebugLogger.Printf("Could not set certificate version to x509v3")
+		return nil, nil, nil, err
+	}
+
 	return cert, certInfo, key, nil
 }
 
