@@ -55,12 +55,6 @@ func (sc *SscgConfig) createPrivateCA() error {
 
 	// Configure this certificate for use as a private Certificate Authority
 
-	VerboseLogger.Printf("Self-signing Certificate Authority")
-	err = sc.SignCertificate(caCert, key)
-	if err != nil {
-		return err
-	}
-
 	// Add x509v3 constraint extensions
 
 	// Subject Key Identifier
@@ -105,6 +99,12 @@ func (sc *SscgConfig) createPrivateCA() error {
 	err = caCert.AddExtension(SscgNIDNameConstraints, nameconstraint)
 	if err != nil {
 		DebugLogger.Printf("%v\n", err)
+		return err
+	}
+
+	VerboseLogger.Printf("Self-signing Certificate Authority")
+	err = sc.SignCertificate(caCert, key)
+	if err != nil {
 		return err
 	}
 

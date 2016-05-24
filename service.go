@@ -54,14 +54,6 @@ func (sc *SscgConfig) createServiceCert() error {
 	DebugLogger.Printf("Setting issuer to the private certificate authority")
 	svcCert.SetIssuer(sc.caCertificate)
 
-	// Sign this certificate by the private Certificate Authority
-
-	VerboseLogger.Printf("Signing Certificate with private certificate authority")
-	err = sc.SignCertificate(svcCert, sc.caCertificateKey)
-	if err != nil {
-		return err
-	}
-
 	// Add x509v3 constraint extensions
 
 	// Basic Constraints
@@ -75,6 +67,13 @@ func (sc *SscgConfig) createServiceCert() error {
 	for _, altName := range sc.subjectAltNames {
 		dnsAltName := fmt.Sprintf("DNS:%s", altName)
 		svcCert.AddExtension(openssl.NID_subject_alt_name, dnsAltName)
+	}
+
+	// Sign this certificate by the private Certificate Authority
+	VerboseLogger.Printf("Signing Certificate with private certificate authority")
+	err = sc.SignCertificate(svcCert, sc.caCertificateKey)
+	if err != nil {
+		return err
 	}
 
 	sc.svcCertificate = svcCert
