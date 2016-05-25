@@ -35,6 +35,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/spacemonkeygo/openssl"
 )
 
 // VersionMajor sscg major version
@@ -92,13 +94,19 @@ func parseArgs(sc *SscgConfig) error {
 	flag.StringVar(&sc.caFile, "ca-file", "ca.crt", "Path where the public CA certificate will be stored.\n\t")
 
 	// --ca-key-file
-	flag.StringVar(&sc.caKeyFile, "ca-key-file", "", "Path where the CA's private key will be stored. If unspecified, the key will be destroyed rather than written to the disk.\n\t")
+	flag.StringVar(&sc.caKeyFile, "ca-key-file", "", "Path where the CA's private key will be stored. If unspecified, the key will be destroyed rather than written to the disk.")
 
 	// --cert-file
 	flag.StringVar(&sc.certFile, "cert-file", "service.pem", "Path where the public service certificate will be stored.\n\t")
 
 	// --cert-key-file
 	flag.StringVar(&sc.certKeyFile, "cert-key-file", "service-key.pem", "Path where the service's private key will be stored.\n\t")
+
+	// --signing-cert
+	flag.StringVar(&sc.signingCertFile, "signing-cert", "", "The location of an existing signing certificate. Setting this option will skip creation of a private CA.")
+
+	// --signing-key
+	flag.StringVar(&sc.signingKeyFile, "signing-key", "", "The location of an existing signing key. Setting this option will skip creation of a private CA.")
 
 	// --hostname
 	hostname, err := os.Hostname()
@@ -165,17 +173,49 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a private CA to sign the certificate
-	VerboseLogger.Printf("Generating CA")
-	err = sc.createPrivateCA()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Creating CA failed: %s\n", err)
+	if (len(sc.signingCertFile) == 0 && len(sc.signingKeyFile) != 0) || (len(sc.signingCertFile) != 0 && len(sc.signingKeyFile) == 0) {
+		fmt.Fprintf(os.Stderr, "Both -signing-cert and -signing-key must be specified together.\n")
 		os.Exit(1)
 	}
-	VerboseLogger.Printf("CA generated successfully\n")
 
-	if sc.debug {
-		sc.CertificateDebug(sc.caCertificate, sc.caCertificateKey)
+	if len(sc.signingKeyFile) == 0 {
+		// Create a private CA to sign the certificate
+		VerboseLogger.Printf("Generating CA")
+		err = sc.createPrivateCA()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Creating CA failed: %s\n", err)
+			os.Exit(1)
+		}
+		VerboseLogger.Printf("CA generated successfully\n")
+
+		if sc.debug {
+			sc.CertificateDebug(sc.caCertificate, sc.caCertificateKey)
+		}
+	} else {
+		// Read in the existing certificate
+		signingCertData, err := ioutil.ReadFile(sc.signingCertFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Cannot open CA certificate for reading: %v\n", err)
+			os.Exit(1)
+		}
+		sc.caCertificate, err = openssl.LoadCertificateFromPEM(signingCertData)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Cannot load CA certificate data: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Read in the existing certificate key
+		signingKeyData, err := ioutil.ReadFile(sc.signingKeyFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Cannot open CA private key for reading: %v\n", err)
+			os.Exit(1)
+		}
+		sc.caCertificateKey, err = openssl.LoadPrivateKeyFromPEM(signingKeyData)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Cannot load CA private key data: %v\n", err)
+			fmt.Fprintf(os.Stderr, "SSCG does not support loading from password-protected key files yet.")
+			os.Exit(1)
+		}
 	}
 
 	// Create a service certificate and sign it with the private CA
@@ -192,20 +232,22 @@ func main() {
 
 	/* == Write the output files == */
 
-	// Write the CA public certificate
-	if err = sc.WriteCertificatePEM(sc.caCertificate, sc.caFile); err != nil {
-		fmt.Fprintf(os.Stderr, "Aborting: Error writing CA certificate file: %v\n", err)
-		os.Exit(1)
-	}
-	StandardLogger.Printf("CA public certificate written to %s.\n", sc.caFile)
-
-	// Write the private key of the certificate if it was requested
-	if len(sc.caKeyFile) != 0 {
-		if err = sc.WriteCertificateKeyPEM(sc.caCertificateKey, sc.caKeyFile, matched_ca); err != nil {
-			fmt.Fprintf(os.Stderr, "Aborting: Error writing CA key file: %v\n", err)
+	if len(sc.signingKeyFile) == 0 {
+		// Write the CA public certificate
+		if err = sc.WriteCertificatePEM(sc.caCertificate, sc.caFile); err != nil {
+			fmt.Fprintf(os.Stderr, "Aborting: Error writing CA certificate file: %v\n", err)
 			os.Exit(1)
 		}
-		StandardLogger.Printf("CA private key written to %s.\n", sc.caKeyFile)
+		StandardLogger.Printf("CA public certificate written to %s.\n", sc.caFile)
+
+		// Write the private key of the certificate if it was requested
+		if len(sc.caKeyFile) != 0 {
+			if err = sc.WriteCertificateKeyPEM(sc.caCertificateKey, sc.caKeyFile, matched_ca); err != nil {
+				fmt.Fprintf(os.Stderr, "Aborting: Error writing CA key file: %v\n", err)
+				os.Exit(1)
+			}
+			StandardLogger.Printf("CA private key written to %s.\n", sc.caKeyFile)
+		}
 	}
 
 	// Write the public service certificate

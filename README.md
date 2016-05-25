@@ -42,6 +42,10 @@ Usage of sscg:
     	The name of the package needing a certificate (default "Unknown")
   -quiet
     	Display no output unless there is an error.
+  -signing-cert string
+    	The location of an existing signing certificate. Setting this option will skip creation of a private CA.
+  -signing-key string
+    	The location of an existing signing key. Setting this option will skip creation of a private CA.
   -subject-alt-name value
     	An additional valid hostname for the certificate. May be specified multiple times. (default [])
   -verbose

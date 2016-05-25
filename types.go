@@ -55,6 +55,10 @@ type SscgConfig struct {
 	certFile      string
 	certKeyFile   string
 
+	// Signing Key information
+	signingCertFile string
+	signingKeyFile  string
+
 	// Certificate information
 	hostname        string
 	subjectAltNames SubjectAltNamesType
