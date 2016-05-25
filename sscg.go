@@ -216,7 +216,7 @@ func main() {
 	StandardLogger.Printf("Service public certificate written to %s.\n", sc.certFile)
 
 	// Write the service private key
-	if err = sc.WriteCertificateKeyPEM(sc.caCertificateKey, sc.certKeyFile, matched_cert); err != nil {
+	if err = sc.WriteCertificateKeyPEM(sc.svcCertificateKey, sc.certKeyFile, matched_cert); err != nil {
 		fmt.Fprintf(os.Stderr, "Aborting: Error writing CA key file: %v\n", err)
 		os.Exit(1)
 	}
