@@ -132,6 +132,7 @@ func main() {
 
 	if sc.printVersion {
 		fmt.Printf("%d.%d.%d\n", VersionMajor, VersionMinor, VersionPatch)
+		os.Exit(0)
 	}
 
 	if !sc.quiet {
