@@ -43,10 +43,10 @@ import (
 const VersionMajor int = 1
 
 // VersionMinor sscg minor version
-const VersionMinor int = 0
+const VersionMinor int = 1
 
 // VersionPatch sscg patch version
-const VersionPatch int = 5
+const VersionPatch int = 0
 
 var debugIO = ioutil.Discard
 var verboseIO = ioutil.Discard
