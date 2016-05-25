@@ -44,7 +44,7 @@ const VersionMajor int = 1
 const VersionMinor int = 0
 
 // VersionPatch sscg patch version
-const VersionPatch int = 0
+const VersionPatch int = 4
 
 var debugIO = ioutil.Discard
 var verboseIO = ioutil.Discard
