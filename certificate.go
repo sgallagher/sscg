@@ -135,18 +135,59 @@ func (sc *SscgConfig) SignCertificate(cert *openssl.Certificate, key openssl.Pri
 
 // CertificateDebug Display information about the certificate on
 // the debug output writer.
-func (sc *SscgConfig) CertificateDebug() {
+func (sc *SscgConfig) CertificateDebug(cert *openssl.Certificate, key openssl.PrivateKey) {
 	DebugLogger.Printf("Certificate Public Key:\n")
-	caPublic, err := sc.caCertificate.MarshalPEM()
+	publicData, err := cert.MarshalPEM()
 	if err != nil {
-		DebugLogger.Printf("Could not retrieve CA public key: %s\n", err)
+		DebugLogger.Printf("Could not retrieve public key: %s\n", err)
 	}
-	fmt.Fprintf(debugIO, "%s\n", caPublic)
+	fmt.Fprintf(debugIO, "%s\n", publicData)
 
 	DebugLogger.Printf("Certificate Private Key:\n")
-	caPrivate, err := sc.caCertificateKey.MarshalPKCS1PrivateKeyPEM()
+	privateData, err := sc.caCertificateKey.MarshalPKCS1PrivateKeyPEM()
 	if err != nil {
-		DebugLogger.Printf("Could not retrieve CA private key: %s\n", err)
+		DebugLogger.Printf("Could not retrieve private key: %s\n", err)
 	}
-	fmt.Fprintf(debugIO, "%s\n", caPrivate)
+	fmt.Fprintf(debugIO, "%s\n", privateData)
+}
+
+func (sc *SscgConfig) WriteCertificatePEM(cert *openssl.Certificate, file string) error {
+	var data []byte
+	var err error
+
+	if data, err = cert.MarshalPEM(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting certificate data: %v\n", err)
+		return err
+	}
+
+	err = sc.WriteSecureFile(file, data)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing certificate file: %v\n", err)
+		return err
+	}
+	return nil
+}
+
+func (sc *SscgConfig) WriteCertificateKeyPEM(key openssl.PrivateKey, file string, append bool) error {
+	var data []byte
+	var err error
+
+	if data, err = key.MarshalPKCS1PrivateKeyPEM(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting certificate key data: %v\n", err)
+		return err
+	}
+
+	if append {
+		err = sc.AppendToFile(file, data)
+		if err != nil {
+			os.Exit(1)
+		}
+	} else {
+		err = sc.WriteSecureFile(file, data)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing private key file: %v\n", err)
+			return err
+		}
+	}
+	return nil
 }

@@ -51,6 +51,7 @@ type SscgConfig struct {
 	hashAlgorithm HashAlgorithmType
 	packagename   string
 	caFile        string
+	caKeyFile     string
 	certFile      string
 	certKeyFile   string
 
