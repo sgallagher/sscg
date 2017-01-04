@@ -23,8 +23,6 @@
 #include <openssl/bn.h>
 #include "sscg.h"
 
-int
-bignum_destructor(TALLOC_CTX *mem_ctx);
 
 /* Add definitions for some helper values added in OpenSSL 1.1.0
    when building against OpenSSL 1.0.2 */
@@ -39,5 +37,14 @@ bignum_destructor(TALLOC_CTX *mem_ctx);
 struct sscg_bignum {
     BIGNUM *bn;
 };
+
+
+int
+sscg_bignum_destructor(TALLOC_CTX *mem_ctx);
+
+int
+sscg_init_bignum(TALLOC_CTX *mem_ctx, unsigned long num,
+                 struct sscg_bignum **bn);
+
 
 #endif /* _SSCG_BIGNUM_H */

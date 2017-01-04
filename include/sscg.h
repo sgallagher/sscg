@@ -47,6 +47,14 @@
 #define talloc_zfree(ptr) do { talloc_free(discard_const(ptr)); ptr = NULL; } while(0)
 #endif
 
+#define CHECK_MEM(ptr) \
+    do { \
+        if (!ptr) { \
+            ret = ENOMEM; \
+            goto done; \
+        } \
+    } while(0)
+
 enum sscg_verbosity {
     SSCG_QUIET = -1,
     SSCG_DEFAULT,
@@ -63,6 +71,15 @@ struct sscg_options {
 
     /* How long should certificates be valid (in days) */
     short lifetime;
+
+    /* Subject information */
+    const char *country;
+    const char *state;
+    const char *locality;
+    const char *org;
+    const char *org_unit;
+    const char *hostname;
+    const char **subject_alt_names;
 };
 
 #endif /* _SSCG_H */

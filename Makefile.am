@@ -28,12 +28,12 @@ sscg_SOURCES = \
     include/authority.h \
     src/bignum.c \
     include/bignum.h \
-    src/certificate.c \
-    include/certificate.h \
     src/key.c \
     include/key.h \
     src/sscg.c \
-    include/sscg.h
+    include/sscg.h \
+    src/x509.c \
+    include/x509.h
 
 sscg_LDADD = \
     $(CRYPTO_LIBS) \

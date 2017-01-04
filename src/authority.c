@@ -17,22 +17,41 @@
     Copyright 2017 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
-#include "include/authority.h"
-#include "include/certificate.h"
 #include "include/sscg.h"
+#include "include/authority.h"
+#include "include/x509.h"
+#include "include/key.h"
 
 int
 create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options)
 {
     int ret;
-    RSA *ca_key = RSA_new();
+    int bits;
+    struct sscg_bignum *e;
+    struct sscg_rsa_key *key;
 
-    if (!ca_key) {
+    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
+    if (!tmp_ctx) {
         return ENOMEM;
     }
 
-    /* For the private CA, we always use 4096 bits */
+    /* For the private CA, we always use 4096 bits and an exponent
+       value of RSA F4 aka 0x10001 (65537) */
+    bits = 4096;
+    ret = sscg_init_bignum(tmp_ctx, RSA_F4, &e);
+    if (ret != EOK) {
+        goto done;
+    }
 
+    /* Generate an RSA keypair for this CA */
+    ret = sscg_generate_rsa_key(tmp_ctx, bits, e, &key);
+    if (ret != EOK) {
+        goto done;
+    }
 
-    return EOK;
+    ret = EOK;
+
+done:
+    talloc_zfree(tmp_ctx);
+    return ret;
 }

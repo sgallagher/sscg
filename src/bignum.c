@@ -20,8 +20,8 @@
 #include "include/sscg.h"
 #include "include/bignum.h"
 
-int
-bignum_destructor(TALLOC_CTX *mem_ctx)
+static int
+_sscg_bignum_destructor(TALLOC_CTX *mem_ctx)
 {
     struct sscg_bignum *bn =
         talloc_get_type_abort(mem_ctx, struct sscg_bignum);
@@ -29,4 +29,44 @@ bignum_destructor(TALLOC_CTX *mem_ctx)
     BN_free(bn->bn);
 
     return 0;
+}
+
+int
+sscg_init_bignum(TALLOC_CTX *mem_ctx, unsigned long num,
+                 struct sscg_bignum **bn)
+{
+    int ret = EOK;
+    struct sscg_bignum *bignum;
+
+    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
+    if (!tmp_ctx) {
+        return ENOMEM;
+    }
+
+    bignum = talloc_zero(tmp_ctx, struct sscg_bignum);
+    if (!bignum) {
+        ret = ENOMEM;
+        goto done;
+    }
+
+    BIGNUM *sslbn = BN_new();
+    if (!sslbn) {
+        ret = ENOMEM;
+        goto done;
+    }
+
+    bignum->bn = sslbn;
+    talloc_set_destructor((TALLOC_CTX *)bignum, _sscg_bignum_destructor);
+
+    BN_set_word(bignum->bn, num);
+
+    ret = EOK;
+
+done:
+    if (ret == EOK) {
+        *bn = talloc_steal(mem_ctx, bignum);
+    }
+    talloc_zfree(tmp_ctx);
+
+    return ret;
 }
