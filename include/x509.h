@@ -22,27 +22,50 @@
 
 #include "include/sscg.h"
 #include "include/bignum.h"
+#include "include/key.h"
 
 #ifndef _SSCG_X509_H
 # define _SSCG_X509_H
 
-struct cert_options {
+struct sscg_cert {
     BIGNUM *serial_number;
-    const char *COUNTRY_NAME;
-    const char *STATE_OR_PROVINCE_NAME;
-    const char *LOCALITY_NAME;
-    const char *ORGANIZATION_NAME;
-    const char *ORGANIZATIONAL_UNIT_NAME;
-    const char *COMMON_NAME;
-    const char **SUBJECT_ALTERNATIVE_NAMES;
+    /* Subject information */
+    const char *country;
+    const char *state;
+    const char *locality;
+    const char *org;
+    const char *org_unit;
+    const char *hostname;
+    const char **subject_alt_names;
+
+    /* Certificate Signing Request (CSR) */
+    X509_REQ *x509_req;
 };
 
 struct sscg_x509_req {
     X509_REQ *x509_req;
 };
 
-int
-generate_serial(TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
+/* Generate a random serial number
 
+   The generated serial number will be the size of
+   sizeof(unsigned long) in bits. This is to ensure
+   that it can be returned by BN_get_word().
+*/
+int
+sscg_generate_serial(TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
+
+
+/* Create a Certificate Signing Request
+
+   If this function succeeds, it returns 0 and
+   cert->x509_req is populated. If it fails, it
+   will return an errno code and cert->x509_req
+   is undefined.
+*/
+int
+sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
+                       struct sscg_rsa_key *key,
+                       struct sscg_cert *cert);
 
 #endif /* _SSCG_X509_H */

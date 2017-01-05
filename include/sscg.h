@@ -55,6 +55,13 @@
         } \
     } while(0)
 
+#define CHECK_OK(_ret) \
+    do { \
+        if (_ret != EOK) { \
+            goto done; \
+        } \
+    } while(0)
+
 enum sscg_verbosity {
     SSCG_QUIET = -1,
     SSCG_DEFAULT,
