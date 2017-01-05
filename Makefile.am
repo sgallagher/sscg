@@ -32,6 +32,7 @@ bin_PROGRAMS = sscg
 noinst_LTLIBRARIES = libsscg.la
 
 TESTS = \
+    create_csr_test \
     generate_rsa_key_test \
     generate_serial_test \
     init_bignum_test
@@ -75,5 +76,12 @@ generate_rsa_key_test_SOURCES = \
     test/generate_rsa_key_test.c
 
 generate_rsa_key_test_LDADD = \
+    $(COMMON_LIBS) \
+    $(NULL)
+
+create_csr_test_SOURCES = \
+    test/generate_rsa_key_test.c
+
+create_csr_test_LDADD = \
     $(COMMON_LIBS) \
     $(NULL)

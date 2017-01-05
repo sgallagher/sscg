@@ -69,37 +69,109 @@ _sscg_cert_destructor(TALLOC_CTX *ctx)
     struct sscg_cert *cert =
         talloc_get_type_abort(ctx, struct sscg_cert);
 
-    X509_REQ_free(cert->x509_req);
+    X509_REQ_free(cert->csr);
 
     return 0;
 }
 
 int
 sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
-                       struct sscg_rsa_key *key,
                        struct sscg_cert *cert)
 {
     int ret, sslret;
-    X509_REQ *x509_req;
     X509_NAME *subject;
 
-    x509_req = X509_REQ_new();
-    if (!x509_req) {
+    cert->csr = X509_REQ_new();
+    if (!cert->csr) {
         ret = ENOMEM;
         goto done;
     }
-    cert->x509_req = x509_req;
     talloc_set_destructor((TALLOC_CTX *)cert, _sscg_cert_destructor);
 
     /* We will generate only x509v3 certificates */
-    sslret = X509_REQ_set_version(cert->x509_req, 3);
+    sslret = X509_REQ_set_version(cert->csr, 3);
     if (sslret != 1) {
-        /* TODO: Get information about error from OpenSSL */
-        ret = ENOTSUP;
+        fprintf(stderr, "Error occurred in X509_REQ_set_version: [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
         goto done;
     }
 
-    subject = X509_REQ_get_subject_name(cert->x509_req);
+    subject = X509_REQ_get_subject_name(cert->csr);
+
+    /* Country */
+    sslret = X509_NAME_add_entry_by_txt(subject, "C", MBSTRING_UTF8,
+             (const unsigned char*)cert->country, -1, -1, 0);
+    if (sslret != 1) {
+        fprintf(stderr,
+                "Error occurred in X509_NAME_add_entry_by_txt(C): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+
+    /* State or Principality */
+    sslret = X509_NAME_add_entry_by_txt(subject, "ST", MBSTRING_UTF8,
+             (const unsigned char*)cert->state, -1, -1, 0);
+    if (sslret != 1) {
+        fprintf(stderr,
+                "Error occurred in X509_NAME_add_entry_by_txt(ST): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+
+    /* Locality */
+    sslret = X509_NAME_add_entry_by_txt(subject, "L", MBSTRING_UTF8,
+             (const unsigned char*)cert->locality, -1, -1, 0);
+    if (sslret != 1) {
+        fprintf(stderr,
+                "Error occurred in X509_NAME_add_entry_by_txt(L): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+
+    /* Organization */
+    sslret = X509_NAME_add_entry_by_txt(subject, "O", MBSTRING_UTF8,
+             (const unsigned char*)cert->org, -1, -1, 0);
+    if (sslret != 1) {
+        fprintf(stderr,
+                "Error occurred in X509_NAME_add_entry_by_txt(O): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+
+    /* Organizational Unit */
+    sslret = X509_NAME_add_entry_by_txt(subject, "OU", MBSTRING_UTF8,
+             (const unsigned char*)cert->org_unit, -1, -1, 0);
+    if (sslret != 1) {
+        fprintf(stderr,
+                "Error occurred in X509_NAME_add_entry_by_txt(OU): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+
+    /* Common Name */
+    sslret = X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_UTF8,
+             (const unsigned char*)cert->cn, -1, -1, 0);
+    if (sslret != 1) {
+        fprintf(stderr,
+                "Error occurred in X509_NAME_add_entry_by_txt(CN): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+
+    /* TODO: Support Subject Alt Names */
+
+    /* TODO: Set the public key */
+
+    /* TODO: Set the private key */
+
+    /* TODO: Make the hash algorithm configurable */
 
     ret = EOK;
 
