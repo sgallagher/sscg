@@ -20,12 +20,22 @@
 #include <popt.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <talloc.h>
 #include <unistd.h>
 
 #include "config.h"
 #include "include/sscg.h"
 #include "include/authority.h"
+
+static int
+set_default_options(struct sscg_options *opts)
+{
+
+    opts->lifetime = 3650;
+    opts->key_strength = 2048;
+    return 0;
+}
 
 int
 main(int argc, const char **argv)
@@ -50,7 +60,10 @@ main(int argc, const char **argv)
     }
 
     options = talloc_zero(main_ctx, struct sscg_options);
-    CHECK_MEM(main_ctx);
+    CHECK_MEM(options);
+
+    ret = set_default_options(options);
+    if (ret != EOK) goto done;
 
     options->verbosity = SSCG_DEFAULT;
     struct poptOption long_options[] = {
@@ -64,11 +77,11 @@ main(int argc, const char **argv)
            "This will print private key information to the screen!"), NULL},
         {"version", 'V', POPT_ARG_NONE, &options->print_version, 0,
          _("Display the version number and exit."), NULL},
-        {"lifetime", '\0', POPT_ARG_SHORT, &options->lifetime, 0,
+        {"lifetime", '\0', POPT_ARG_INT|POPT_ARGFLAG_SHOW_DEFAULT, &options->lifetime, 3650,
          _("Certificate lifetime (days)."),
          _("1-3650")},
         {"country", '\0', POPT_ARG_STRING, &country, 0,
-         _("Certificate DN: Country (C)."),
+         _("Certificate DN: Country (C). (default: \"US\")"),
          _("US, CZ, etc.")},
         {"state", '\0', POPT_ARG_STRING, &state, 0,
          _("Certificate DN: State or Province (ST)."),
@@ -77,18 +90,21 @@ main(int argc, const char **argv)
          _("Certificate DN: Locality (L)."),
          _("Westford, Paris, etc.")},
         {"organization", '\0', POPT_ARG_STRING, &organization, 0,
-         _("Certificate DN: Organization (O)."),
+         _("Certificate DN: Organization (O). (default: \"Unspecified\")"),
          _("My Company")},
         {"organizational-unit", '\0', POPT_ARG_STRING, &organizational_unit, 0,
          _("Certificate DN: Organizational Unit (OU)."),
          _("Engineering, etc.")},
         {"hostname", '\0', POPT_ARG_STRING, &hostname, 0,
-         _("The valid hostname of the certificate. Must be an FQDN."),
+         _("The valid hostname of the certificate. Must be an FQDN. (default: current system FQDN)"),
          _("server.example.com")},
         {"subject-alt-name", '\0', POPT_ARG_ARGV, &alternative_names, 0,
-         _("An additional valid hostname for the certificate. "
+         _("Optional additional valid hostnames for the certificate. "
            "May be specified multiple times."),
          _("alt.example.com")},
+        {"key-strength", '\0', POPT_ARG_INT|POPT_ARGFLAG_SHOW_DEFAULT, &options->key_strength, 0,
+         _("Strength of the certificate private keys in bits."),
+         _("{512,1024,2048,4096}")},
         POPT_TABLEEND
     };
 
@@ -193,6 +209,16 @@ main(int argc, const char **argv)
             options->subject_alt_names[i + 1] = NULL;
             i++;
         }
+    }
+
+    if (options->key_strength != 512
+        && options->key_strength != 1024
+        && options->key_strength != 2048
+        && options->key_strength != 4096) {
+
+        fprintf(stderr, "Key strength must be one of {512, 1024, 2048, 4096}.\n");
+        ret = EINVAL;
+        goto done;
     }
 
     /* TODO:

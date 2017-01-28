@@ -87,6 +87,8 @@ struct sscg_options {
     const char *org_unit;
     const char *hostname;
     const char **subject_alt_names;
+
+    int key_strength;
 };
 
 #endif /* _SSCG_H */
