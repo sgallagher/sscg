@@ -17,6 +17,7 @@
     Copyright 2017 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
+#include <openssl/err.h>
 #include "include/sscg.h"
 #include "include/bignum.h"
 
@@ -36,6 +37,7 @@ sscg_init_bignum(TALLOC_CTX *mem_ctx, unsigned long num,
                  struct sscg_bignum **bn)
 {
     int ret = EOK;
+    int sslret;
     struct sscg_bignum *bignum;
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
@@ -58,7 +60,14 @@ sscg_init_bignum(TALLOC_CTX *mem_ctx, unsigned long num,
     bignum->bn = sslbn;
     talloc_set_destructor((TALLOC_CTX *)bignum, _sscg_bignum_destructor);
 
-    BN_set_word(bignum->bn, num);
+    sslret = BN_set_word(bignum->bn, num);
+    if (sslret != 1) {
+        fprintf(stderr,
+                "Error occurred in X509_NAME_add_entry_by_txt(CN): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
 
     ret = EOK;
 

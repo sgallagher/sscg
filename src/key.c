@@ -17,6 +17,7 @@
     Copyright 2017 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
+#include <openssl/err.h>
 #include "include/sscg.h"
 #include "include/key.h"
 
@@ -64,7 +65,9 @@ sscg_generate_rsa_key(TALLOC_CTX *mem_ctx, int bits, struct sscg_bignum *e,
     /* Generate a random RSA keypair */
     sslret = RSA_generate_key_ex(rsa_key->rsa_key, bits, e->bn, NULL);
     if (!sslret) {
-        /* TODO: Get information about error from OpenSSL */
+        /* Get information about error from OpenSSL */
+        fprintf(stderr, "Error occurred in RSA_generate_key_ex: [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
         ret = ENOTSUP;
         goto done;
     }

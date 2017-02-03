@@ -28,26 +28,34 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options)
     int ret;
     int bits;
     struct sscg_bignum *e;
+    struct sscg_cert_info *ca_certinfo;
+    struct sscg_x509_req *csr;
     struct sscg_rsa_key *key;
+
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     if (!tmp_ctx) {
         return ENOMEM;
     }
 
+    ca_certinfo = sscg_cert_info_new(tmp_ctx, options->hash_fn);
+    CHECK_MEM(ca_certinfo);
+
     /* For the private CA, we always use 4096 bits and an exponent
        value of RSA F4 aka 0x10001 (65537) */
     bits = 4096;
     ret = sscg_init_bignum(tmp_ctx, RSA_F4, &e);
-    if (ret != EOK) {
-        goto done;
-    }
+    CHECK_OK(ret);
 
     /* Generate an RSA keypair for this CA */
-    ret = sscg_generate_rsa_key(tmp_ctx, bits, e, &key);
-    if (ret != EOK) {
-        goto done;
-    }
+    ret = sscg_generate_rsa_key(ca_certinfo, bits, e, &key);
+    CHECK_OK(ret);
+
+    /* Create a certificate signing request for the private CA */
+    ret = sscg_create_x509v3_csr(tmp_ctx, ca_certinfo, key, &csr);
+    CHECK_OK(ret);
+
+    /* TODO: Self-sign the private CA */
 
     ret = EOK;
 

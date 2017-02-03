@@ -19,28 +19,32 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <talloc.h>
+#include <string.h>
 
 #include <include/sscg.h>
 #include <include/x509.h>
 
 int main(int argc, char **argv)
 {
-    int ret;
-    struct sscg_cert *cert;
-    X509_NAME *subject;
+    int ret, bits;
+    struct sscg_cert_info *certinfo;
+    struct sscg_bignum *e;
+    struct sscg_x509_req *csr = NULL;
+    struct sscg_rsa_key *key = NULL;
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     if (!tmp_ctx) {
         return ENOMEM;
     }
 
-    cert = talloc_zero(tmp_ctx, struct sscg_cert);
-    if (!cert) {
+    certinfo = sscg_cert_info_new(tmp_ctx, EVP_sha256());
+    if (!certinfo) {
         ret = ENOMEM;
         goto done;
     }
 
-    ret = sscg_generate_serial(tmp_ctx, &cert->serial);
+    ret = sscg_generate_serial(tmp_ctx, &certinfo->serial);
     if (ret != EOK) {
         printf("FAILED.\n");
         goto done;
@@ -48,27 +52,37 @@ int main(int argc, char **argv)
 
     /* Create a subject matching the defaults in sscg.c
        Keep this in sync if defaults change. */
-    cert->country = talloc_strdup(cert, "US");
-    CHECK_MEM(cert->country);
+    certinfo->country = talloc_strdup(certinfo, "US");
+    CHECK_MEM(certinfo->country);
 
-    cert->state = talloc_strdup(cert, "");
-    CHECK_MEM(cert->state);
+    certinfo->state = talloc_strdup(certinfo, "");
+    CHECK_MEM(certinfo->state);
 
-    cert->locality = talloc_strdup(cert, "");
-    CHECK_MEM(cert->locality);
+    certinfo->locality = talloc_strdup(certinfo, "");
+    CHECK_MEM(certinfo->locality);
 
-    cert->org = talloc_strdup(cert, "Unspecified");
-    CHECK_MEM(cert->org);
+    certinfo->org = talloc_strdup(certinfo, "Unspecified");
+    CHECK_MEM(certinfo->org);
 
-    cert->org_unit = talloc_strdup(cert, "");
-    CHECK_MEM(cert->org_unit);
+    certinfo->org_unit = talloc_strdup(certinfo, "");
+    CHECK_MEM(certinfo->org_unit);
 
-    cert->cn = talloc_strdup(cert, "server.example.com");
-    CHECK_MEM(cert->cn);
+    certinfo->cn = talloc_strdup(certinfo, "server.example.com");
+    CHECK_MEM(certinfo->cn);
 
     /* TODO: include subject alt names */
 
-    ret = sscg_create_x509v3_csr(tmp_ctx, cert);
+    /* Generate an RSA keypair */
+    bits = 4096;
+
+    ret = sscg_init_bignum(tmp_ctx, RSA_F4, &e);
+    CHECK_OK(ret);
+
+    ret = sscg_generate_rsa_key(certinfo, bits, e, &key);
+    CHECK_OK(ret);
+
+    /* Create the CSR */
+    ret = sscg_create_x509v3_csr(tmp_ctx, certinfo, key, &csr);
     CHECK_OK(ret);
 
     /* TODO: compare subject values */

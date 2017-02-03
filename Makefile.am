@@ -80,7 +80,7 @@ generate_rsa_key_test_LDADD = \
     $(NULL)
 
 create_csr_test_SOURCES = \
-    test/generate_rsa_key_test.c
+    test/create_csr_test.c
 
 create_csr_test_LDADD = \
     $(COMMON_LIBS) \

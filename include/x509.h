@@ -27,9 +27,10 @@
 #ifndef _SSCG_X509_H
 # define _SSCG_X509_H
 
-struct sscg_cert {
+struct sscg_cert_info {
     /* === Input Data === */
     struct sscg_bignum *serial;
+    const EVP_MD *hash_fn;
 
     /* Subject information */
     const char *country;
@@ -39,12 +40,11 @@ struct sscg_cert {
     const char *org_unit;
     const char *cn;
     const char **subject_alt_names;
-
-    /* === Generated === */
-
-    /* Certificate Signing Request (CSR) */
-    X509_REQ *csr;
 };
+
+/* Initialize a certificate */
+struct sscg_cert_info *
+sscg_cert_info_new(TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn);
 
 struct sscg_x509_req {
     X509_REQ *x509_req;
@@ -62,13 +62,13 @@ sscg_generate_serial(TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
 
 /* Create a Certificate Signing Request
 
-   If this function succeeds, it returns 0 and
-   cert->csr is populated. If it fails, it
-   will return an errno code and cert->csr
-   is undefined.
+   If this function succeeds, it returns 0 and _csr is allocated and populated.
+   If it fails, it will return an errno code and _csr is undefined.
 */
 int
 sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
-                       struct sscg_cert *cert);
+                       struct sscg_cert_info *certinfo,
+                       struct sscg_rsa_key *key,
+                       struct sscg_x509_req **_csr);
 
 #endif /* _SSCG_X509_H */

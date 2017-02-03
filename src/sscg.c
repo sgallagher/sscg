@@ -23,6 +23,7 @@
 #include <string.h>
 #include <talloc.h>
 #include <unistd.h>
+#include <openssl/evp.h>
 
 #include "config.h"
 #include "include/sscg.h"
@@ -35,6 +36,27 @@ set_default_options(struct sscg_options *opts)
     opts->lifetime = 3650;
     opts->key_strength = 2048;
     return 0;
+}
+
+static void
+print_options(struct sscg_options *opts)
+{
+    size_t i = 0;
+    fprintf(stdout, "==== Options ====\n");
+    fprintf(stdout, "Certificate lifetime: %d\n", opts->lifetime);
+    fprintf(stdout, "Country: \"%s\"\n", opts->country);
+    fprintf(stdout, "State or Principality: \"%s\"\n", opts->state);
+    fprintf(stdout, "Locality: \"%s\"\n", opts->locality);
+    fprintf(stdout, "Organization: \"%s\"\n", opts->org);
+    fprintf(stdout, "Organizational Unit: \"%s\"\n", opts->org_unit);
+    fprintf(stdout, "Hostname: \"%s\"\n", opts->hostname);
+    if (opts->subject_alt_names) {
+        for (i = 0; opts->subject_alt_names[i]; i++) {
+            fprintf(stdout, "Subject Alternative Name: \"%s\"\n",
+                    opts->subject_alt_names[i]);
+        }
+    }
+    fprintf(stdout, "=================\n");
 }
 
 int
@@ -51,6 +73,7 @@ main(int argc, const char **argv)
     char *organization = NULL;
     char *organizational_unit = NULL;
     char *hostname = NULL;
+    char *hash_alg = NULL;
     char **alternative_names = NULL;
 
     TALLOC_CTX *main_ctx = talloc_new(NULL);
@@ -105,6 +128,10 @@ main(int argc, const char **argv)
         {"key-strength", '\0', POPT_ARG_INT|POPT_ARGFLAG_SHOW_DEFAULT, &options->key_strength, 0,
          _("Strength of the certificate private keys in bits."),
          _("{512,1024,2048,4096}")},
+        {"hash-alg", '\0', POPT_ARG_STRING, &hash_alg, 0,
+         _("Hashing algorithm to use for signing. (default: sha256)"),
+         _("{sha256,sha384,sha512}"),
+        },
         POPT_TABLEEND
     };
 
@@ -198,7 +225,7 @@ main(int argc, const char **argv)
         while (alternative_names[i] != NULL) {
             options->subject_alt_names =
                 talloc_realloc(options, options->subject_alt_names,
-                               const char *, i + 2);
+                               char *, i + 2);
             CHECK_MEM(options->subject_alt_names);
 
             options->subject_alt_names[i] =
@@ -221,8 +248,20 @@ main(int argc, const char **argv)
         goto done;
     }
 
-    /* TODO:
-       On verbose logging, display all of the selected options. */
+    if (!hash_alg) {
+        /* Default to SHA256 */
+        options->hash_fn = EVP_sha256();
+    } else {
+        /* TODO: restrict this to approved hashes.
+         * For now, we'll only list SHA[256|384|512] in the help */
+        options->hash_fn = EVP_get_digestbyname(hash_alg);
+    }
+    if (!options->hash_fn) {
+        fprintf(stderr, "Unsupported hashing algorithm.");
+    }
+
+    /* On verbose logging, display all of the selected options. */
+    if (options->verbosity >= SSCG_VERBOSE) print_options(options);
 
     poptFreeContext(pc);
 
