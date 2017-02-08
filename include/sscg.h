@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <stdbool.h>
 #include <talloc.h>
 

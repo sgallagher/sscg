@@ -18,11 +18,13 @@
 */
 
 #include "sscg.h"
+#include "x509.h"
 
 #ifndef _AUTHORITY_H
 # define _AUTHORITY_H
 
 int
-create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options);
+create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
+                  struct sscg_x509_cert **_cacert);
 
 #endif /* _AUTHORITY_H */

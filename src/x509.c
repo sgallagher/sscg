@@ -238,6 +238,8 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
     X509 *cert;
     X509_REQ *csr = NULL;
     X509_NAME *subject = NULL;
+    EVP_PKEY *pktmp;
+
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     CHECK_MEM(tmp_ctx);
 
@@ -267,6 +269,12 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
     subject = X509_NAME_dup(X509_REQ_get_subject_name(csr));
     sslret = X509_set_subject_name(cert, subject);
     CHECK_SSL(sslret, X509_set_subject_name);
+
+    /* set pubkey from req */
+    pktmp = X509_REQ_get_pubkey(csr);
+    sslret = X509_set_pubkey(cert, pktmp);
+    EVP_PKEY_free(pktmp);
+    CHECK_SSL(sslret, X509_set_pubkey);
 
     /* Sign the new certificate */
 

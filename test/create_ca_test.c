@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     certinfo->country = talloc_strdup(certinfo, "US");
     CHECK_MEM(certinfo->country);
 
-    certinfo->state = talloc_strdup(certinfo, "MA");
+    certinfo->state = talloc_strdup(certinfo, "");
     CHECK_MEM(certinfo->state);
 
     certinfo->locality = talloc_strdup(certinfo, "");

@@ -76,6 +76,8 @@ main(int argc, const char **argv)
     char *hash_alg = NULL;
     char **alternative_names = NULL;
 
+    struct sscg_x509_cert *cacert;
+
     TALLOC_CTX *main_ctx = talloc_new(NULL);
     if (!main_ctx) {
         fprintf(stderr, "Could not allocate memory.");
@@ -265,7 +267,8 @@ main(int argc, const char **argv)
 
     poptFreeContext(pc);
 
-    ret = create_private_CA(main_ctx, options);
+    ret = create_private_CA(main_ctx, options, &cacert);
+    CHECK_OK(ret);
 
 
 done:

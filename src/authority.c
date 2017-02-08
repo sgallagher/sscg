@@ -23,7 +23,8 @@
 #include "include/key.h"
 
 int
-create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options)
+create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
+                  struct sscg_x509_cert **_cacert)
 {
     int ret;
     int bits;
@@ -42,6 +43,27 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options)
 
     ca_certinfo = sscg_cert_info_new(tmp_ctx, options->hash_fn);
     CHECK_MEM(ca_certinfo);
+
+    /* Populate cert_info from options */
+    ca_certinfo->country = talloc_strdup(ca_certinfo, options->country);
+    CHECK_MEM(ca_certinfo->country);
+
+    ca_certinfo->state = talloc_strdup(ca_certinfo, options->state);
+    CHECK_MEM(ca_certinfo->state);
+
+    ca_certinfo->locality = talloc_strdup(ca_certinfo, options->locality);
+    CHECK_MEM(ca_certinfo->locality);
+
+    ca_certinfo->org = talloc_strdup(ca_certinfo, options->org);
+    CHECK_MEM(ca_certinfo->org);
+
+    ca_certinfo->org_unit = talloc_strdup(ca_certinfo, options->org_unit);
+    CHECK_MEM(ca_certinfo->org_unit);
+
+    ca_certinfo->cn = talloc_strdup(ca_certinfo, options->hostname);
+    CHECK_MEM(ca_certinfo->cn);
+
+    /* TODO: include subject alt names */
 
     /* For the private CA, we always use 4096 bits and an exponent
        value of RSA F4 aka 0x10001 (65537) */
@@ -65,6 +87,8 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options)
     ret = sscg_sign_x509_csr(tmp_ctx, csr, serial, options->lifetime,
                              NULL, pkey, options->hash_fn, &cert);
     CHECK_OK(ret);
+
+    *_cacert = talloc_steal(mem_ctx, cert);
 
     ret = EOK;
 
