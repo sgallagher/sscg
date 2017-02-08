@@ -61,13 +61,7 @@ sscg_init_bignum(TALLOC_CTX *mem_ctx, unsigned long num,
     talloc_set_destructor((TALLOC_CTX *)bignum, _sscg_bignum_destructor);
 
     sslret = BN_set_word(bignum->bn, num);
-    if (sslret != 1) {
-        fprintf(stderr,
-                "Error occurred in X509_NAME_add_entry_by_txt(CN): [%s].\n",
-                ERR_error_string(ERR_get_error(), NULL));
-        ret = EIO;
-        goto done;
-    }
+    CHECK_SSL(sslret, BN_set_word);
 
     ret = EOK;
 

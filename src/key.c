@@ -46,25 +46,14 @@ sscg_generate_rsa_key(TALLOC_CTX *mem_ctx, int bits, struct sscg_bignum *e,
 
     /* Generate a random RSA keypair */
     sslret = RSA_generate_key_ex(rsa, bits, e->bn, NULL);
-    if (!sslret) {
-        /* Get information about error from OpenSSL */
-        fprintf(stderr, "Error occurred in RSA_generate_key_ex: [%s].\n",
-                ERR_error_string(ERR_get_error(), NULL));
-        ret = ENOTSUP;
-        goto done;
-    }
+    CHECK_SSL(sslret, RSA_generate_key_ex);
 
     pkey = EVP_PKEY_new();
     CHECK_MEM(pkey);
 
     sslret = EVP_PKEY_assign_RSA(pkey, rsa);
-    if (sslret != 1) {
-        /* Get information about error from OpenSSL */
-        fprintf(stderr, "Error occurred in EVP_PKEY_assign_RSA: [%s].\n",
-                ERR_error_string(ERR_get_error(), NULL));
-        ret = EIO;
-        goto done;
-    }
+    CHECK_SSL(sslret, EVP_PKEY_assign_RSA);
+
     /* The memory for the RSA key is now maintained by the EVP_PKEY.
        Mark this variable as NULL so we don't free() it below */
     rsa = NULL;

@@ -62,6 +62,17 @@
         } \
     } while(0)
 
+#define CHECK_SSL(_sslret, _fn) \
+    do { \
+        if (_sslret != 1) { \
+            /* Get information about error from OpenSSL */ \
+            fprintf(stderr, "Error occurred in " #_fn ": [%s].\n", \
+                    ERR_error_string(ERR_get_error(), NULL)); \
+            ret = EIO; \
+            goto done; \
+        } \
+    } while(0)
+
 enum sscg_verbosity {
     SSCG_QUIET = -1,
     SSCG_DEFAULT,
