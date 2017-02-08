@@ -22,48 +22,30 @@
 #include "include/key.h"
 
 static int
-_sscg_rsa_key_destructor(TALLOC_CTX *mem_ctx)
+_sscg_evp_pkey_destructor(TALLOC_CTX *mem_ctx)
 {
-    struct sscg_rsa_key *key =
-        talloc_get_type_abort(mem_ctx, struct sscg_rsa_key);
+    struct sscg_evp_pkey *pkey =
+        talloc_get_type_abort(mem_ctx, struct sscg_evp_pkey);
 
-    RSA_free(key->rsa_key);
+    EVP_PKEY_free(pkey->evp_pkey);
 
     return 0;
 }
 
 int
 sscg_generate_rsa_key(TALLOC_CTX *mem_ctx, int bits, struct sscg_bignum *e,
-                      struct sscg_rsa_key **key)
+                      struct sscg_evp_pkey **_key)
 {
     int ret, sslret;
-    struct sscg_rsa_key *rsa_key = NULL;
-    RSA *rsa;
-
-    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
-    if (!tmp_ctx) {
-        return ENOMEM;
-    }
-
-    /* Create the talloc container to hold the memory */
-    rsa_key = talloc_zero(tmp_ctx, struct sscg_rsa_key);
-    if (!rsa_key) {
-        ret = ENOMEM;
-        goto done;
-    }
+    RSA *rsa = NULL;
+    EVP_PKEY *pkey = NULL;
 
     /* Create memory for the actual key */
     rsa = RSA_new();
-    if (!rsa) {
-        ret = ENOMEM;
-        goto done;
-    }
-
-    rsa_key->rsa_key = rsa;
-    talloc_set_destructor((TALLOC_CTX *)rsa_key, _sscg_rsa_key_destructor);
+    CHECK_MEM(rsa);
 
     /* Generate a random RSA keypair */
-    sslret = RSA_generate_key_ex(rsa_key->rsa_key, bits, e->bn, NULL);
+    sslret = RSA_generate_key_ex(rsa, bits, e->bn, NULL);
     if (!sslret) {
         /* Get information about error from OpenSSL */
         fprintf(stderr, "Error occurred in RSA_generate_key_ex: [%s].\n",
@@ -72,12 +54,34 @@ sscg_generate_rsa_key(TALLOC_CTX *mem_ctx, int bits, struct sscg_bignum *e,
         goto done;
     }
 
+    pkey = EVP_PKEY_new();
+    CHECK_MEM(pkey);
+
+    sslret = EVP_PKEY_assign_RSA(pkey, rsa);
+    if (sslret != 1) {
+        /* Get information about error from OpenSSL */
+        fprintf(stderr, "Error occurred in EVP_PKEY_assign_RSA: [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+    /* The memory for the RSA key is now maintained by the EVP_PKEY.
+       Mark this variable as NULL so we don't free() it below */
+    rsa = NULL;
+
+    /* Create the talloc container to hold the memory */
+    (*_key) = talloc_zero(mem_ctx, struct sscg_evp_pkey);
+    if (!(*_key)) {
+        ret = ENOMEM;
+        goto done;
+    }
+
+    (*_key)->evp_pkey = pkey;
+    talloc_set_destructor((TALLOC_CTX *)(*_key), _sscg_evp_pkey_destructor);
+
     ret = EOK;
 
 done:
-    if (ret == EOK) {
-        *key = talloc_steal(mem_ctx, rsa_key);
-    }
-    talloc_zfree(tmp_ctx);
+    RSA_free(rsa);
     return ret;
 }

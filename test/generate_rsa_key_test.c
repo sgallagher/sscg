@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 {
     int ret, sret;
     struct sscg_bignum *e;
-    struct sscg_rsa_key *key;
+    struct sscg_evp_pkey *pkey;
     size_t i, j;
     unsigned long exp_list[] = {3, 7, 65537, 0};
     int bits[] = {512, 1024, 2048, 4096, 0};
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
         j = 0;
         while (bits[j] != 0) {
             printf("\tGenerating %d-bit key. ", bits[j]);
-            ret = sscg_generate_rsa_key(tmp_ctx, bits[j], e, &key);
+            ret = sscg_generate_rsa_key(tmp_ctx, bits[j], e, &pkey);
             if (ret != EOK) {
                 printf("FAILED.\n");
                 fprintf(stderr, "Error generating key: [%s].\n",
@@ -73,7 +73,12 @@ int main(int argc, char **argv)
             }
             printf("SUCCESS.\n");
 
-            /* TODO: Actually inspect the created key for validity */
+            /* Inspect the created key for validity */
+            if (EVP_PKEY_RSA != EVP_PKEY_base_id(pkey->evp_pkey)) {
+                fprintf(stderr, "Generated key was not an RSA key.\n");
+                ret = EINVAL;
+                goto done;
+            }
 
             j++;
         }

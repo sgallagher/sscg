@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     struct sscg_cert_info *certinfo;
     struct sscg_bignum *e;
     struct sscg_x509_req *csr = NULL;
-    struct sscg_rsa_key *key = NULL;
+    struct sscg_evp_pkey *pkey = NULL;
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     if (!tmp_ctx) {
@@ -78,11 +78,11 @@ int main(int argc, char **argv)
     ret = sscg_init_bignum(tmp_ctx, RSA_F4, &e);
     CHECK_OK(ret);
 
-    ret = sscg_generate_rsa_key(certinfo, bits, e, &key);
+    ret = sscg_generate_rsa_key(certinfo, bits, e, &pkey);
     CHECK_OK(ret);
 
     /* Create the CSR */
-    ret = sscg_create_x509v3_csr(tmp_ctx, certinfo, key, &csr);
+    ret = sscg_create_x509v3_csr(tmp_ctx, certinfo, pkey, &csr);
     CHECK_OK(ret);
 
     /* TODO: compare subject values */

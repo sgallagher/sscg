@@ -30,7 +30,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options)
     struct sscg_bignum *e;
     struct sscg_cert_info *ca_certinfo;
     struct sscg_x509_req *csr;
-    struct sscg_rsa_key *key;
+    struct sscg_evp_pkey *pkey;
 
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
@@ -48,11 +48,11 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options)
     CHECK_OK(ret);
 
     /* Generate an RSA keypair for this CA */
-    ret = sscg_generate_rsa_key(ca_certinfo, bits, e, &key);
+    ret = sscg_generate_rsa_key(ca_certinfo, bits, e, &pkey);
     CHECK_OK(ret);
 
     /* Create a certificate signing request for the private CA */
-    ret = sscg_create_x509v3_csr(tmp_ctx, ca_certinfo, key, &csr);
+    ret = sscg_create_x509v3_csr(tmp_ctx, ca_certinfo, pkey, &csr);
     CHECK_OK(ret);
 
     /* TODO: Self-sign the private CA */

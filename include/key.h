@@ -18,6 +18,7 @@
 */
 
 #include <openssl/rsa.h>
+#include <openssl/evp.h>
 
 #include "include/sscg.h"
 #include "include/bignum.h"
@@ -25,13 +26,13 @@
 #ifndef _SSCG_KEY_H
 # define _SSCG_KEY_H
 
-struct sscg_rsa_key {
-    RSA *rsa_key;
+struct sscg_evp_pkey {
+    EVP_PKEY *evp_pkey;
 };
 
 int
 sscg_generate_rsa_key(TALLOC_CTX *mem_ctx, int bits, struct sscg_bignum *e,
-                      struct sscg_rsa_key **key);
+                      struct sscg_evp_pkey **_key);
 
 
 #endif /* _SSCG_KEY_H */

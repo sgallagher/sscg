@@ -50,6 +50,10 @@ struct sscg_x509_req {
     X509_REQ *x509_req;
 };
 
+struct sscg_x509_cert {
+    X509 *certificate;
+};
+
 /* Generate a random serial number
 
    The generated serial number will be the size of
@@ -68,7 +72,26 @@ sscg_generate_serial(TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
 int
 sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
                        struct sscg_cert_info *certinfo,
-                       struct sscg_rsa_key *key,
+                       struct sscg_evp_pkey *pkey,
                        struct sscg_x509_req **_csr);
+
+/* Sign a CSR with a private key
+ * Returns a signed X509 certificate through the _cert parameter if ret == 0,
+ * allocated on mem_ctx. */
+int
+sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
+                   struct sscg_x509_req *csr,
+                   BIGNUM *serial,
+                   ASN1_TIME *not_before,
+                   ASN1_TIME *not_after,
+                   X509_NAME *issuer,
+                   EVP_PKEY *signing_key,
+                   const EVP_MD *hash_fn,
+                   struct sscg_x509_cert **_cert);
+
+/* Allocate an sscg_x509_cert and set a destructor to clean up the
+ * OpenSSL certificate. */
+struct sscg_x509_cert *
+sscg_x509_cert_new(TALLOC_CTX *mem_ctx);
 
 #endif /* _SSCG_X509_H */
