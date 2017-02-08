@@ -80,12 +80,11 @@ sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
  * allocated on mem_ctx. */
 int
 sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
-                   struct sscg_x509_req *csr,
-                   BIGNUM *serial,
-                   ASN1_TIME *not_before,
-                   ASN1_TIME *not_after,
+                   struct sscg_x509_req *scsr,
+                   struct sscg_bignum *serial,
+                   size_t days,
                    X509_NAME *issuer,
-                   EVP_PKEY *signing_key,
+                   struct sscg_evp_pkey *signing_key,
                    const EVP_MD *hash_fn,
                    struct sscg_x509_cert **_cert);
 

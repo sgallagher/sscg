@@ -22,16 +22,17 @@
 #include <talloc.h>
 #include <string.h>
 
-#include <include/sscg.h>
-#include <include/x509.h>
+#include "include/sscg.h"
+#include "include/x509.h"
 
 int main(int argc, char **argv)
 {
     int ret, bits;
     struct sscg_cert_info *certinfo;
-    struct sscg_bignum *e;
+    struct sscg_bignum *e, *serial;
     struct sscg_x509_req *csr = NULL;
-    struct sscg_rsa_key *key = NULL;
+    struct sscg_evp_pkey *pkey = NULL;
+    struct sscg_x509_cert *cert = NULL;
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     if (!tmp_ctx) {
@@ -55,7 +56,7 @@ int main(int argc, char **argv)
     certinfo->country = talloc_strdup(certinfo, "US");
     CHECK_MEM(certinfo->country);
 
-    certinfo->state = talloc_strdup(certinfo, "");
+    certinfo->state = talloc_strdup(certinfo, "MA");
     CHECK_MEM(certinfo->state);
 
     certinfo->locality = talloc_strdup(certinfo, "");
@@ -78,14 +79,20 @@ int main(int argc, char **argv)
     ret = sscg_init_bignum(tmp_ctx, RSA_F4, &e);
     CHECK_OK(ret);
 
-    ret = sscg_generate_rsa_key(certinfo, bits, e, &key);
+    ret = sscg_generate_rsa_key(certinfo, bits, e, &pkey);
     CHECK_OK(ret);
 
     /* Create the CSR */
-    ret = sscg_create_x509v3_csr(tmp_ctx, certinfo, key, &csr);
+    ret = sscg_create_x509v3_csr(tmp_ctx, certinfo, pkey, &csr);
     CHECK_OK(ret);
 
-    /* TODO: compare subject values */
+    /* Sign the CSR */
+    ret = sscg_generate_serial(tmp_ctx, &serial);
+    CHECK_OK(ret);
+
+    ret = sscg_sign_x509_csr(tmp_ctx, csr, serial, 3650, NULL, pkey,
+                             EVP_sha512(), &cert);
+    CHECK_OK(ret);
 
     ret = EOK;
 done:

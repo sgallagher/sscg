@@ -225,38 +225,52 @@ done:
 
 int
 sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
-                   struct sscg_x509_req *csr,
-                   BIGNUM *serial,
-                   ASN1_TIME *not_before,
-                   ASN1_TIME *not_after,
+                   struct sscg_x509_req *scsr,
+                   struct sscg_bignum *serial,
+                   size_t days,
                    X509_NAME *issuer,
-                   EVP_PKEY *signing_key,
+                   struct sscg_evp_pkey *signing_key,
                    const EVP_MD *hash_fn,
                    struct sscg_x509_cert **_cert)
 {
     int ret, sslret;
-    struct sscg_x509_cert *cert = NULL;
-    EVP_PKEY *pkey;
+    struct sscg_x509_cert *scert = NULL;
+    X509 *cert;
+    X509_REQ *csr = NULL;
+    X509_NAME *subject = NULL;
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     CHECK_MEM(tmp_ctx);
 
-    cert = sscg_x509_cert_new(tmp_ctx);
-    CHECK_MEM(cert);
+    scert = sscg_x509_cert_new(tmp_ctx);
+    CHECK_MEM(scert);
 
-    /* Set the public key for the signature */
-    pkey = EVP_PKEY_new();
-    CHECK_MEM(pkey);
+    /* Easier shorthand */
+    cert = scert->certificate;
+    csr = scsr->x509_req;
 
-    sslret = EVP_PKEY_set1_RSA(pkey, signing_key);
-    if (sslret != 1) {
-        /* Get information about error from OpenSSL */
-        fprintf(stderr, "Error occurred in EVP_PKEY_set1_RSA: [%s].\n",
-                ERR_error_string(ERR_get_error(), NULL));
-        ret = EIO;
-        goto done;
+    /* Set the serial number for the new certificate */
+    BN_to_ASN1_INTEGER(serial->bn, X509_get_serialNumber(cert));
+
+    /* set the issuer name */
+    if (issuer) {
+        X509_set_issuer_name(cert, issuer);
+    } else {
+        /* If unspecified, it's self-signing */
+        X509_set_issuer_name(cert, X509_REQ_get_subject_name(csr));
     }
 
-    sslret = X509_sign(cert->certificate, pkey, hash_fn);
+    /* set time */
+    X509_gmtime_adj(X509_get_notBefore(cert), 0);
+    X509_gmtime_adj(X509_get_notAfter(cert), days * 24 * 3650);
+
+    /* set subject */
+    subject = X509_NAME_dup(X509_REQ_get_subject_name(csr));
+    sslret = X509_set_subject_name(cert, subject);
+    CHECK_SSL(sslret, X509_set_subject_name);
+
+    /* Sign the new certificate */
+
+    sslret = X509_sign(cert, signing_key->evp_pkey, hash_fn);
     if (sslret <= 0) {
         /* Get information about error from OpenSSL */
         fprintf(stderr, "Error occurred in X509_sign: [%s].\n",
@@ -265,13 +279,11 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
         goto done;
     }
 
-    X509_NAME_print_ex_fp(stderr, X509_get_subject_name(cert->certificate), 0, 0);
-
     ret = EOK;
 done:
-    EVP_PKEY_free(pkey);
     if (ret == EOK) {
-        *_cert = talloc_steal(mem_ctx, cert);
+        *_cert = talloc_steal(mem_ctx, scert);
     }
+    X509_NAME_free(subject);
     return ret;
 }
