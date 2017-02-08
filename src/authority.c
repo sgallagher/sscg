@@ -24,7 +24,8 @@
 
 int
 create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
-                  struct sscg_x509_cert **_cacert)
+                  struct sscg_x509_cert **_cacert,
+                  struct sscg_evp_pkey **_cakey)
 {
     int ret;
     int bits;
@@ -73,7 +74,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
 
     /* Generate an RSA keypair for this CA */
     /* TODO: support DSA keys as well */
-    ret = sscg_generate_rsa_key(ca_certinfo, bits, e, &pkey);
+    ret = sscg_generate_rsa_key(tmp_ctx, bits, e, &pkey);
     CHECK_OK(ret);
 
     /* Create a certificate signing request for the private CA */
@@ -89,6 +90,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     CHECK_OK(ret);
 
     *_cacert = talloc_steal(mem_ctx, cert);
+    *_cakey = talloc_steal(mem_ctx, pkey);
 
     ret = EOK;
 

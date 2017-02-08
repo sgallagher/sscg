@@ -77,6 +77,7 @@ main(int argc, const char **argv)
     char **alternative_names = NULL;
 
     struct sscg_x509_cert *cacert;
+    struct sscg_evp_pkey *cakey;
 
     TALLOC_CTX *main_ctx = talloc_new(NULL);
     if (!main_ctx) {
@@ -267,7 +268,7 @@ main(int argc, const char **argv)
 
     poptFreeContext(pc);
 
-    ret = create_private_CA(main_ctx, options, &cacert);
+    ret = create_private_CA(main_ctx, options, &cacert, &cakey);
     CHECK_OK(ret);
 
 

@@ -25,6 +25,7 @@
 
 int
 create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
-                  struct sscg_x509_cert **_cacert);
+                  struct sscg_x509_cert **_cacert,
+                  struct sscg_evp_pkey **_cakey);
 
 #endif /* _AUTHORITY_H */
