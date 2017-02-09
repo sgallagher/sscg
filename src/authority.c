@@ -35,6 +35,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     struct sscg_x509_req *csr;
     struct sscg_evp_pkey *pkey;
     struct sscg_x509_cert *cert;
+    X509_EXTENSION *ex = NULL;
 
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
@@ -64,7 +65,13 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     ca_certinfo->cn = talloc_strdup(ca_certinfo, options->hostname);
     CHECK_MEM(ca_certinfo->cn);
 
-    /* TODO: include subject alt names */
+    /* Make this a CA certificate */
+    ex = X509V3_EXT_conf_nid(NULL, NULL,
+                             NID_basic_constraints,
+                             "CA:TRUE");
+    CHECK_MEM(ex);
+
+    sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
 
     /* For the private CA, we always use 4096 bits and an exponent
        value of RSA F4 aka 0x10001 (65537) */

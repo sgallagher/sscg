@@ -59,11 +59,24 @@ done:
     return ret;
 }
 
+static int
+_sscg_certinfo_destructor(TALLOC_CTX *ctx)
+{
+    struct sscg_cert_info *certinfo =
+        talloc_get_type_abort(ctx, struct sscg_cert_info);
+
+    sk_X509_EXTENSION_free(certinfo->extensions);
+
+    return 0;
+}
+
 struct sscg_cert_info *
 sscg_cert_info_new(TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn)
 {
     int ret;
     struct sscg_cert_info *certinfo;
+    X509_EXTENSION *ex = NULL;
+
     certinfo = talloc_zero(mem_ctx, struct sscg_cert_info);
     CHECK_MEM(certinfo);
 
@@ -72,6 +85,19 @@ sscg_cert_info_new(TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn)
     } else {
         certinfo->hash_fn = EVP_sha256();
     }
+
+    /* Allocate space for the stack of extensions */
+    certinfo->extensions = sk_X509_EXTENSION_new_null();
+    CHECK_MEM(certinfo->extensions);
+    talloc_set_destructor((TALLOC_CTX *)certinfo, _sscg_certinfo_destructor);
+
+    /* TODO: add default extensions */
+    ex = X509V3_EXT_conf_nid(NULL, NULL,
+                             NID_key_usage,
+                             "critical,digitalSignature,keyEncipherment");
+    CHECK_MEM(ex);
+
+    sk_X509_EXTENSION_push(certinfo->extensions, ex);
 
     ret = EOK;
 done:
@@ -164,7 +190,9 @@ sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
              (const unsigned char*)certinfo->cn, -1, -1, 0);
     CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(CN));
 
-    /* TODO: Support Subject Alt Names */
+    /* Add extensions */
+    sslret = X509_REQ_add_extensions(csr->x509_req, certinfo->extensions);
+    CHECK_SSL(sslret, X509_REQ_add_extensions);
 
     /* Set the public key for the certificate */
     sslret = X509_REQ_set_pubkey(csr->x509_req, spkey->evp_pkey);
