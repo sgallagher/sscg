@@ -88,6 +88,13 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     ret = sscg_create_x509v3_csr(tmp_ctx, ca_certinfo, pkey, &csr);
     CHECK_OK(ret);
 
+    if (options->verbosity >= SSCG_DEBUG) {
+        fprintf(stderr, "DEBUG: Writing CA CSR to ./debug-ca.csr\n");
+        BIO *ca_csr_out = BIO_new_file("./debug-ca.csr","w");
+        int sslret = PEM_write_bio_X509_REQ(ca_csr_out, csr->x509_req);
+        CHECK_SSL(sslret, PEM_write_bio_X509_REQ);
+    }
+
     /* create a serial number for this certificate */
     ret = sscg_generate_serial(tmp_ctx, &serial);
 

@@ -271,6 +271,20 @@ main(int argc, const char **argv)
     ret = create_private_CA(main_ctx, options, &cacert, &cakey);
     CHECK_OK(ret);
 
+    if (options->verbosity >= SSCG_DEBUG) {
+        fprintf(stderr, "DEBUG: Writing CA public certificate to "
+                        "./debug-ca.crt\n");
+        BIO *ca_out = BIO_new_file("./debug-ca.crt","w");
+        sret = PEM_write_bio_X509(ca_out, cacert->certificate);
+        CHECK_SSL(sret, PEM_write_bio_X509);
+
+        fprintf(stderr, "DEBUG: Writing CA private key to "
+                        "./debug-ca.key\n");
+        BIO *ca_key_out = BIO_new_file("./debug-ca.key","w");
+        sret = 	PEM_write_bio_PrivateKey(ca_key_out, cakey->evp_pkey,
+                                         NULL, NULL, 0, NULL, NULL);
+        CHECK_SSL(sret, PEM_write_bio_X509);
+    }
 
 done:
     talloc_zfree(main_ctx);
