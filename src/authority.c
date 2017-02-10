@@ -66,6 +66,15 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     CHECK_MEM(ca_certinfo->cn);
 
     /* Make this a CA certificate */
+
+    /* Add key extensions */
+    ex = X509V3_EXT_conf_nid(
+        NULL, NULL, NID_key_usage,
+        "critical,digitalSignature,keyEncipherment,keyCertSign");
+    CHECK_MEM(ex);
+    sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+
+    /* Mark it as a CA */
     ex = X509V3_EXT_conf_nid(NULL, NULL,
                              NID_basic_constraints,
                              "CA:TRUE");

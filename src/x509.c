@@ -75,7 +75,6 @@ sscg_cert_info_new(TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn)
 {
     int ret;
     struct sscg_cert_info *certinfo;
-    X509_EXTENSION *ex = NULL;
 
     certinfo = talloc_zero(mem_ctx, struct sscg_cert_info);
     CHECK_MEM(certinfo);
@@ -90,14 +89,6 @@ sscg_cert_info_new(TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn)
     certinfo->extensions = sk_X509_EXTENSION_new_null();
     CHECK_MEM(certinfo->extensions);
     talloc_set_destructor((TALLOC_CTX *)certinfo, _sscg_certinfo_destructor);
-
-    /* TODO: add default extensions */
-    ex = X509V3_EXT_conf_nid(NULL, NULL,
-                             NID_key_usage,
-                             "critical,digitalSignature,keyEncipherment");
-    CHECK_MEM(ex);
-
-    sk_X509_EXTENSION_push(certinfo->extensions, ex);
 
     ret = EOK;
 done:
