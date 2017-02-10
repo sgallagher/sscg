@@ -30,11 +30,14 @@
 # define _SSCG_H
 
 /* TODO: implement internationalization */
-#ifdef HAVE_GETTEXT
-# define _(STRING) gettext (STRING)
-#else
-# define _(STRING) STRING
-#endif /* HAVE_GETTEXT */
+
+#ifndef _
+# ifdef HAVE_GETTEXT
+#  define _(STRING) gettext (STRING)
+# else
+#  define _(STRING) STRING
+# endif /* HAVE_GETTEXT */
+#endif /* _ */
 
 #ifndef EOK
 # define EOK 0
@@ -100,8 +103,15 @@ struct sscg_options {
     const char *hostname;
     char **subject_alt_names;
 
+    /* Encryption requirements */
     int key_strength;
     const EVP_MD *hash_fn;
+
+    /* Output Files */
+    char *ca_file;
+    char *ca_key_file;
+    char *cert_file;
+    char *cert_key_file;
 };
 
 #endif /* _SSCG_H */

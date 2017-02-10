@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <talloc.h>
+#include <path_utils.h>
 #include <unistd.h>
 #include <openssl/evp.h>
 
@@ -59,6 +60,47 @@ print_options(struct sscg_options *opts)
     fprintf(stdout, "=================\n");
 }
 
+static int
+_sscg_normalize_path(TALLOC_CTX  *mem_ctx,
+                     const char  *path,
+                     const char  *path_default,
+                     char       **_normalized_path)
+{
+    int ret;
+    char *orig_path = NULL;
+    char *normalized_path = NULL;
+
+    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
+    CHECK_MEM(tmp_ctx);
+
+    if (path) {
+        orig_path = talloc_strdup(tmp_ctx, path);
+    } else {
+        if (!path_default) {
+            /* If no default is set and no path was provided,
+             * return NULL */
+            *_normalized_path = NULL;
+            ret = EOK;
+            goto done;
+        }
+        orig_path = talloc_strdup(tmp_ctx, path_default);
+        CHECK_MEM(orig_path);
+    }
+
+    normalized_path = talloc_zero_array(tmp_ctx, char, PATH_MAX);
+    CHECK_MEM(normalized_path);
+
+    ret = make_normalized_absolute_path(normalized_path, PATH_MAX, orig_path);
+    CHECK_OK(ret);
+
+    *_normalized_path = talloc_steal(mem_ctx, normalized_path);
+    ret = EOK;
+
+done:
+    talloc_free(tmp_ctx);
+    return ret;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -75,6 +117,11 @@ main(int argc, const char **argv)
     char *hostname = NULL;
     char *hash_alg = NULL;
     char **alternative_names = NULL;
+
+    char *ca_file;
+    char *ca_key_file;
+    char *cert_file;
+    char *cert_key_file;
 
     struct sscg_x509_cert *cacert;
     struct sscg_evp_pkey *cakey;
@@ -134,6 +181,25 @@ main(int argc, const char **argv)
         {"hash-alg", '\0', POPT_ARG_STRING, &hash_alg, 0,
          _("Hashing algorithm to use for signing. (default: sha256)"),
          _("{sha256,sha384,sha512}"),
+        },
+        {"ca-file", '\0', POPT_ARG_STRING, &ca_file, 0,
+         _("Path where the public CA certificate will be stored. (default: \"./ca.crt\")"),
+         NULL,
+        },
+        {"ca-key-file", '\0', POPT_ARG_STRING, &ca_key_file, 0,
+         _("Path where the CA's private key will be stored. If unspecified, "
+           "the key will be destroyed rather than written to the disk."),
+         NULL,
+        },
+        {"cert-file", '\0', POPT_ARG_STRING, &cert_file, 0,
+         _("Path where the public service certificate will be stored. "
+           "(default \"./service.pem\")"),
+         NULL,
+        },
+        {"cert-key-file", '\0', POPT_ARG_STRING, &cert_key_file, 0,
+         _("Path where the service's private key will be stored. "
+           "(default \"service-key.pem\")"),
+         NULL,
         },
         POPT_TABLEEND
     };
@@ -266,21 +332,44 @@ main(int argc, const char **argv)
     /* On verbose logging, display all of the selected options. */
     if (options->verbosity >= SSCG_VERBOSE) print_options(options);
 
+    /* Get the paths of the output files */
+    ret = _sscg_normalize_path(options, ca_file, "./ca.crt",
+                               &options->ca_file);
+    CHECK_OK(ret);
+
+    ret = _sscg_normalize_path(options, ca_key_file, NULL,
+                               &options->ca_key_file);
+    CHECK_OK(ret);
+    if (options->verbosity >= SSCG_DEBUG) {
+        fprintf(stdout, "DEBUG: CA Key file path: %s\n",
+                        options->ca_key_file ? options->ca_key_file : "(N/A)");
+    }
+
+    ret = _sscg_normalize_path(options, cert_file, "./service.pem",
+                               &options->cert_file);
+    CHECK_OK(ret);
+
+    ret = _sscg_normalize_path(options, cert_key_file, "./service-key.pem",
+                               &options->cert_key_file);
+    CHECK_OK(ret);
+
     poptFreeContext(pc);
 
     ret = create_private_CA(main_ctx, options, &cacert, &cakey);
     CHECK_OK(ret);
 
-    if (options->verbosity >= SSCG_DEBUG) {
-        fprintf(stderr, "DEBUG: Writing CA public certificate to "
-                        "./debug-ca.crt\n");
-        BIO *ca_out = BIO_new_file("./debug-ca.crt","w");
-        sret = PEM_write_bio_X509(ca_out, cacert->certificate);
-        CHECK_SSL(sret, PEM_write_bio_X509);
+    if (options->verbosity >= SSCG_DEFAULT) {
+        fprintf(stdout, "Writing CA public certificate to %s\n",
+                        options->ca_file);
+    }
+    BIO *ca_out = BIO_new_file(options->ca_file, "w");
+    sret = PEM_write_bio_X509(ca_out, cacert->certificate);
+    CHECK_SSL(sret, PEM_write_bio_X509);
 
-        fprintf(stderr, "DEBUG: Writing CA private key to "
+    if (options->verbosity >= SSCG_DEBUG) {
+        fprintf(stdout, "DEBUG: Writing CA private key to "
                         "./debug-ca.key\n");
-        BIO *ca_key_out = BIO_new_file("./debug-ca.key","w");
+        BIO *ca_key_out = BIO_new_file("./debug-ca.key", "w");
         sret = 	PEM_write_bio_PrivateKey(ca_key_out, cakey->evp_pkey,
                                          NULL, NULL, 0, NULL, NULL);
         CHECK_SSL(sret, PEM_write_bio_X509);
@@ -293,3 +382,4 @@ done:
     }
     return ret;
 }
+

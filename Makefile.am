@@ -17,6 +17,7 @@ AM_CPPFLAGS = \
    $(CRYPTO_CFLAGS) \
    $(POPT_CFLAGS) \
    $(TALLOC_CFLAGS) \
+   $(PATH_UTILS_CFLAGS) \
    -DLIBDIR=\"$(libdir)\" \
    -DVARDIR=\"$(localstatedir)\" \
    $(NULL)
@@ -25,6 +26,7 @@ COMMON_LIBS = \
     $(CRYPTO_LIBS) \
     $(POPT_LIBS) \
     $(TALLOC_LIBS) \
+    $(PATH_UTILS_LIBS) \
     libsscg.la
 
 bin_PROGRAMS = sscg

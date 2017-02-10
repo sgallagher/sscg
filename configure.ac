@@ -42,6 +42,7 @@ m4_include([m4/pkg.m4])
 m4_include([m4/libtalloc.m4])
 m4_include([m4/crypto.m4])
 m4_include([m4/libpopt.m4])
+m4_include([m4/libpath_utils.m4])
 
 AM_CHECK_LIBCRYPTO
 
