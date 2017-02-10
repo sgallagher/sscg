@@ -262,11 +262,14 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
                    struct sscg_x509_cert **_cert)
 {
     int ret, sslret;
+    size_t i;
     struct sscg_x509_cert *scert = NULL;
     X509 *cert;
     X509_REQ *csr = NULL;
     X509_NAME *subject = NULL;
     EVP_PKEY *pktmp;
+    STACK_OF(X509_EXTENSION) *extensions = NULL;
+    X509_EXTENSION *ext;
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     CHECK_MEM(tmp_ctx);
@@ -297,6 +300,15 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
     subject = X509_NAME_dup(X509_REQ_get_subject_name(csr));
     sslret = X509_set_subject_name(cert, subject);
     CHECK_SSL(sslret, X509_set_subject_name);
+
+    /* Copy the extensions from the CSR */
+    extensions = X509_REQ_get_extensions(csr);
+    for (i = 0; i < sk_X509_EXTENSION_num(extensions); i++) {
+        ext = sk_X509_EXTENSION_value(extensions, i);
+        sslret = X509_add_ext(cert, ext, -1);
+        CHECK_SSL(sslret, X509_add_ext);
+    }
+    sk_X509_EXTENSION_pop_free(extensions, X509_EXTENSION_free);
 
     /* set pubkey from req */
     pktmp = X509_REQ_get_pubkey(csr);
