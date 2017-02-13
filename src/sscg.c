@@ -118,13 +118,16 @@ main(int argc, const char **argv)
     char *hash_alg = NULL;
     char **alternative_names = NULL;
 
-    char *ca_file;
-    char *ca_key_file;
-    char *cert_file;
-    char *cert_key_file;
+    char *ca_file = NULL;
+    char *ca_key_file = NULL;
+    char *cert_file = NULL;
+    char *cert_key_file = NULL;
 
     struct sscg_x509_cert *cacert;
     struct sscg_evp_pkey *cakey;
+
+    BIO *ca_out;
+    BIO *ca_key_out;
 
     TALLOC_CTX *main_ctx = talloc_new(NULL);
     if (!main_ctx) {
@@ -362,20 +365,32 @@ main(int argc, const char **argv)
         fprintf(stdout, "Writing CA public certificate to %s\n",
                         options->ca_file);
     }
-    BIO *ca_out = BIO_new_file(options->ca_file, "w");
+    ca_out = BIO_new_file(options->ca_file, "w");
+    CHECK_MEM(ca_out);
+
     sret = PEM_write_bio_X509(ca_out, cacert->certificate);
     CHECK_SSL(sret, PEM_write_bio_X509);
+    BIO_free(ca_out); ca_out = NULL;
 
-    if (options->verbosity >= SSCG_DEBUG) {
-        fprintf(stdout, "DEBUG: Writing CA private key to "
-                        "./debug-ca.key\n");
-        BIO *ca_key_out = BIO_new_file("./debug-ca.key", "w");
+    if (options->ca_key_file) {
+        fprintf(stdout, "Writing CA private key to %s \n",
+                        options->ca_key_file);
+        if (strcmp(options->ca_key_file, options->ca_file) == 0) {
+            ca_key_out = BIO_new_file(options->ca_key_file, "a");
+        } else {
+            ca_key_out = BIO_new_file(options->ca_key_file, "w");
+        }
+        CHECK_MEM(ca_key_out);
+
         sret = 	PEM_write_bio_PrivateKey(ca_key_out, cakey->evp_pkey,
                                          NULL, NULL, 0, NULL, NULL);
         CHECK_SSL(sret, PEM_write_bio_X509);
     }
 
 done:
+    BIO_free(ca_key_out);
+    BIO_free(ca_out);
+
     talloc_zfree(main_ctx);
     if (ret != EOK) {
         fprintf(stderr, "%s\n", strerror(ret));
