@@ -116,11 +116,17 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     CHECK_OK(ret);
 
     /* Generate an RSA keypair for this CA */
+    if (options->verbosity >= SSCG_VERBOSE) {
+        fprintf(stdout, "Generating RSA key for private CA.\n");
+    }
     /* TODO: support DSA keys as well */
     ret = sscg_generate_rsa_key(tmp_ctx, bits, e, &pkey);
     CHECK_OK(ret);
 
     /* Create a certificate signing request for the private CA */
+    if (options->verbosity >= SSCG_VERBOSE) {
+        fprintf(stdout, "Generating CSR for private CA.\n");
+    }
     ret = sscg_create_x509v3_csr(tmp_ctx, ca_certinfo, pkey, &csr);
     CHECK_OK(ret);
 
@@ -135,6 +141,9 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     ret = sscg_generate_serial(tmp_ctx, &serial);
 
     /* Self-sign the private CA */
+    if (options->verbosity >= SSCG_VERBOSE) {
+        fprintf(stdout, "Signing CSR for private CA.\n");
+    }
     ret = sscg_sign_x509_csr(tmp_ctx, csr, serial, options->lifetime,
                              NULL, pkey, options->hash_fn, &cert);
     CHECK_OK(ret);

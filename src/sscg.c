@@ -373,8 +373,10 @@ main(int argc, const char **argv)
     BIO_free(ca_out); ca_out = NULL;
 
     if (options->ca_key_file) {
-        fprintf(stdout, "Writing CA private key to %s \n",
-                        options->ca_key_file);
+        if (options->verbosity >= SSCG_DEFAULT) {
+            fprintf(stdout, "Writing CA private key to %s \n",
+                            options->ca_key_file);
+        }
         if (strcmp(options->ca_key_file, options->ca_file) == 0) {
             ca_key_out = BIO_new_file(options->ca_key_file, "a");
         } else {
