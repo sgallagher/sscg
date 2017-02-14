@@ -45,6 +45,10 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
         return ENOMEM;
     }
 
+    /* create a serial number for this certificate */
+    ret = sscg_generate_serial(tmp_ctx, &serial);
+    CHECK_OK(ret);
+
     ca_certinfo = sscg_cert_info_new(tmp_ctx, options->hash_fn);
     CHECK_MEM(ca_certinfo);
 
@@ -64,7 +68,9 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     ca_certinfo->org_unit = talloc_strdup(ca_certinfo, options->org_unit);
     CHECK_MEM(ca_certinfo->org_unit);
 
-    ca_certinfo->cn = talloc_strdup(ca_certinfo, options->hostname);
+    ca_certinfo->cn = talloc_asprintf(ca_certinfo,"ca-%lu.%s",
+                                      BN_get_word(serial->bn),
+                                      options->hostname);
     CHECK_MEM(ca_certinfo->cn);
 
     /* Make this a CA certificate */
@@ -136,9 +142,6 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
         int sslret = PEM_write_bio_X509_REQ(ca_csr_out, csr->x509_req);
         CHECK_SSL(sslret, PEM_write_bio_X509_REQ);
     }
-
-    /* create a serial number for this certificate */
-    ret = sscg_generate_serial(tmp_ctx, &serial);
 
     /* Self-sign the private CA */
     if (options->verbosity >= SSCG_VERBOSE) {
