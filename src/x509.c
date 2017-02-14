@@ -111,10 +111,10 @@ _sscg_csr_destructor(TALLOC_CTX *ctx)
 }
 
 int
-sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
-                       struct sscg_cert_info *certinfo,
-                       struct sscg_evp_pkey *spkey,
-                       struct sscg_x509_req **_csr)
+sscg_x509v3_csr_new(TALLOC_CTX *mem_ctx,
+                    struct sscg_cert_info *certinfo,
+                    struct sscg_evp_pkey *spkey,
+                    struct sscg_x509_req **_csr)
 {
     int ret, sslret;
     X509_NAME *subject;
@@ -181,13 +181,28 @@ sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
              (const unsigned char*)certinfo->cn, -1, -1, 0);
     CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(CN));
 
-    /* Add extensions */
-    sslret = X509_REQ_add_extensions(csr->x509_req, certinfo->extensions);
-    CHECK_SSL(sslret, X509_REQ_add_extensions);
-
     /* Set the public key for the certificate */
     sslret = X509_REQ_set_pubkey(csr->x509_req, spkey->evp_pkey);
     CHECK_SSL(sslret, X509_REQ_set_pubkey(OU));
+
+    *_csr = talloc_steal(mem_ctx, csr);
+    ret = EOK;
+
+done:
+    talloc_free(tmp_ctx);
+    return ret;
+}
+
+int
+sscg_x509v3_csr_finalize(struct sscg_cert_info *certinfo,
+                         struct sscg_evp_pkey *spkey,
+                         struct sscg_x509_req *csr)
+{
+    int ret, sslret;
+
+    /* Add extensions */
+    sslret = X509_REQ_add_extensions(csr->x509_req, certinfo->extensions);
+    CHECK_SSL(sslret, X509_REQ_add_extensions);
 
     /* Set the private key */
     sslret = X509_REQ_sign(csr->x509_req, spkey->evp_pkey, certinfo->hash_fn);
@@ -199,11 +214,8 @@ sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
         goto done;
     }
 
-    *_csr = talloc_steal(mem_ctx, csr);
     ret = EOK;
-
 done:
-    talloc_free(tmp_ctx);
     return ret;
 }
 
@@ -247,7 +259,7 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
                    struct sscg_x509_req *scsr,
                    struct sscg_bignum *serial,
                    size_t days,
-                   X509_NAME *issuer,
+                   struct sscg_x509_cert *issuer,
                    struct sscg_evp_pkey *signing_key,
                    const EVP_MD *hash_fn,
                    struct sscg_x509_cert **_cert)
@@ -261,9 +273,12 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
     EVP_PKEY *pktmp;
     STACK_OF(X509_EXTENSION) *extensions = NULL;
     X509_EXTENSION *ext;
+    X509V3_CTX x509v3_ctx;
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
     CHECK_MEM(tmp_ctx);
+
+    X509V3_set_ctx_nodb(&x509v3_ctx);
 
     scert = sscg_x509_cert_new(tmp_ctx);
     CHECK_MEM(scert);
@@ -277,7 +292,7 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
 
     /* set the issuer name */
     if (issuer) {
-        X509_set_issuer_name(cert, issuer);
+        X509_set_issuer_name(cert, X509_get_subject_name(issuer->certificate));
     } else {
         /* If unspecified, it's self-signing */
         X509_set_issuer_name(cert, X509_REQ_get_subject_name(csr));
@@ -307,8 +322,26 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
     EVP_PKEY_free(pktmp);
     CHECK_SSL(sslret, X509_set_pubkey);
 
-    /* Sign the new certificate */
+    if (issuer) {
+        X509V3_set_ctx(&x509v3_ctx, issuer->certificate,
+                       cert, NULL, NULL, 0);
+        /* Set the Authority Key Identifier extension */
+        ext = X509V3_EXT_conf_nid(NULL, &x509v3_ctx,
+                                  NID_authority_key_identifier,
+                                  "keyid:always,issuer");
+        if (!ext) {
+            /* Get information about error from OpenSSL */
+            fprintf(stderr, "Error occurred in "
+                            "X509V3_EXT_conf_nid(AuthorityKeyIdentifier): [%s].\n",
+                    ERR_error_string(ERR_get_error(), NULL));
+            ret = EIO;
+            goto done;
+        }
+        sslret = X509_add_ext(cert, ext, -1);
+        CHECK_SSL(sslret, X509_add_ext);
+    }
 
+    /* Sign the new certificate */
     sslret = X509_sign(cert, signing_key->evp_pkey, hash_fn);
     if (sslret <= 0) {
         /* Get information about error from OpenSSL */

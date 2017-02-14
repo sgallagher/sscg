@@ -72,10 +72,17 @@ sscg_generate_serial(TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
    If it fails, it will return an errno code and _csr is undefined.
 */
 int
-sscg_create_x509v3_csr(TALLOC_CTX *mem_ctx,
-                       struct sscg_cert_info *certinfo,
-                       struct sscg_evp_pkey *pkey,
-                       struct sscg_x509_req **_csr);
+sscg_x509v3_csr_new(TALLOC_CTX *mem_ctx,
+                    struct sscg_cert_info *certinfo,
+                    struct sscg_evp_pkey *pkey,
+                    struct sscg_x509_req **_csr);
+
+/* Finish creation of the CSR by adding extensions and self-signing
+   the request. */
+int
+sscg_x509v3_csr_finalize(struct sscg_cert_info *certinfo,
+                         struct sscg_evp_pkey *spkey,
+                         struct sscg_x509_req *csr);
 
 /* Sign a CSR with a private key
  * Returns a signed X509 certificate through the _cert parameter if ret == 0,
@@ -85,7 +92,7 @@ sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
                    struct sscg_x509_req *scsr,
                    struct sscg_bignum *serial,
                    size_t days,
-                   X509_NAME *issuer,
+                   struct sscg_x509_cert *issuer,
                    struct sscg_evp_pkey *signing_key,
                    const EVP_MD *hash_fn,
                    struct sscg_x509_cert **_cert);

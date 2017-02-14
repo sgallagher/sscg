@@ -30,6 +30,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     int ret;
     int bits;
     size_t i;
+    TALLOC_CTX *tmp_ctx = NULL;
     struct sscg_bignum *e;
     struct sscg_bignum *serial;
     struct sscg_cert_info *ca_certinfo;
@@ -37,13 +38,11 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     struct sscg_evp_pkey *pkey;
     struct sscg_x509_cert *cert;
     X509_EXTENSION *ex = NULL;
+    X509V3_CTX xctx;
     char *name_constraint;
 
-
-    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
-    if (!tmp_ctx) {
-        return ENOMEM;
-    }
+    tmp_ctx = talloc_new(NULL);
+    CHECK_MEM(tmp_ctx);
 
     /* create a serial number for this certificate */
     ret = sscg_generate_serial(tmp_ctx, &serial);
@@ -115,6 +114,18 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
         talloc_free(name_constraint);
     }
 
+    /* Also give it privilege to sign itself */
+    name_constraint = talloc_asprintf(tmp_ctx,
+                                      "permitted;DNS:%s",
+                                      ca_certinfo->cn);
+    CHECK_MEM(name_constraint);
+    ex = X509V3_EXT_conf_nid(NULL, NULL,
+                             NID_name_constraints,
+                             name_constraint);
+    CHECK_MEM(ex);
+    sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+    talloc_free(name_constraint);
+
     /* For the private CA, we always use 4096 bits and an exponent
        value of RSA F4 aka 0x10001 (65537) */
     bits = 4096;
@@ -133,7 +144,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     if (options->verbosity >= SSCG_VERBOSE) {
         fprintf(stdout, "Generating CSR for private CA.\n");
     }
-    ret = sscg_create_x509v3_csr(tmp_ctx, ca_certinfo, pkey, &csr);
+    ret = sscg_x509v3_csr_new(tmp_ctx, ca_certinfo, pkey, &csr);
     CHECK_OK(ret);
 
     if (options->verbosity >= SSCG_DEBUG) {
@@ -142,6 +153,30 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
         int sslret = PEM_write_bio_X509_REQ(ca_csr_out, csr->x509_req);
         CHECK_SSL(sslret, PEM_write_bio_X509_REQ);
     }
+
+    X509V3_set_ctx_nodb(&xctx);
+    X509V3_set_ctx(&xctx, NULL, NULL, csr->x509_req, NULL, 0);
+
+    /* Set the Subject Key Identifier extension */
+    if (options->verbosity >= SSCG_DEBUG) {
+        fprintf(stderr, "DEBUG: Creating SubjectKeyIdentifier\n");
+    }
+    ex = X509V3_EXT_conf_nid(NULL, &xctx,
+                             NID_subject_key_identifier,
+                             "hash");
+    if (!ex) {
+        /* Get information about error from OpenSSL */
+        fprintf(stderr, "Error occurred in "
+                        "X509V3_EXT_conf_nid(SubjectKeyIdentifier): [%s].\n",
+                ERR_error_string(ERR_get_error(), NULL));
+        ret = EIO;
+        goto done;
+    }
+    sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+
+    /* Finalize the CSR */
+    ret = sscg_x509v3_csr_finalize(ca_certinfo, pkey, csr);
+
 
     /* Self-sign the private CA */
     if (options->verbosity >= SSCG_VERBOSE) {

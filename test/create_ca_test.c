@@ -83,7 +83,10 @@ int main(int argc, char **argv)
     CHECK_OK(ret);
 
     /* Create the CSR */
-    ret = sscg_create_x509v3_csr(tmp_ctx, certinfo, pkey, &csr);
+    ret = sscg_x509v3_csr_new(tmp_ctx, certinfo, pkey, &csr);
+    CHECK_OK(ret);
+
+    ret = sscg_x509v3_csr_finalize(certinfo, pkey, csr);
     CHECK_OK(ret);
 
     /* Sign the CSR */
