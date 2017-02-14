@@ -29,6 +29,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
 {
     int ret;
     int bits;
+    size_t i;
     struct sscg_bignum *e;
     struct sscg_bignum *serial;
     struct sscg_cert_info *ca_certinfo;
@@ -36,6 +37,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     struct sscg_evp_pkey *pkey;
     struct sscg_x509_cert *cert;
     X509_EXTENSION *ex = NULL;
+    char *name_constraint;
 
 
     TALLOC_CTX *tmp_ctx = talloc_new(NULL);
@@ -79,8 +81,33 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
                              NID_basic_constraints,
                              "CA:TRUE");
     CHECK_MEM(ex);
-
     sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+
+    /* Restrict this certificate to being able to sign only the hostname
+       and SubjectAltNames for the requested service certificate */
+    name_constraint = talloc_asprintf(tmp_ctx,
+                                      "permitted;DNS:%s",
+                                      options->hostname);
+    CHECK_MEM(name_constraint);
+    ex = X509V3_EXT_conf_nid(NULL, NULL,
+                             NID_name_constraints,
+                             name_constraint);
+    CHECK_MEM(ex);
+    sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+    talloc_free(name_constraint);
+
+    for (i = 0; options->subject_alt_names[i]; i++) {
+        name_constraint = talloc_asprintf(tmp_ctx,
+                                          "permitted;DNS:%s",
+                                          options->subject_alt_names[i]);
+        CHECK_MEM(name_constraint);
+        ex = X509V3_EXT_conf_nid(NULL, NULL,
+                                 NID_name_constraints,
+                                 name_constraint);
+        CHECK_MEM(ex);
+        sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+        talloc_free(name_constraint);
+    }
 
     /* For the private CA, we always use 4096 bits and an exponent
        value of RSA F4 aka 0x10001 (65537) */
