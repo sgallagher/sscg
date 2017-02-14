@@ -126,8 +126,8 @@ main(int argc, const char **argv)
     struct sscg_x509_cert *cacert;
     struct sscg_evp_pkey *cakey;
 
-    BIO *ca_out;
-    BIO *ca_key_out;
+    BIO *ca_out = NULL;
+    BIO *ca_key_out = NULL;
 
     TALLOC_CTX *main_ctx = talloc_new(NULL);
     if (!main_ctx) {
