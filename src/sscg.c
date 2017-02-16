@@ -405,6 +405,7 @@ main(int argc, const char **argv)
         sret = PEM_write_bio_PrivateKey(ca_key_out, cakey->evp_pkey,
                                          NULL, NULL, 0, NULL, NULL);
         CHECK_SSL(sret, PEM_write_bio_PrivateKey(CA));
+        BIO_free(ca_key_out); ca_key_out = NULL;
     }
 
     if (options->verbosity >= SSCG_DEFAULT) {
@@ -420,6 +421,24 @@ main(int argc, const char **argv)
 
     sret = PEM_write_bio_X509(cert_out, svc_cert->certificate);
     CHECK_SSL(sret, PEM_write_bio_X509(svc));
+    BIO_free(cert_out); cert_out = NULL;
+
+    if (options->verbosity >= SSCG_DEFAULT) {
+        fprintf(stdout, "Writing service private key to %s\n",
+                        options->cert_key_file);
+    }
+    if (strcmp(options->cert_file, options->cert_key_file) == 0) {
+        cert_key_out = BIO_new_file(options->cert_key_file, "a");
+    } else {
+        cert_key_out = BIO_new_file(options->cert_key_file, "w");
+    }
+    CHECK_MEM(cert_key_out);
+
+    sret = PEM_write_bio_PrivateKey(cert_key_out, svc_key->evp_pkey,
+                                    NULL, NULL, 0, NULL, NULL);
+    CHECK_SSL(sret, PEM_write_bio_PrivateKey(svc));
+    BIO_free(cert_key_out); cert_key_out = NULL;
+
 
 done:
     BIO_free(ca_key_out);
