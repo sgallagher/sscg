@@ -116,6 +116,7 @@ main(int argc, const char **argv)
     char *organization = NULL;
     char *organizational_unit = NULL;
     char *hostname = NULL;
+    char *packagename;
     char *hash_alg = NULL;
     char **alternative_names = NULL;
 
@@ -183,6 +184,10 @@ main(int argc, const char **argv)
          _("Optional additional valid hostnames for the certificate. "
            "May be specified multiple times."),
          _("alt.example.com")},
+        {"package", '\0', POPT_ARG_STRING, &packagename, 0,
+         _("Unused. Retained for compatibility with earlier versions of sscg."),
+         NULL,
+        },
         {"key-strength", '\0', POPT_ARG_INT|POPT_ARGFLAG_SHOW_DEFAULT, &options->key_strength, 0,
          _("Strength of the certificate private keys in bits."),
          _("{512,1024,2048,4096}")},
