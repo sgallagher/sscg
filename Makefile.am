@@ -54,6 +54,8 @@ libsscg_la_SOURCES = \
     include/bignum.h \
     src/key.c \
     include/key.h \
+    src/service.c \
+    include/service.h \
     src/x509.c \
     include/x509.h
 

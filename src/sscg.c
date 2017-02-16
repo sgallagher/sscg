@@ -29,6 +29,7 @@
 #include "config.h"
 #include "include/sscg.h"
 #include "include/authority.h"
+#include "include/service.h"
 
 static int
 set_default_options(struct sscg_options *opts)
@@ -125,9 +126,13 @@ main(int argc, const char **argv)
 
     struct sscg_x509_cert *cacert;
     struct sscg_evp_pkey *cakey;
+    struct sscg_x509_cert *svc_cert;
+    struct sscg_evp_pkey *svc_key;
 
     BIO *ca_out = NULL;
     BIO *ca_key_out = NULL;
+    BIO *cert_out = NULL;
+    BIO *cert_key_out = NULL;
 
     TALLOC_CTX *main_ctx = talloc_new(NULL);
     if (!main_ctx) {
@@ -358,9 +363,17 @@ main(int argc, const char **argv)
 
     poptFreeContext(pc);
 
+    /* Generate the private CA for the certificate */
     ret = create_private_CA(main_ctx, options, &cacert, &cakey);
     CHECK_OK(ret);
 
+    /* Generate the service certificate and sign it with the private CA */
+    ret = create_service_cert(main_ctx, options, cacert, cakey,
+                              &svc_cert, &svc_key);
+    CHECK_OK(ret);
+
+
+    /* ==== Output the final files ==== */
     if (options->verbosity >= SSCG_DEFAULT) {
         fprintf(stdout, "Writing CA public certificate to %s\n",
                         options->ca_file);
@@ -369,7 +382,7 @@ main(int argc, const char **argv)
     CHECK_MEM(ca_out);
 
     sret = PEM_write_bio_X509(ca_out, cacert->certificate);
-    CHECK_SSL(sret, PEM_write_bio_X509);
+    CHECK_SSL(sret, PEM_write_bio_X509(CA));
     BIO_free(ca_out); ca_out = NULL;
 
     if (options->ca_key_file) {
@@ -384,10 +397,24 @@ main(int argc, const char **argv)
         }
         CHECK_MEM(ca_key_out);
 
-        sret = 	PEM_write_bio_PrivateKey(ca_key_out, cakey->evp_pkey,
+        sret = PEM_write_bio_PrivateKey(ca_key_out, cakey->evp_pkey,
                                          NULL, NULL, 0, NULL, NULL);
-        CHECK_SSL(sret, PEM_write_bio_X509);
+        CHECK_SSL(sret, PEM_write_bio_PrivateKey(CA));
     }
+
+    if (options->verbosity >= SSCG_DEFAULT) {
+        fprintf(stdout, "Writing service public certificate to %s\n",
+                        options->cert_file);
+    }
+    if (strcmp(options->ca_file, options->cert_file) == 0) {
+        cert_out = BIO_new_file(options->cert_file, "a");
+    } else {
+        cert_out = BIO_new_file(options->cert_file, "w");
+    }
+    CHECK_MEM(cert_out);
+
+    sret = PEM_write_bio_X509(cert_out, svc_cert->certificate);
+    CHECK_SSL(sret, PEM_write_bio_X509(svc));
 
 done:
     BIO_free(ca_key_out);

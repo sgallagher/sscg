@@ -39,6 +39,7 @@ struct sscg_cert_info {
     const char *org;
     const char *org_unit;
     const char *cn;
+    char **subject_alt_names;
 
     /* X509v3 Extensions */
     STACK_OF(X509_EXTENSION) *extensions;

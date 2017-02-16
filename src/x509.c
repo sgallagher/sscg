@@ -117,8 +117,11 @@ sscg_x509v3_csr_new(TALLOC_CTX *mem_ctx,
                     struct sscg_x509_req **_csr)
 {
     int ret, sslret;
+    size_t i;
     X509_NAME *subject;
+    char *alt_name = NULL;
     TALLOC_CTX *tmp_ctx;
+    X509_EXTENSION *ex = NULL;
     struct sscg_x509_req *csr;
 
     /* Make sure we have a key available */
@@ -180,6 +183,21 @@ sscg_x509v3_csr_new(TALLOC_CTX *mem_ctx,
     sslret = X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_UTF8,
              (const unsigned char*)certinfo->cn, -1, -1, 0);
     CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(CN));
+
+    /* SubjectAltNames */
+    if(certinfo->subject_alt_names) {
+        for (i = 0; certinfo->subject_alt_names[i]; i++) {
+            alt_name = talloc_asprintf(tmp_ctx, "DNS:%s",
+                                       certinfo->subject_alt_names[i]);
+            CHECK_MEM(alt_name);
+            ex = X509V3_EXT_conf_nid(NULL, NULL,
+                                     NID_subject_alt_name,
+                                     alt_name);
+            CHECK_MEM(ex);
+            sk_X509_EXTENSION_push(certinfo->extensions, ex);
+            talloc_free(alt_name);
+        }
+    }
 
     /* Set the public key for the certificate */
     sslret = X509_REQ_set_pubkey(csr->x509_req, spkey->evp_pkey);

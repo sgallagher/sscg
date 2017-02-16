@@ -101,17 +101,19 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
     talloc_free(name_constraint);
 
-    for (i = 0; options->subject_alt_names[i]; i++) {
-        name_constraint = talloc_asprintf(tmp_ctx,
-                                          "permitted;DNS:%s",
-                                          options->subject_alt_names[i]);
-        CHECK_MEM(name_constraint);
-        ex = X509V3_EXT_conf_nid(NULL, NULL,
-                                 NID_name_constraints,
-                                 name_constraint);
-        CHECK_MEM(ex);
-        sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
-        talloc_free(name_constraint);
+    if (options->subject_alt_names) {
+        for (i = 0; options->subject_alt_names[i]; i++) {
+            name_constraint = talloc_asprintf(tmp_ctx,
+                                              "permitted;DNS:%s",
+                                              options->subject_alt_names[i]);
+            CHECK_MEM(name_constraint);
+            ex = X509V3_EXT_conf_nid(NULL, NULL,
+                                     NID_name_constraints,
+                                     name_constraint);
+            CHECK_MEM(ex);
+            sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+            talloc_free(name_constraint);
+        }
     }
 
     /* Also give it privilege to sign itself */
@@ -147,13 +149,6 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     ret = sscg_x509v3_csr_new(tmp_ctx, ca_certinfo, pkey, &csr);
     CHECK_OK(ret);
 
-    if (options->verbosity >= SSCG_DEBUG) {
-        fprintf(stderr, "DEBUG: Writing CA CSR to ./debug-ca.csr\n");
-        BIO *ca_csr_out = BIO_new_file("./debug-ca.csr","w");
-        int sslret = PEM_write_bio_X509_REQ(ca_csr_out, csr->x509_req);
-        CHECK_SSL(sslret, PEM_write_bio_X509_REQ);
-    }
-
     X509V3_set_ctx_nodb(&xctx);
     X509V3_set_ctx(&xctx, NULL, NULL, csr->x509_req, NULL, 0);
 
@@ -177,6 +172,12 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     /* Finalize the CSR */
     ret = sscg_x509v3_csr_finalize(ca_certinfo, pkey, csr);
 
+    if (options->verbosity >= SSCG_DEBUG) {
+        fprintf(stderr, "DEBUG: Writing CA CSR to ./debug-ca.csr\n");
+        BIO *ca_csr_out = BIO_new_file("./debug-ca.csr","w");
+        int sslret = PEM_write_bio_X509_REQ(ca_csr_out, csr->x509_req);
+        CHECK_SSL(sslret, PEM_write_bio_X509_REQ);
+    }
 
     /* Self-sign the private CA */
     if (options->verbosity >= SSCG_VERBOSE) {
