@@ -263,6 +263,7 @@ sscg_x509_cert_new(TALLOC_CTX *mem_ctx)
     sslret = X509_set_version(cert->certificate, 2);
     CHECK_SSL(sslret, X509_set_version);
 
+    ret = EOK;
 done:
     if (ret != EOK) {
         talloc_free(cert);

@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     ret = EOK;
 done:
     if (ret != EOK) {
-        fprintf(stderr, "FAILURE: %s", strerror(ret));
+        fprintf(stderr, "FAILURE: %s\n", strerror(ret));
     }
     talloc_free(tmp_ctx);
     return ret;
