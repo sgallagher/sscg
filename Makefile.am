@@ -11,6 +11,8 @@ if HAVE_GCC
                  -std=gnu99
 endif
 
+dist_noinst_DATA = README.md
+
 AM_CPPFLAGS = \
    -Wall \
    -I. \
