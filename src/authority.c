@@ -40,6 +40,7 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     X509_EXTENSION *ex = NULL;
     X509V3_CTX xctx;
     char *name_constraint;
+    char *tmp;
 
     tmp_ctx = talloc_new(NULL);
     CHECK_MEM(tmp_ctx);
@@ -88,39 +89,26 @@ create_private_CA(TALLOC_CTX *mem_ctx, const struct sscg_options *options,
     CHECK_MEM(ex);
     sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
 
-    /* Restrict this certificate to being able to sign only the hostname
-       and SubjectAltNames for the requested service certificate */
+    /* Restrict signing to itself and the subjectAltNames of the
+       service certificate */
     name_constraint = talloc_asprintf(tmp_ctx,
+                                      "permitted;DNS:%s, "
                                       "permitted;DNS:%s",
+                                      ca_certinfo->cn,
                                       options->hostname);
     CHECK_MEM(name_constraint);
-    ex = X509V3_EXT_conf_nid(NULL, NULL,
-                             NID_name_constraints,
-                             name_constraint);
-    CHECK_MEM(ex);
-    sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
-    talloc_free(name_constraint);
 
     if (options->subject_alt_names) {
         for (i = 0; options->subject_alt_names[i]; i++) {
-            name_constraint = talloc_asprintf(tmp_ctx,
-                                              "permitted;DNS:%s",
-                                              options->subject_alt_names[i]);
-            CHECK_MEM(name_constraint);
-            ex = X509V3_EXT_conf_nid(NULL, NULL,
-                                     NID_name_constraints,
-                                     name_constraint);
-            CHECK_MEM(ex);
-            sk_X509_EXTENSION_push(ca_certinfo->extensions, ex);
+            tmp = talloc_asprintf(tmp_ctx, "%s, permitted;DNS:%s",
+                                  name_constraint,
+                                  options->subject_alt_names[i]);
+            CHECK_MEM(tmp);
             talloc_free(name_constraint);
+            name_constraint = tmp;
         }
     }
 
-    /* Also give it privilege to sign itself */
-    name_constraint = talloc_asprintf(tmp_ctx,
-                                      "permitted;DNS:%s",
-                                      ca_certinfo->cn);
-    CHECK_MEM(name_constraint);
     ex = X509V3_EXT_conf_nid(NULL, NULL,
                              NID_name_constraints,
                              name_constraint);
