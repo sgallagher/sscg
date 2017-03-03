@@ -135,6 +135,9 @@ main(int argc, const char **argv)
     BIO *cert_out = NULL;
     BIO *cert_key_out = NULL;
 
+    /* Always use umask 077 for generating certificates and keys */
+    umask(077);
+
     TALLOC_CTX *main_ctx = talloc_new(NULL);
     if (!main_ctx) {
         fprintf(stderr, "Could not allocate memory.");
