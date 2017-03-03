@@ -92,7 +92,7 @@ struct sscg_options {
     bool print_version;
 
     /* How long should certificates be valid (in days) */
-    short lifetime;
+    int lifetime;
 
     /* Subject information */
     const char *country;

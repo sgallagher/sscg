@@ -159,7 +159,7 @@ main(int argc, const char **argv)
            "This will print private key information to the screen!"), NULL},
         {"version", 'V', POPT_ARG_NONE, &options->print_version, 0,
          _("Display the version number and exit."), NULL},
-        {"lifetime", '\0', POPT_ARG_INT|POPT_ARGFLAG_SHOW_DEFAULT, &options->lifetime, 3650,
+        {"lifetime", '\0', POPT_ARG_INT|POPT_ARGFLAG_SHOW_DEFAULT, &options->lifetime, 0,
          _("Certificate lifetime (days)."),
          _("1-3650")},
         {"country", '\0', POPT_ARG_STRING, &country, 0,
