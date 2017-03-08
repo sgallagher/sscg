@@ -125,6 +125,11 @@ main(int argc, const char **argv)
     char *cert_file = NULL;
     char *cert_key_file = NULL;
 
+    int ca_mode = 0644;
+    int ca_key_mode = 0600;
+    int cert_mode = 0644;
+    int cert_key_mode = 0600;
+
     struct sscg_x509_cert *cacert;
     struct sscg_evp_pkey *cakey;
     struct sscg_x509_cert *svc_cert;
@@ -134,6 +139,8 @@ main(int argc, const char **argv)
     BIO *ca_key_out = NULL;
     BIO *cert_out = NULL;
     BIO *cert_key_out = NULL;
+
+    FILE *fp;
 
     /* Always use umask 077 for generating certificates and keys */
     umask(077);
@@ -202,20 +209,36 @@ main(int argc, const char **argv)
          _("Path where the public CA certificate will be stored. (default: \"./ca.crt\")"),
          NULL,
         },
+        {"ca-mode", '\0', POPT_ARG_INT, &ca_mode, 0,
+         _("File mode of the created CA certificate. (default: 0644)"),
+         _("0644"),
+        },
         {"ca-key-file", '\0', POPT_ARG_STRING, &ca_key_file, 0,
          _("Path where the CA's private key will be stored. If unspecified, "
            "the key will be destroyed rather than written to the disk."),
          NULL,
+        },
+        {"ca-key-mode", '\0', POPT_ARG_INT, &ca_key_mode, 0,
+         _("File mode of the created CA key. (default: 0600)"),
+         _("0600"),
         },
         {"cert-file", '\0', POPT_ARG_STRING, &cert_file, 0,
          _("Path where the public service certificate will be stored. "
            "(default \"./service.pem\")"),
          NULL,
         },
+        {"cert-mode", '\0', POPT_ARG_INT, &cert_mode, 0,
+         _("File mode of the created certificate. (default: 0644)"),
+         _("0644"),
+        },
         {"cert-key-file", '\0', POPT_ARG_STRING, &cert_key_file, 0,
          _("Path where the service's private key will be stored. "
            "(default \"service-key.pem\")"),
          NULL,
+        },
+        {"cert-key-mode", '\0', POPT_ARG_INT, &cert_key_mode, 0,
+         _("File mode of the created certificate key. (default: 0600)"),
+         _("0600"),
         },
         POPT_TABLEEND
     };
@@ -391,6 +414,8 @@ main(int argc, const char **argv)
 
     sret = PEM_write_bio_X509(ca_out, cacert->certificate);
     CHECK_SSL(sret, PEM_write_bio_X509(CA));
+    BIO_get_fp(ca_out, &fp);
+    fchmod(fileno(fp), ca_mode);
     BIO_free(ca_out); ca_out = NULL;
 
     if (options->ca_key_file) {
@@ -408,6 +433,8 @@ main(int argc, const char **argv)
         sret = PEM_write_bio_PrivateKey(ca_key_out, cakey->evp_pkey,
                                          NULL, NULL, 0, NULL, NULL);
         CHECK_SSL(sret, PEM_write_bio_PrivateKey(CA));
+        BIO_get_fp(ca_key_out, &fp);
+        fchmod(fileno(fp), ca_key_mode);
         BIO_free(ca_key_out); ca_key_out = NULL;
     }
 
@@ -424,6 +451,8 @@ main(int argc, const char **argv)
 
     sret = PEM_write_bio_X509(cert_out, svc_cert->certificate);
     CHECK_SSL(sret, PEM_write_bio_X509(svc));
+    BIO_get_fp(cert_out, &fp);
+    fchmod(fileno(fp), cert_mode);
     BIO_free(cert_out); cert_out = NULL;
 
     if (options->verbosity >= SSCG_DEFAULT) {
@@ -440,9 +469,11 @@ main(int argc, const char **argv)
     sret = PEM_write_bio_PrivateKey(cert_key_out, svc_key->evp_pkey,
                                     NULL, NULL, 0, NULL, NULL);
     CHECK_SSL(sret, PEM_write_bio_PrivateKey(svc));
+    BIO_get_fp(cert_key_out, &fp);
+    fchmod(fileno(fp), cert_key_mode);
     BIO_free(cert_key_out); cert_key_out = NULL;
 
-
+    ret = EOK;
 done:
     BIO_free(ca_key_out);
     BIO_free(ca_out);
