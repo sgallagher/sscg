@@ -25,6 +25,7 @@
 #include <openssl/err.h>
 #include <stdbool.h>
 #include <talloc.h>
+#include <stdint.h>
 
 #ifndef _SSCG_H
 # define _SSCG_H
