@@ -99,3 +99,5 @@ create_ca_test_SOURCES = \
 create_ca_test_LDADD = \
     $(COMMON_LIBS) \
     $(NULL)
+
+test: check
