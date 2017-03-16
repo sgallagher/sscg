@@ -1,5 +1,10 @@
 # SSCG - Simple Signed Certificate Generator
 
+<a href="https://scan.coverity.com/projects/sscg">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/12070/badge.svg"/>
+</a>
+
 ## Why?
 x509 Certificates are complicated to get right. SSCG makes it easy to generate usable, _signed_ certificates quickly without needing to understand complex `openssl`, `certtool` or `certutil` commands.
 
