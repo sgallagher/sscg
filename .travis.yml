@@ -1,0 +1,9 @@
+language: c
+before_install:
+- sudo apt-get update -qq
+- sudo apt-get install -qq libtalloc-dev libpath-utils-dev libssl-dev libpopt-dev
+compiler:
+- clang
+- gcc
+before_script: autoreconf -if
+
