@@ -142,8 +142,10 @@ main(int argc, const char **argv)
 
     FILE *fp;
 
-    /* Always use umask 077 for generating certificates and keys */
-    umask(077);
+    /* Always use umask 0577 for generating certificates and keys
+       This means that it's opened as write-only by the effective
+       user. */
+    umask(0577);
 
     TALLOC_CTX *main_ctx = talloc_new(NULL);
     if (!main_ctx) {
@@ -415,7 +417,25 @@ main(int argc, const char **argv)
     sret = PEM_write_bio_X509(ca_out, cacert->certificate);
     CHECK_SSL(sret, PEM_write_bio_X509(CA));
     BIO_get_fp(ca_out, &fp);
-    fchmod(fileno(fp), ca_mode);
+
+    /* If this file matches either of the keyfiles, do not set its
+       permissions */
+    if (strcmp(options->ca_file, options->cert_key_file) == 0
+        || (options->ca_key_file
+            && strcmp(options->ca_file, options->ca_key_file) == 0) ) {
+        if (options->verbosity >= SSCG_DEBUG) {
+            fprintf(stdout,
+                    "DEBUG: Not setting CA file permissions: superseded by a key\n");
+        }
+    }
+    else {
+        if (options->verbosity >= SSCG_DEBUG) {
+            fprintf(stdout,
+                    "DEBUG: Setting CA file permissions to %o\n",
+                    ca_mode);
+        }
+        fchmod(fileno(fp), ca_mode);
+    }
     BIO_free(ca_out); ca_out = NULL;
 
     if (options->ca_key_file) {
@@ -434,7 +454,14 @@ main(int argc, const char **argv)
                                          NULL, NULL, 0, NULL, NULL);
         CHECK_SSL(sret, PEM_write_bio_PrivateKey(CA));
         BIO_get_fp(ca_key_out, &fp);
+
+        if (options->verbosity >= SSCG_DEBUG) {
+            fprintf(stdout,
+                    "DEBUG: Setting CA key file permissions to %o\n",
+                    ca_key_mode);
+        }
         fchmod(fileno(fp), ca_key_mode);
+
         BIO_free(ca_key_out); ca_key_out = NULL;
     }
 
@@ -452,7 +479,24 @@ main(int argc, const char **argv)
     sret = PEM_write_bio_X509(cert_out, svc_cert->certificate);
     CHECK_SSL(sret, PEM_write_bio_X509(svc));
     BIO_get_fp(cert_out, &fp);
-    fchmod(fileno(fp), cert_mode);
+    /* If this file matches either of the keyfiles, do not set its
+       permissions */
+    if (strcmp(options->cert_file, options->cert_key_file) == 0
+        || (options->ca_key_file
+            && strcmp(options->cert_file, options->ca_key_file) == 0) ) {
+        if (options->verbosity >= SSCG_DEBUG) {
+            fprintf(stdout,
+                    "DEBUG: Not setting cert file permissions: superseded by a key\n");
+        }
+    }
+    else {
+        if (options->verbosity >= SSCG_DEBUG) {
+            fprintf(stdout,
+                    "DEBUG: Setting cert file permissions to %o\n",
+                    cert_mode);
+        }
+        fchmod(fileno(fp), cert_mode);
+    }
     BIO_free(cert_out); cert_out = NULL;
 
     if (options->verbosity >= SSCG_DEFAULT) {
@@ -470,11 +514,18 @@ main(int argc, const char **argv)
                                     NULL, NULL, 0, NULL, NULL);
     CHECK_SSL(sret, PEM_write_bio_PrivateKey(svc));
     BIO_get_fp(cert_key_out, &fp);
+    if (options->verbosity >= SSCG_DEBUG) {
+        fprintf(stdout,
+                "DEBUG: Setting cert key file permissions to %o\n",
+                cert_key_mode);
+    }
     fchmod(fileno(fp), cert_key_mode);
     BIO_free(cert_key_out); cert_key_out = NULL;
 
     ret = EOK;
 done:
+    BIO_free(cert_key_out);
+    BIO_free(cert_out);
     BIO_free(ca_key_out);
     BIO_free(ca_out);
 
