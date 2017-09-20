@@ -22,40 +22,44 @@
 
 #include "include/x509.h"
 
-int main(int argc, char **argv)
+int
+main (int argc, char **argv)
 {
-    int ret;
-    unsigned long val;
-    struct sscg_bignum *serial;
+  int ret;
+  unsigned long val;
+  struct sscg_bignum *serial;
 
-    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
-    if (!tmp_ctx) {
-        return ENOMEM;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+  if (!tmp_ctx)
+    {
+      return ENOMEM;
     }
 
-    printf("Testing sscg_generate_serial. ");
+  printf ("Testing sscg_generate_serial. ");
 
-    ret = sscg_generate_serial(tmp_ctx, &serial);
-    if (ret != EOK) {
-        printf("FAILED.\n");
-        goto done;
+  ret = sscg_generate_serial (tmp_ctx, &serial);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
     }
-    printf("SUCCESS.\n");
+  printf ("SUCCESS.\n");
 
-    printf("Verifying serial initialized to nonzero. ");
-    val = BN_get_word(serial->bn);
-    if (val == 0 || val == 0xffffffffL) {
-        /* If val is zero or out of range for unsigned long,
+  printf ("Verifying serial initialized to nonzero. ");
+  val = BN_get_word (serial->bn);
+  if (val == 0 || val == 0xffffffffL)
+    {
+      /* If val is zero or out of range for unsigned long,
            generation failed somewhere. */
-        printf("FAILED.\n");
-        ret = EINVAL;
-        goto done;
+      printf ("FAILED.\n");
+      ret = EINVAL;
+      goto done;
     }
-    printf("SUCCESS. Value is [%lu]\n", val);
+  printf ("SUCCESS. Value is [%lu]\n", val);
 
-    ret = EOK;
+  ret = EOK;
 
 done:
-    talloc_free(tmp_ctx);
-    return ret;
+  talloc_free (tmp_ctx);
+  return ret;
 }

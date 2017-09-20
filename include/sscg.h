@@ -28,92 +28,110 @@
 #include <stdint.h>
 
 #ifndef _SSCG_H
-# define _SSCG_H
+#define _SSCG_H
 
 /* TODO: implement internationalization */
 
 #ifndef _
-# ifdef HAVE_GETTEXT
-#  define _(STRING) gettext (STRING)
-# else
-#  define _(STRING) STRING
-# endif /* HAVE_GETTEXT */
+#ifdef HAVE_GETTEXT
+#define _(STRING) gettext (STRING)
+#else
+#define _(STRING) STRING
+#endif /* HAVE_GETTEXT */
 #endif /* _ */
 
 #ifndef EOK
-# define EOK 0
+#define EOK 0
 #endif
 
 #ifndef discard_const
-# define discard_const(ptr) ((void *)((uintptr_t)(ptr)))
+#define discard_const(ptr) ((void *)((uintptr_t) (ptr)))
 #endif
 
 #ifndef talloc_zfree
-#define talloc_zfree(ptr) do { talloc_free(discard_const(ptr)); ptr = NULL; } while(0)
+#define talloc_zfree(ptr)                                                     \
+  do                                                                          \
+    {                                                                         \
+      talloc_free (discard_const (ptr));                                      \
+      ptr = NULL;                                                             \
+    }                                                                         \
+  while (0)
 #endif
 
-#define CHECK_MEM(ptr) \
-    do { \
-        if (!ptr) { \
-            ret = ENOMEM; \
-            goto done; \
-        } \
-    } while(0)
+#define CHECK_MEM(ptr)                                                        \
+  do                                                                          \
+    {                                                                         \
+      if (!ptr)                                                               \
+        {                                                                     \
+          ret = ENOMEM;                                                       \
+          goto done;                                                          \
+        }                                                                     \
+    }                                                                         \
+  while (0)
 
-#define CHECK_OK(_ret) \
-    do { \
-        if (_ret != EOK) { \
-            goto done; \
-        } \
-    } while(0)
+#define CHECK_OK(_ret)                                                        \
+  do                                                                          \
+    {                                                                         \
+      if (_ret != EOK)                                                        \
+        {                                                                     \
+          goto done;                                                          \
+        }                                                                     \
+    }                                                                         \
+  while (0)
 
-#define CHECK_SSL(_sslret, _fn) \
-    do { \
-        if (_sslret != 1) { \
-            /* Get information about error from OpenSSL */ \
-            fprintf(stderr, "Error occurred in " #_fn ": [%s].\n", \
-                    ERR_error_string(ERR_get_error(), NULL)); \
-            ret = EIO; \
-            goto done; \
-        } \
-    } while(0)
+#define CHECK_SSL(_sslret, _fn)                                               \
+  do                                                                          \
+    {                                                                         \
+      if (_sslret != 1)                                                       \
+        {                                                                     \
+          /* Get information about error from OpenSSL */                      \
+          fprintf (stderr,                                                    \
+                   "Error occurred in " #_fn ": [%s].\n",                     \
+                   ERR_error_string (ERR_get_error (), NULL));                \
+          ret = EIO;                                                          \
+          goto done;                                                          \
+        }                                                                     \
+    }                                                                         \
+  while (0)
 
-enum sscg_verbosity {
-    SSCG_QUIET = -1,
-    SSCG_DEFAULT,
-    SSCG_VERBOSE,
-    SSCG_DEBUG
+enum sscg_verbosity
+{
+  SSCG_QUIET = -1,
+  SSCG_DEFAULT,
+  SSCG_VERBOSE,
+  SSCG_DEBUG
 };
 
-struct sscg_options {
-    /* How noisy to be when printing information */
-    enum sscg_verbosity verbosity;
+struct sscg_options
+{
+  /* How noisy to be when printing information */
+  enum sscg_verbosity verbosity;
 
-    /* Whether to print the version and exit */
-    bool print_version;
+  /* Whether to print the version and exit */
+  bool print_version;
 
-    /* How long should certificates be valid (in days) */
-    int lifetime;
+  /* How long should certificates be valid (in days) */
+  int lifetime;
 
-    /* Subject information */
-    const char *country;
-    const char *state;
-    const char *locality;
-    const char *org;
-    const char *org_unit;
-    const char *email;
-    const char *hostname;
-    char **subject_alt_names;
+  /* Subject information */
+  const char *country;
+  const char *state;
+  const char *locality;
+  const char *org;
+  const char *org_unit;
+  const char *email;
+  const char *hostname;
+  char **subject_alt_names;
 
-    /* Encryption requirements */
-    int key_strength;
-    const EVP_MD *hash_fn;
+  /* Encryption requirements */
+  int key_strength;
+  const EVP_MD *hash_fn;
 
-    /* Output Files */
-    char *ca_file;
-    char *ca_key_file;
-    char *cert_file;
-    char *cert_key_file;
+  /* Output Files */
+  char *ca_file;
+  char *ca_key_file;
+  char *cert_file;
+  char *cert_key_file;
 };
 
 #endif /* _SSCG_H */

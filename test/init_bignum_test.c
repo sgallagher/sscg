@@ -22,39 +22,43 @@
 
 #include "include/bignum.h"
 
-int main(int argc, char **argv)
+int
+main (int argc, char **argv)
 {
-    int ret;
-    unsigned long val;
-    struct sscg_bignum *bn;
+  int ret;
+  unsigned long val;
+  struct sscg_bignum *bn;
 
-    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
-    if (!tmp_ctx) {
-        return ENOMEM;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+  if (!tmp_ctx)
+    {
+      return ENOMEM;
     }
 
-    printf("Testing sscg_init_bignum. ");
+  printf ("Testing sscg_init_bignum. ");
 
-    ret = sscg_init_bignum(tmp_ctx, 0, &bn);
-    if (ret != EOK) {
-        printf("FAILED.\n");
-        goto done;
+  ret = sscg_init_bignum (tmp_ctx, 0, &bn);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
     }
-    printf("SUCCESS.\n");
+  printf ("SUCCESS.\n");
 
-    printf("Verifying bignum initialized to zero. ");
-    val = BN_get_word(bn->bn);
-    if (val != 0) {
-        /* Bignum should always be initialized to 0 */
-        printf("FAILED.\n");
-        ret = EINVAL;
-        goto done;
+  printf ("Verifying bignum initialized to zero. ");
+  val = BN_get_word (bn->bn);
+  if (val != 0)
+    {
+      /* Bignum should always be initialized to 0 */
+      printf ("FAILED.\n");
+      ret = EINVAL;
+      goto done;
     }
-    printf("SUCCESS.\n");
+  printf ("SUCCESS.\n");
 
-    ret = EOK;
+  ret = EOK;
 
 done:
-    talloc_free(tmp_ctx);
-    return ret;
+  talloc_free (tmp_ctx);
+  return ret;
 }

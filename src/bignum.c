@@ -22,54 +22,58 @@
 #include "include/bignum.h"
 
 static int
-_sscg_bignum_destructor(TALLOC_CTX *mem_ctx)
+_sscg_bignum_destructor (TALLOC_CTX *mem_ctx)
 {
-    struct sscg_bignum *bn =
-        talloc_get_type_abort(mem_ctx, struct sscg_bignum);
+  struct sscg_bignum *bn = talloc_get_type_abort (mem_ctx, struct sscg_bignum);
 
-    BN_free(bn->bn);
+  BN_free (bn->bn);
 
-    return 0;
+  return 0;
 }
 
 int
-sscg_init_bignum(TALLOC_CTX *mem_ctx, unsigned long num,
-                 struct sscg_bignum **bn)
+sscg_init_bignum (TALLOC_CTX *mem_ctx,
+                  unsigned long num,
+                  struct sscg_bignum **bn)
 {
-    int ret = EOK;
-    int sslret;
-    struct sscg_bignum *bignum;
+  int ret = EOK;
+  int sslret;
+  struct sscg_bignum *bignum;
 
-    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
-    if (!tmp_ctx) {
-        return ENOMEM;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+  if (!tmp_ctx)
+    {
+      return ENOMEM;
     }
 
-    bignum = talloc_zero(tmp_ctx, struct sscg_bignum);
-    if (!bignum) {
-        ret = ENOMEM;
-        goto done;
+  bignum = talloc_zero (tmp_ctx, struct sscg_bignum);
+  if (!bignum)
+    {
+      ret = ENOMEM;
+      goto done;
     }
 
-    BIGNUM *sslbn = BN_new();
-    if (!sslbn) {
-        ret = ENOMEM;
-        goto done;
+  BIGNUM *sslbn = BN_new ();
+  if (!sslbn)
+    {
+      ret = ENOMEM;
+      goto done;
     }
 
-    bignum->bn = sslbn;
-    talloc_set_destructor((TALLOC_CTX *)bignum, _sscg_bignum_destructor);
+  bignum->bn = sslbn;
+  talloc_set_destructor ((TALLOC_CTX *)bignum, _sscg_bignum_destructor);
 
-    sslret = BN_set_word(bignum->bn, num);
-    CHECK_SSL(sslret, BN_set_word);
+  sslret = BN_set_word (bignum->bn, num);
+  CHECK_SSL (sslret, BN_set_word);
 
-    ret = EOK;
+  ret = EOK;
 
 done:
-    if (ret == EOK) {
-        *bn = talloc_steal(mem_ctx, bignum);
+  if (ret == EOK)
+    {
+      *bn = talloc_steal (mem_ctx, bignum);
     }
-    talloc_zfree(tmp_ctx);
+  talloc_zfree (tmp_ctx);
 
-    return ret;
+  return ret;
 }

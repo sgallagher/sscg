@@ -25,37 +25,40 @@
 #include "include/key.h"
 
 #ifndef _SSCG_X509_H
-# define _SSCG_X509_H
+#define _SSCG_X509_H
 
-struct sscg_cert_info {
-    /* === Input Data === */
-    struct sscg_bignum *serial;
-    const EVP_MD *hash_fn;
+struct sscg_cert_info
+{
+  /* === Input Data === */
+  struct sscg_bignum *serial;
+  const EVP_MD *hash_fn;
 
-    /* Subject information */
-    const char *country;
-    const char *state;
-    const char *locality;
-    const char *org;
-    const char *org_unit;
-    const char *cn;
-    const char *email;
-    char **subject_alt_names;
+  /* Subject information */
+  const char *country;
+  const char *state;
+  const char *locality;
+  const char *org;
+  const char *org_unit;
+  const char *cn;
+  const char *email;
+  char **subject_alt_names;
 
-    /* X509v3 Extensions */
-    STACK_OF(X509_EXTENSION) *extensions;
+  /* X509v3 Extensions */
+  STACK_OF (X509_EXTENSION) * extensions;
 };
 
 /* Initialize a certificate */
 struct sscg_cert_info *
-sscg_cert_info_new(TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn);
+sscg_cert_info_new (TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn);
 
-struct sscg_x509_req {
-    X509_REQ *x509_req;
+struct sscg_x509_req
+{
+  X509_REQ *x509_req;
 };
 
-struct sscg_x509_cert {
-    X509 *certificate;
+struct sscg_x509_cert
+{
+  X509 *certificate;
 };
 
 /* Generate a random serial number
@@ -65,7 +68,7 @@ struct sscg_x509_cert {
    that it can be returned by BN_get_word().
 */
 int
-sscg_generate_serial(TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
+sscg_generate_serial (TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
 
 
 /* Create a Certificate Signing Request
@@ -74,34 +77,34 @@ sscg_generate_serial(TALLOC_CTX *mem_ctx, struct sscg_bignum **serial);
    If it fails, it will return an errno code and _csr is undefined.
 */
 int
-sscg_x509v3_csr_new(TALLOC_CTX *mem_ctx,
-                    struct sscg_cert_info *certinfo,
-                    struct sscg_evp_pkey *pkey,
-                    struct sscg_x509_req **_csr);
+sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
+                     struct sscg_cert_info *certinfo,
+                     struct sscg_evp_pkey *pkey,
+                     struct sscg_x509_req **_csr);
 
 /* Finish creation of the CSR by adding extensions and self-signing
    the request. */
 int
-sscg_x509v3_csr_finalize(struct sscg_cert_info *certinfo,
-                         struct sscg_evp_pkey *spkey,
-                         struct sscg_x509_req *csr);
+sscg_x509v3_csr_finalize (struct sscg_cert_info *certinfo,
+                          struct sscg_evp_pkey *spkey,
+                          struct sscg_x509_req *csr);
 
 /* Sign a CSR with a private key
  * Returns a signed X509 certificate through the _cert parameter if ret == 0,
  * allocated on mem_ctx. */
 int
-sscg_sign_x509_csr(TALLOC_CTX *mem_ctx,
-                   struct sscg_x509_req *scsr,
-                   struct sscg_bignum *serial,
-                   size_t days,
-                   struct sscg_x509_cert *issuer,
-                   struct sscg_evp_pkey *signing_key,
-                   const EVP_MD *hash_fn,
-                   struct sscg_x509_cert **_cert);
+sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
+                    struct sscg_x509_req *scsr,
+                    struct sscg_bignum *serial,
+                    size_t days,
+                    struct sscg_x509_cert *issuer,
+                    struct sscg_evp_pkey *signing_key,
+                    const EVP_MD *hash_fn,
+                    struct sscg_x509_cert **_cert);
 
 /* Allocate an sscg_x509_cert and set a destructor to clean up the
  * OpenSSL certificate. */
 struct sscg_x509_cert *
-sscg_x509_cert_new(TALLOC_CTX *mem_ctx);
+sscg_x509_cert_new (TALLOC_CTX *mem_ctx);
 
 #endif /* _SSCG_X509_H */

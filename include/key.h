@@ -24,15 +24,18 @@
 #include "include/bignum.h"
 
 #ifndef _SSCG_KEY_H
-# define _SSCG_KEY_H
+#define _SSCG_KEY_H
 
-struct sscg_evp_pkey {
-    EVP_PKEY *evp_pkey;
+struct sscg_evp_pkey
+{
+  EVP_PKEY *evp_pkey;
 };
 
 int
-sscg_generate_rsa_key(TALLOC_CTX *mem_ctx, int bits, struct sscg_bignum *e,
-                      struct sscg_evp_pkey **_key);
+sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
+                       int bits,
+                       struct sscg_bignum *e,
+                       struct sscg_evp_pkey **_key);
 
 
 #endif /* _SSCG_KEY_H */

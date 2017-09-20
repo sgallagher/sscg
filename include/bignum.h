@@ -18,7 +18,7 @@
 */
 
 #ifndef _SSCG_BIGNUM_H
-# define _SSCG_BIGNUM_H
+#define _SSCG_BIGNUM_H
 
 #include <openssl/bn.h>
 #include "sscg.h"
@@ -27,24 +27,26 @@
 /* Add definitions for some helper values added in OpenSSL 1.1.0
    when building against OpenSSL 1.0.2 */
 #ifndef BN_RAND_TOP_ANY
-# define BN_RAND_TOP_ANY -1
+#define BN_RAND_TOP_ANY -1
 #endif
 
 #ifndef BN_RAND_BOTTOM_ANY
-# define BN_RAND_BOTTOM_ANY 0
+#define BN_RAND_BOTTOM_ANY 0
 #endif
 
-struct sscg_bignum {
-    BIGNUM *bn;
+struct sscg_bignum
+{
+  BIGNUM *bn;
 };
 
 
 int
-sscg_bignum_destructor(TALLOC_CTX *mem_ctx);
+sscg_bignum_destructor (TALLOC_CTX *mem_ctx);
 
 int
-sscg_init_bignum(TALLOC_CTX *mem_ctx, unsigned long num,
-                 struct sscg_bignum **bn);
+sscg_init_bignum (TALLOC_CTX *mem_ctx,
+                  unsigned long num,
+                  struct sscg_bignum **bn);
 
 
 #endif /* _SSCG_BIGNUM_H */

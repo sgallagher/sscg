@@ -25,76 +25,81 @@
 #include <include/sscg.h>
 #include <include/x509.h>
 
-int main(int argc, char **argv)
+int
+main (int argc, char **argv)
 {
-    int ret, bits;
-    struct sscg_cert_info *certinfo;
-    struct sscg_bignum *e;
-    struct sscg_x509_req *csr = NULL;
-    struct sscg_evp_pkey *pkey = NULL;
+  int ret, bits;
+  struct sscg_cert_info *certinfo;
+  struct sscg_bignum *e;
+  struct sscg_x509_req *csr = NULL;
+  struct sscg_evp_pkey *pkey = NULL;
 
-    TALLOC_CTX *tmp_ctx = talloc_new(NULL);
-    if (!tmp_ctx) {
-        return ENOMEM;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+  if (!tmp_ctx)
+    {
+      return ENOMEM;
     }
 
-    certinfo = sscg_cert_info_new(tmp_ctx, EVP_sha256());
-    if (!certinfo) {
-        ret = ENOMEM;
-        goto done;
+  certinfo = sscg_cert_info_new (tmp_ctx, EVP_sha256 ());
+  if (!certinfo)
+    {
+      ret = ENOMEM;
+      goto done;
     }
 
-    ret = sscg_generate_serial(tmp_ctx, &certinfo->serial);
-    if (ret != EOK) {
-        printf("FAILED.\n");
-        goto done;
+  ret = sscg_generate_serial (tmp_ctx, &certinfo->serial);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
     }
 
-    /* Create a subject matching the defaults in sscg.c
+  /* Create a subject matching the defaults in sscg.c
        Keep this in sync if defaults change. */
-    certinfo->country = talloc_strdup(certinfo, "US");
-    CHECK_MEM(certinfo->country);
+  certinfo->country = talloc_strdup (certinfo, "US");
+  CHECK_MEM (certinfo->country);
 
-    certinfo->state = talloc_strdup(certinfo, "");
-    CHECK_MEM(certinfo->state);
+  certinfo->state = talloc_strdup (certinfo, "");
+  CHECK_MEM (certinfo->state);
 
-    certinfo->locality = talloc_strdup(certinfo, "");
-    CHECK_MEM(certinfo->locality);
+  certinfo->locality = talloc_strdup (certinfo, "");
+  CHECK_MEM (certinfo->locality);
 
-    certinfo->org = talloc_strdup(certinfo, "Unspecified");
-    CHECK_MEM(certinfo->org);
+  certinfo->org = talloc_strdup (certinfo, "Unspecified");
+  CHECK_MEM (certinfo->org);
 
-    certinfo->org_unit = talloc_strdup(certinfo, "");
-    CHECK_MEM(certinfo->org_unit);
+  certinfo->org_unit = talloc_strdup (certinfo, "");
+  CHECK_MEM (certinfo->org_unit);
 
-    certinfo->cn = talloc_strdup(certinfo, "server.example.com");
-    CHECK_MEM(certinfo->cn);
+  certinfo->cn = talloc_strdup (certinfo, "server.example.com");
+  CHECK_MEM (certinfo->cn);
 
-    /* TODO: include subject alt names */
+  /* TODO: include subject alt names */
 
-    /* Generate an RSA keypair */
-    bits = 4096;
+  /* Generate an RSA keypair */
+  bits = 4096;
 
-    ret = sscg_init_bignum(tmp_ctx, RSA_F4, &e);
-    CHECK_OK(ret);
+  ret = sscg_init_bignum (tmp_ctx, RSA_F4, &e);
+  CHECK_OK (ret);
 
-    ret = sscg_generate_rsa_key(certinfo, bits, e, &pkey);
-    CHECK_OK(ret);
+  ret = sscg_generate_rsa_key (certinfo, bits, e, &pkey);
+  CHECK_OK (ret);
 
-    /* Create the CSR */
-    ret = sscg_x509v3_csr_new(tmp_ctx, certinfo, pkey, &csr);
-    CHECK_OK(ret);
+  /* Create the CSR */
+  ret = sscg_x509v3_csr_new (tmp_ctx, certinfo, pkey, &csr);
+  CHECK_OK (ret);
 
-    ret = sscg_x509v3_csr_finalize(certinfo, pkey, csr);
-    CHECK_OK(ret);
+  ret = sscg_x509v3_csr_finalize (certinfo, pkey, csr);
+  CHECK_OK (ret);
 
-    /* TODO: compare subject values */
+  /* TODO: compare subject values */
 
-    ret = EOK;
+  ret = EOK;
 done:
-    if (ret != EOK) {
-        fprintf(stderr, "FAILURE: %s", strerror(ret));
+  if (ret != EOK)
+    {
+      fprintf (stderr, "FAILURE: %s", strerror (ret));
     }
-    talloc_free(tmp_ctx);
-    return ret;
+  talloc_free (tmp_ctx);
+  return ret;
 }

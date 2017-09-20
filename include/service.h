@@ -22,14 +22,14 @@
 #include "key.h"
 
 #ifndef _SERVICE_H
-# define _SERVICE_H
+#define _SERVICE_H
 
 int
-create_service_cert(TALLOC_CTX                 *mem_ctx,
-                    const struct sscg_options  *options,
-                    struct sscg_x509_cert      *ca_cert,
-                    struct sscg_evp_pkey       *ca_key,
-                    struct sscg_x509_cert     **_svc_cert,
-                    struct sscg_evp_pkey      **_svc_key);
+create_service_cert (TALLOC_CTX *mem_ctx,
+                     const struct sscg_options *options,
+                     struct sscg_x509_cert *ca_cert,
+                     struct sscg_evp_pkey *ca_key,
+                     struct sscg_x509_cert **_svc_cert,
+                     struct sscg_evp_pkey **_svc_key);
 
 #endif /* _SERVICE_H */
