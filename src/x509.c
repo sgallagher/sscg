@@ -197,6 +197,15 @@ sscg_x509v3_csr_new(TALLOC_CTX *mem_ctx,
              (const unsigned char*)certinfo->cn, -1, -1, 0);
     CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(CN));
 
+    /* Email Address */
+    if (certinfo->email && certinfo->email[0]) {
+        sslret = X509_NAME_add_entry_by_NID(subject,
+                                            NID_pkcs9_emailAddress,
+                                            MBSTRING_UTF8,
+                 (const unsigned char*)certinfo->email, -1, -1, 0);
+        CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(Email));
+    }
+
     /* SubjectAltNames */
     alt_name = talloc_asprintf(tmp_ctx, "DNS:%s", certinfo->cn);
     CHECK_MEM(alt_name);

@@ -68,6 +68,9 @@ create_service_cert(TALLOC_CTX                 *mem_ctx,
     svc_certinfo->org_unit = talloc_strdup(svc_certinfo, options->org_unit);
     CHECK_MEM(svc_certinfo->org_unit);
 
+    svc_certinfo->email = talloc_strdup(svc_certinfo, options->email);
+    CHECK_MEM(svc_certinfo->email);
+
     svc_certinfo->cn = talloc_strdup(svc_certinfo, options->hostname);
     CHECK_MEM(svc_certinfo->cn);
 

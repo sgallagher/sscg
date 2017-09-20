@@ -101,6 +101,7 @@ struct sscg_options {
     const char *locality;
     const char *org;
     const char *org_unit;
+    const char *email;
     const char *hostname;
     char **subject_alt_names;
 

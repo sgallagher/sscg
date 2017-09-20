@@ -51,6 +51,7 @@ print_options(struct sscg_options *opts)
     fprintf(stdout, "Locality: \"%s\"\n", opts->locality);
     fprintf(stdout, "Organization: \"%s\"\n", opts->org);
     fprintf(stdout, "Organizational Unit: \"%s\"\n", opts->org_unit);
+    fprintf(stdout, "Email Address: \"%s\"\n", opts->email);
     fprintf(stdout, "Hostname: \"%s\"\n", opts->hostname);
     if (opts->subject_alt_names) {
         for (i = 0; opts->subject_alt_names[i]; i++) {
@@ -115,6 +116,7 @@ main(int argc, const char **argv)
     char *locality = NULL;
     char *organization = NULL;
     char *organizational_unit = NULL;
+    char *email = NULL;
     char *hostname = NULL;
     char *packagename;
     char *hash_alg = NULL;
@@ -189,6 +191,9 @@ main(int argc, const char **argv)
         {"organizational-unit", '\0', POPT_ARG_STRING, &organizational_unit, 0,
          _("Certificate DN: Organizational Unit (OU)."),
          _("Engineering, etc.")},
+        {"email", '\0', POPT_ARG_STRING, &email, 0,
+         _("Certificate DN: Email Address (Email)."),
+         _("myname@example.com")},
         {"hostname", '\0', POPT_ARG_STRING, &hostname, 0,
          _("The valid hostname of the certificate. Must be an FQDN. (default: current system FQDN)"),
          _("server.example.com")},
@@ -308,6 +313,13 @@ main(int argc, const char **argv)
         options->org_unit = talloc_strdup(options, "");
     }
     CHECK_MEM(options->org_unit);
+
+    if (email) {
+        options->email = talloc_strdup(options, email);
+    } else {
+        options->email = talloc_strdup(options, "");
+    }
+    CHECK_MEM(options->email);
 
     if (hostname) {
         options->hostname = talloc_strdup(options, hostname);
