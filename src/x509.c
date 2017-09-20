@@ -148,42 +148,54 @@ sscg_x509v3_csr_new(TALLOC_CTX *mem_ctx,
     subject = X509_REQ_get_subject_name(csr->x509_req);
 
     /* Country */
-    sslret = X509_NAME_add_entry_by_txt(subject, "C", MBSTRING_UTF8,
+    sslret = X509_NAME_add_entry_by_NID(subject,
+                                        NID_countryName,
+                                        MBSTRING_UTF8,
              (const unsigned char*)certinfo->country, -1, -1, 0);
-    CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(C));
+    CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(C));
 
     /* State or Principality */
     if (certinfo->state && certinfo->state[0]) {
-        sslret = X509_NAME_add_entry_by_txt(subject, "ST", MBSTRING_UTF8,
+        sslret = X509_NAME_add_entry_by_NID(subject,
+                                            NID_stateOrProvinceName,
+                                            MBSTRING_UTF8,
                  (const unsigned char*)certinfo->state, -1, -1, 0);
-        CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(ST));
+        CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(ST));
     }
 
     /* Locality */
     if (certinfo->locality && certinfo->locality[0]) {
-        sslret = X509_NAME_add_entry_by_txt(subject, "L", MBSTRING_UTF8,
+        sslret = X509_NAME_add_entry_by_NID(subject,
+                                            NID_localityName,
+                                            MBSTRING_UTF8,
                  (const unsigned char*)certinfo->locality, -1, -1, 0);
-        CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(L));
+        CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(L));
     }
 
     /* Organization */
     if (certinfo->org && certinfo->org[0]) {
-        sslret = X509_NAME_add_entry_by_txt(subject, "O", MBSTRING_UTF8,
+        sslret = X509_NAME_add_entry_by_NID(subject,
+                                            NID_organizationName,
+                                            MBSTRING_UTF8,
                  (const unsigned char*)certinfo->org, -1, -1, 0);
-        CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(O));
+        CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(O));
     }
 
     /* Organizational Unit */
     if (certinfo->org_unit && certinfo->org_unit[0]) {
-        sslret = X509_NAME_add_entry_by_txt(subject, "OU", MBSTRING_UTF8,
+        sslret = X509_NAME_add_entry_by_NID(subject,
+                                            NID_organizationalUnitName,
+                                            MBSTRING_UTF8,
                  (const unsigned char*)certinfo->org_unit, -1, -1, 0);
-        CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(OU));
+        CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(OU));
     }
 
     /* Common Name */
-    sslret = X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_UTF8,
+    sslret = X509_NAME_add_entry_by_NID(subject,
+                                        NID_commonName,
+                                        MBSTRING_UTF8,
              (const unsigned char*)certinfo->cn, -1, -1, 0);
-    CHECK_SSL(sslret, X509_NAME_add_entry_by_txt(CN));
+    CHECK_SSL(sslret, X509_NAME_add_entry_by_NID(CN));
 
     /* SubjectAltNames */
     alt_name = talloc_asprintf(tmp_ctx, "DNS:%s", certinfo->cn);
