@@ -531,6 +531,8 @@ main (int argc, const char **argv)
   if (!options->hash_fn)
     {
       fprintf (stderr, "Unsupported hashing algorithm.");
+      ret = EINVAL;
+      goto done;
     }
 
   /* On verbose logging, display all of the selected options. */
