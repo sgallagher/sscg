@@ -563,6 +563,28 @@ main (int argc, const char **argv)
 
   poptFreeContext (pc);
 
+  /* Validate the file paths */
+
+  /* Only one key can exist in a single file */
+  if (options->ca_key_file &&
+      strcmp (options->ca_key_file, options->cert_key_file) == 0)
+    {
+      fprintf (stderr,
+               "Certificate key and CA key may not be in the same file.\n");
+      ret = EINVAL;
+      goto done;
+    }
+
+  /* The CA key must not be in the same file as the service cert */
+  if (options->ca_key_file &&
+      strcmp (options->ca_key_file, options->cert_file) == 0)
+    {
+      fprintf (stderr,
+               "CA key and service certificate may not be in the same file.\n");
+      ret = EINVAL;
+      goto done;
+    }
+
   /* Generate the private CA for the certificate */
   ret = create_private_CA (main_ctx, options, &cacert, &cakey);
   CHECK_OK (ret);
@@ -574,23 +596,135 @@ main (int argc, const char **argv)
 
 
   /* ==== Output the final files ==== */
+
+  /* Create certificate private key file */
+  if (options->verbosity >= SSCG_DEFAULT)
+    {
+      fprintf (
+        stdout, "Writing svc private key to %s \n", options->cert_key_file);
+    }
+
+  cert_key_out = BIO_new_file (options->cert_key_file, "w");
+  CHECK_MEM (cert_key_out);
+
+  sret = PEM_write_bio_PrivateKey (
+    cert_key_out, svc_key->evp_pkey, NULL, NULL, 0, NULL, NULL);
+  CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
+  BIO_get_fp (cert_key_out, &fp);
+
+  if (options->verbosity >= SSCG_DEBUG)
+    {
+      fprintf (stdout,
+               "DEBUG: Setting svc key file permissions to %o\n",
+               cert_key_mode);
+    }
+  fchmod (fileno (fp), cert_key_mode);
+
+  BIO_free (cert_key_out);
+  cert_key_out = NULL;
+
+
+  /* Create service public certificate */
+  if (options->verbosity >= SSCG_DEFAULT)
+    {
+      fprintf (stdout,
+               "Writing service public certificate to %s\n",
+               options->cert_file);
+    }
+  if (strcmp (options->cert_key_file, options->cert_file) == 0)
+    {
+      cert_out = BIO_new_file (options->cert_file, "a");
+    }
+  else
+    {
+      cert_out = BIO_new_file (options->cert_file, "w");
+    }
+  CHECK_MEM (cert_out);
+
+  sret = PEM_write_bio_X509 (cert_out, svc_cert->certificate);
+  CHECK_SSL (sret, PEM_write_bio_X509 (svc));
+  BIO_get_fp (cert_out, &fp);
+
+  /* If this file matches the keyfile, do not set its permissions */
+  if (strcmp (options->cert_file, options->cert_key_file) == 0)
+    {
+      if (options->verbosity >= SSCG_DEBUG)
+        {
+          fprintf (stdout,
+                   "DEBUG: Not setting service cert file permissions: "
+                   "superseded by the key\n");
+        }
+    }
+  else
+    {
+      if (options->verbosity >= SSCG_DEBUG)
+        {
+          fprintf (stdout,
+                   "DEBUG: Setting service cert file permissions to %o\n",
+                   cert_mode);
+        }
+      fchmod (fileno (fp), cert_mode);
+    }
+  BIO_free (cert_out);
+  cert_out = NULL;
+
+
+  /* Create CA private key, if requested */
+  if (options->ca_key_file)
+    {
+      if (options->verbosity >= SSCG_DEFAULT)
+        {
+          fprintf (
+            stdout, "Writing CA private key to %s\n", options->ca_key_file);
+        }
+      if (strcmp (options->ca_file, options->ca_key_file) == 0)
+        {
+          ca_key_out = BIO_new_file (options->ca_key_file, "a");
+        }
+      else
+        {
+          ca_key_out = BIO_new_file (options->ca_key_file, "w");
+        }
+      CHECK_MEM (ca_key_out);
+
+      sret = PEM_write_bio_PrivateKey (
+        ca_key_out, cakey->evp_pkey, NULL, NULL, 0, NULL, NULL);
+      CHECK_SSL (sret, PEM_write_bio_PrivateKey (CA));
+      BIO_get_fp (ca_key_out, &fp);
+      if (options->verbosity >= SSCG_DEBUG)
+        {
+          fprintf (stdout,
+                   "DEBUG: Setting CA key file permissions to %o\n",
+                   ca_key_mode);
+        }
+      fchmod (fileno (fp), ca_key_mode);
+      BIO_free (ca_key_out);
+      ca_key_out = NULL;
+    }
+
+
+  /* Create CA public certificate */
   if (options->verbosity >= SSCG_DEFAULT)
     {
       fprintf (
         stdout, "Writing CA public certificate to %s\n", options->ca_file);
     }
-  ca_out = BIO_new_file (options->ca_file, "w");
+  if (strcmp (options->ca_file, options->cert_file) == 0)
+    {
+      ca_out = BIO_new_file (options->ca_file, "a");
+    }
+  else
+    {
+      ca_out = BIO_new_file (options->ca_file, "w");
+    }
   CHECK_MEM (ca_out);
 
   sret = PEM_write_bio_X509 (ca_out, cacert->certificate);
   CHECK_SSL (sret, PEM_write_bio_X509 (CA));
   BIO_get_fp (ca_out, &fp);
-
-  /* If this file matches either of the keyfiles, do not set its
-       permissions */
-  if (strcmp (options->ca_file, options->cert_key_file) == 0 ||
-      (options->ca_key_file &&
-       strcmp (options->ca_file, options->ca_key_file) == 0))
+  /* If this file matches the keyfile, do not set its permissions */
+  if (options->ca_key_file &&
+      strcmp (options->ca_file, options->ca_key_file) == 0)
     {
       if (options->verbosity >= SSCG_DEBUG)
         {
@@ -608,115 +742,9 @@ main (int argc, const char **argv)
         }
       fchmod (fileno (fp), ca_mode);
     }
-  BIO_free (ca_out);
-  ca_out = NULL;
-
-  if (options->ca_key_file)
-    {
-      if (options->verbosity >= SSCG_DEFAULT)
-        {
-          fprintf (
-            stdout, "Writing CA private key to %s \n", options->ca_key_file);
-        }
-      if (strcmp (options->ca_key_file, options->ca_file) == 0)
-        {
-          ca_key_out = BIO_new_file (options->ca_key_file, "a");
-        }
-      else
-        {
-          ca_key_out = BIO_new_file (options->ca_key_file, "w");
-        }
-      CHECK_MEM (ca_key_out);
-
-      sret = PEM_write_bio_PrivateKey (
-        ca_key_out, cakey->evp_pkey, NULL, NULL, 0, NULL, NULL);
-      CHECK_SSL (sret, PEM_write_bio_PrivateKey (CA));
-      BIO_get_fp (ca_key_out, &fp);
-
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (stdout,
-                   "DEBUG: Setting CA key file permissions to %o\n",
-                   ca_key_mode);
-        }
-      fchmod (fileno (fp), ca_key_mode);
-
-      BIO_free (ca_key_out);
-      ca_key_out = NULL;
-    }
-
-  if (options->verbosity >= SSCG_DEFAULT)
-    {
-      fprintf (stdout,
-               "Writing service public certificate to %s\n",
-               options->cert_file);
-    }
-  if (strcmp (options->ca_file, options->cert_file) == 0)
-    {
-      cert_out = BIO_new_file (options->cert_file, "a");
-    }
-  else
-    {
-      cert_out = BIO_new_file (options->cert_file, "w");
-    }
-  CHECK_MEM (cert_out);
-
-  sret = PEM_write_bio_X509 (cert_out, svc_cert->certificate);
-  CHECK_SSL (sret, PEM_write_bio_X509 (svc));
-  BIO_get_fp (cert_out, &fp);
-  /* If this file matches either of the keyfiles, do not set its
-       permissions */
-  if (strcmp (options->cert_file, options->cert_key_file) == 0 ||
-      (options->ca_key_file &&
-       strcmp (options->cert_file, options->ca_key_file) == 0))
-    {
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (
-            stdout,
-            "DEBUG: Not setting cert file permissions: superseded by a key\n");
-        }
-    }
-  else
-    {
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (
-            stdout, "DEBUG: Setting cert file permissions to %o\n", cert_mode);
-        }
-      fchmod (fileno (fp), cert_mode);
-    }
   BIO_free (cert_out);
   cert_out = NULL;
 
-  if (options->verbosity >= SSCG_DEFAULT)
-    {
-      fprintf (
-        stdout, "Writing service private key to %s\n", options->cert_key_file);
-    }
-  if (strcmp (options->cert_file, options->cert_key_file) == 0)
-    {
-      cert_key_out = BIO_new_file (options->cert_key_file, "a");
-    }
-  else
-    {
-      cert_key_out = BIO_new_file (options->cert_key_file, "w");
-    }
-  CHECK_MEM (cert_key_out);
-
-  sret = PEM_write_bio_PrivateKey (
-    cert_key_out, svc_key->evp_pkey, NULL, NULL, 0, NULL, NULL);
-  CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
-  BIO_get_fp (cert_key_out, &fp);
-  if (options->verbosity >= SSCG_DEBUG)
-    {
-      fprintf (stdout,
-               "DEBUG: Setting cert key file permissions to %o\n",
-               cert_key_mode);
-    }
-  fchmod (fileno (fp), cert_key_mode);
-  BIO_free (cert_key_out);
-  cert_key_out = NULL;
 
   ret = EOK;
 done:
