@@ -38,8 +38,15 @@ endforeach
 pkg = import('pkgconfig')
 crypto = dependency('libcrypto')
 path_utils = dependency('path_utils')
-popt = dependency('popt')
 talloc = dependency('talloc')
+
+popt = dependency(
+    'popt',
+    required : false)
+if popt.found()
+else
+    popt = cc.find_library('popt')
+endif
 
 sscg_lib_srcs = [
     'src/authority.c',
