@@ -20,6 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include <string.h>
 #include "include/sscg.h"
 #include "include/key.h"
 #include "include/x509.h"
@@ -129,6 +130,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   X509_NAME *subject;
   char *alt_name = NULL;
   char *tmp = NULL;
+  char *san = NULL;
   TALLOC_CTX *tmp_ctx;
   X509_EXTENSION *ex = NULL;
   struct sscg_x509_req *csr;
@@ -255,8 +257,20 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
     {
       for (i = 0; certinfo->subject_alt_names[i]; i++)
         {
+          if (!strchr(certinfo->subject_alt_names[i], ':'))
+            {
+              san = talloc_asprintf(tmp_ctx, "DNS:%s",
+                                    certinfo->subject_alt_names[i]);
+            }
+          else
+            {
+              san = talloc_strdup(tmp_ctx, certinfo->subject_alt_names[i]);
+            }
+          CHECK_MEM(san);
+
           tmp = talloc_asprintf (
-            tmp_ctx, "%s, DNS:%s", alt_name, certinfo->subject_alt_names[i]);
+            tmp_ctx, "%s, %s", alt_name, san);
+          talloc_zfree(san);
           CHECK_MEM (tmp);
           talloc_free (alt_name);
           alt_name = tmp;

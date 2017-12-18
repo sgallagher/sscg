@@ -17,6 +17,7 @@
     Copyright 2017 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
+#include <string.h>
 #include "include/sscg.h"
 #include "include/authority.h"
 #include "include/x509.h"
@@ -41,6 +42,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   X509_EXTENSION *ex = NULL;
   X509V3_CTX xctx;
   char *name_constraint;
+  char *san;
   char *tmp;
 
   tmp_ctx = talloc_new (NULL);
@@ -105,10 +107,22 @@ create_private_CA (TALLOC_CTX *mem_ctx,
     {
       for (i = 0; options->subject_alt_names[i]; i++)
         {
+          if (!strchr(options->subject_alt_names[i], ':'))
+            {
+              san = talloc_asprintf(tmp_ctx, "DNS:%s",
+                                    options->subject_alt_names[i]);
+            }
+          else
+            {
+              san = talloc_strdup(tmp_ctx, options->subject_alt_names[i]);
+            }
+          CHECK_MEM(san);
+
           tmp = talloc_asprintf (tmp_ctx,
-                                 "%s, permitted;DNS:%s",
+                                 "%s, permitted;%s",
                                  name_constraint,
-                                 options->subject_alt_names[i]);
+                                 san);
+          talloc_zfree(san);
           CHECK_MEM (tmp);
           talloc_free (name_constraint);
           name_constraint = tmp;
@@ -116,7 +130,12 @@ create_private_CA (TALLOC_CTX *mem_ctx,
     }
 
   ex = X509V3_EXT_conf_nid (NULL, NULL, NID_name_constraints, name_constraint);
-  CHECK_MEM (ex);
+  if (!ex)
+    {
+      ret = EINVAL;
+      fprintf(stderr, "Invalid name constraint: %s\n", name_constraint);
+      goto done;
+    }
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
   talloc_free (name_constraint);
 
