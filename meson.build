@@ -9,9 +9,6 @@ project('sscg', 'c',
         license : 'MIT',
         meson_version : '>=0.36.0')
 
-sscg_version = '2.3.0'
-
-
 cc = meson.get_compiler('c')
 test_cflags = [
   '-Wpointer-arith',
