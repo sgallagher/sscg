@@ -57,7 +57,7 @@ sscg_lib_srcs = [
 ]
 
 sscg_lib_hdrs = [
-    'include/authority.c',
+    'include/authority.h',
     'include/bignum.h',
     'include/key.h',
     'include/service.h',
