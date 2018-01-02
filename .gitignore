@@ -15,10 +15,8 @@ dist
 /*.crt
 /*.pem
 ABOUT-NLS
-Makefile.in
 aclocal.m4
 autom4te.cache/
-configure
 m4/codeset.m4
 m4/glibc2.m4
 m4/glibc21.m4
