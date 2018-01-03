@@ -609,7 +609,7 @@ main (int argc, const char **argv)
     }
 
   cert_key_out = BIO_new_file (options->cert_key_file, "w");
-  CHECK_MEM (cert_key_out);
+  CHECK_BIO (cert_key_out, options->cert_key_file);
 
   sret = PEM_write_bio_PrivateKey (
     cert_key_out, svc_key->evp_pkey, NULL, NULL, 0, NULL, NULL);
@@ -643,7 +643,7 @@ main (int argc, const char **argv)
     {
       cert_out = BIO_new_file (options->cert_file, "w");
     }
-  CHECK_MEM (cert_out);
+  CHECK_BIO (cert_out, options->cert_file);
 
   sret = PEM_write_bio_X509 (cert_out, svc_cert->certificate);
   CHECK_SSL (sret, PEM_write_bio_X509 (svc));
@@ -689,7 +689,7 @@ main (int argc, const char **argv)
         {
           ca_key_out = BIO_new_file (options->ca_key_file, "w");
         }
-      CHECK_MEM (ca_key_out);
+      CHECK_BIO (ca_key_out, options->ca_key_file);
 
       sret = PEM_write_bio_PrivateKey (
         ca_key_out, cakey->evp_pkey, NULL, NULL, 0, NULL, NULL);
@@ -721,7 +721,7 @@ main (int argc, const char **argv)
     {
       ca_out = BIO_new_file (options->ca_file, "w");
     }
-  CHECK_MEM (ca_out);
+  CHECK_BIO (ca_out, options->ca_file);
 
   sret = PEM_write_bio_X509 (ca_out, cacert->certificate);
   CHECK_SSL (sret, PEM_write_bio_X509 (CA));

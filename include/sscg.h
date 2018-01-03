@@ -94,6 +94,20 @@
     }                                                                         \
   while (0)
 
+#define CHECK_BIO(ptr, file)                                                  \
+  do                                                                          \
+    {                                                                         \
+      if (!ptr)                                                               \
+        {                                                                     \
+          ret = errno;                                                        \
+          fprintf (stderr,                                                    \
+                   "Could not write to %s. Check directory permissions.\n",   \
+                   file);                                                     \
+          goto done;                                                          \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+
 enum sscg_verbosity
 {
   SSCG_QUIET = -1,
