@@ -107,22 +107,20 @@ create_private_CA (TALLOC_CTX *mem_ctx,
     {
       for (i = 0; options->subject_alt_names[i]; i++)
         {
-          if (!strchr(options->subject_alt_names[i], ':'))
+          if (!strchr (options->subject_alt_names[i], ':'))
             {
-              san = talloc_asprintf(tmp_ctx, "DNS:%s",
-                                    options->subject_alt_names[i]);
+              san = talloc_asprintf (
+                tmp_ctx, "DNS:%s", options->subject_alt_names[i]);
             }
           else
             {
-              san = talloc_strdup(tmp_ctx, options->subject_alt_names[i]);
+              san = talloc_strdup (tmp_ctx, options->subject_alt_names[i]);
             }
-          CHECK_MEM(san);
+          CHECK_MEM (san);
 
-          tmp = talloc_asprintf (tmp_ctx,
-                                 "%s, permitted;%s",
-                                 name_constraint,
-                                 san);
-          talloc_zfree(san);
+          tmp = talloc_asprintf (
+            tmp_ctx, "%s, permitted;%s", name_constraint, san);
+          talloc_zfree (san);
           CHECK_MEM (tmp);
           talloc_free (name_constraint);
           name_constraint = tmp;
@@ -133,7 +131,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   if (!ex)
     {
       ret = EINVAL;
-      fprintf(stderr, "Invalid name constraint: %s\n", name_constraint);
+      fprintf (stderr, "Invalid name constraint: %s\n", name_constraint);
       goto done;
     }
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);

@@ -582,8 +582,9 @@ main (int argc, const char **argv)
   if (options->ca_key_file &&
       strcmp (options->ca_key_file, options->cert_file) == 0)
     {
-      fprintf (stderr,
-               "CA key and service certificate may not be in the same file.\n");
+      fprintf (
+        stderr,
+        "CA key and service certificate may not be in the same file.\n");
       ret = EINVAL;
       goto done;
     }

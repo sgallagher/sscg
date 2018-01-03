@@ -257,20 +257,19 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
     {
       for (i = 0; certinfo->subject_alt_names[i]; i++)
         {
-          if (!strchr(certinfo->subject_alt_names[i], ':'))
+          if (!strchr (certinfo->subject_alt_names[i], ':'))
             {
-              san = talloc_asprintf(tmp_ctx, "DNS:%s",
-                                    certinfo->subject_alt_names[i]);
+              san = talloc_asprintf (
+                tmp_ctx, "DNS:%s", certinfo->subject_alt_names[i]);
             }
           else
             {
-              san = talloc_strdup(tmp_ctx, certinfo->subject_alt_names[i]);
+              san = talloc_strdup (tmp_ctx, certinfo->subject_alt_names[i]);
             }
-          CHECK_MEM(san);
+          CHECK_MEM (san);
 
-          tmp = talloc_asprintf (
-            tmp_ctx, "%s, %s", alt_name, san);
-          talloc_zfree(san);
+          tmp = talloc_asprintf (tmp_ctx, "%s, %s", alt_name, san);
+          talloc_zfree (san);
           CHECK_MEM (tmp);
           talloc_free (alt_name);
           alt_name = tmp;
