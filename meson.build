@@ -39,10 +39,14 @@ talloc = dependency('talloc')
 
 popt = dependency(
     'popt',
+    version : '>=1.14',
     required : false)
+
 if popt.found()
+    popt_incdirs = include_directories('.')
 else
-    popt = cc.find_library('popt')
+    popt = subproject('popt').get_variable('libpopt_a')
+    popt_incdirs = include_directories('subprojects/popt')
 endif
 
 sscg_lib_srcs = [
@@ -81,6 +85,7 @@ sscg = executable(
             popt,
             talloc,
         ],
+    include_directories : popt_incdirs,
     install : true,
 )
 

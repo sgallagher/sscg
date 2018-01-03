@@ -1,0 +1,3 @@
+[submodule "subprojects/popt"]
+	path = subprojects/popt
+	url = https://github.com/sgallagher/POPT.git
