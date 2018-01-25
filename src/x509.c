@@ -20,6 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include <sys/param.h>
 #include <string.h>
 #include "include/sscg.h"
 #include "include/key.h"
@@ -267,6 +268,16 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
               san = talloc_strdup (tmp_ctx, certinfo->subject_alt_names[i]);
             }
           CHECK_MEM (san);
+
+          if (strnlen (san, MAXHOSTNAMELEN + 5) > MAXHOSTNAMELEN + 4)
+            {
+              fprintf (stderr,
+                       "Hostnames may not exceed %d characters in Subject "
+                       "Alternative Names\n",
+                       MAXHOSTNAMELEN);
+              ret = EINVAL;
+              goto done;
+            }
 
           tmp = talloc_asprintf (tmp_ctx, "%s, %s", alt_name, san);
           talloc_zfree (san);

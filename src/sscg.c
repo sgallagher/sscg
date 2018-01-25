@@ -25,6 +25,7 @@
 #include <path_utils.h>
 #include <unistd.h>
 #include <openssl/evp.h>
+#include <sys/param.h>
 
 #include "config.h"
 #include "include/sscg.h"
@@ -487,6 +488,14 @@ main (int argc, const char **argv)
       options->hostname = hostname;
     }
   CHECK_MEM (options->hostname);
+
+  if (strnlen (options->hostname, MAXHOSTNAMELEN + 1) > MAXHOSTNAMELEN)
+    {
+      fprintf (
+        stderr, "Hostnames may not exceed %d characters\n", MAXHOSTNAMELEN);
+      ret = EINVAL;
+      goto done;
+    }
 
   /* Use a realloc loop to copy the names from popt into the
        options struct. It's not the most efficient approach, but
