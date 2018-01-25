@@ -68,14 +68,14 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   ca_certinfo->org = talloc_strdup (ca_certinfo, options->org);
   CHECK_MEM (ca_certinfo->org);
 
-  ca_certinfo->org_unit = talloc_strdup (ca_certinfo, options->org_unit);
-  CHECK_MEM (ca_certinfo->org_unit);
+  ca_certinfo->org_unit =
+    talloc_asprintf (ca_certinfo, "ca-%lu", BN_get_word (serial->bn));
+
 
   ca_certinfo->email = talloc_strdup (ca_certinfo, options->email);
   CHECK_MEM (ca_certinfo->email);
 
-  ca_certinfo->cn = talloc_asprintf (
-    ca_certinfo, "ca-%lu.%s", BN_get_word (serial->bn), options->hostname);
+  ca_certinfo->cn = talloc_strdup (ca_certinfo, options->hostname);
   CHECK_MEM (ca_certinfo->cn);
 
   /* Make this a CA certificate */
@@ -94,12 +94,10 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   CHECK_MEM (ex);
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
 
-  /* Restrict signing to itself and the subjectAltNames of the
+  /* Restrict signing to the hostname and subjectAltNames of the
        service certificate */
   name_constraint = talloc_asprintf (tmp_ctx,
-                                     "permitted;DNS:%s, "
                                      "permitted;DNS:%s",
-                                     ca_certinfo->cn,
                                      options->hostname);
   CHECK_MEM (name_constraint);
 
