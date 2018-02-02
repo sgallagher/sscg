@@ -146,6 +146,9 @@ struct sscg_options
   char *ca_key_file;
   char *cert_file;
   char *cert_key_file;
+
+  /* Overwrite the output files */
+  bool overwrite;
 };
 
 #endif /* _SSCG_H */

@@ -139,6 +139,8 @@ main (int argc, const char **argv)
   int cert_mode = 0644;
   int cert_key_mode = 0600;
 
+  char *create_mode = NULL;
+
   struct sscg_x509_cert *cacert;
   struct sscg_evp_pkey *cakey;
   struct sscg_x509_cert *svc_cert;
@@ -200,6 +202,13 @@ main (int argc, const char **argv)
       &options->print_version,
       0,
       _ ("Display the version number and exit."),
+      NULL },
+    { "force",
+      'f',
+      POPT_ARG_NONE,
+      &options->overwrite,
+      0,
+      _ ("Overwrite any pre-existing files in the requested locations"),
       NULL },
     { "lifetime",
       '\0',
@@ -610,6 +619,17 @@ main (int argc, const char **argv)
 
   /* ==== Output the final files ==== */
 
+  /* Set the file-creation mode */
+  if (options->overwrite)
+    {
+      create_mode = talloc_strdup (main_ctx, "w");
+    }
+  else
+    {
+      create_mode = talloc_strdup (main_ctx, "wx");
+    }
+  CHECK_MEM (create_mode);
+
   /* Create certificate private key file */
   if (options->verbosity >= SSCG_DEFAULT)
     {
@@ -617,7 +637,7 @@ main (int argc, const char **argv)
         stdout, "Writing svc private key to %s \n", options->cert_key_file);
     }
 
-  cert_key_out = BIO_new_file (options->cert_key_file, "w");
+  cert_key_out = BIO_new_file (options->cert_key_file, create_mode);
   CHECK_BIO (cert_key_out, options->cert_key_file);
 
   sret = PEM_write_bio_PrivateKey (
@@ -650,7 +670,7 @@ main (int argc, const char **argv)
     }
   else
     {
-      cert_out = BIO_new_file (options->cert_file, "w");
+      cert_out = BIO_new_file (options->cert_file, create_mode);
     }
   CHECK_BIO (cert_out, options->cert_file);
 
@@ -696,7 +716,7 @@ main (int argc, const char **argv)
         }
       else
         {
-          ca_key_out = BIO_new_file (options->ca_key_file, "w");
+          ca_key_out = BIO_new_file (options->ca_key_file, create_mode);
         }
       CHECK_BIO (ca_key_out, options->ca_key_file);
 
@@ -728,7 +748,7 @@ main (int argc, const char **argv)
     }
   else
     {
-      ca_out = BIO_new_file (options->ca_file, "w");
+      ca_out = BIO_new_file (options->ca_file, create_mode);
     }
   CHECK_BIO (ca_out, options->ca_file);
 
