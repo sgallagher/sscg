@@ -96,9 +96,8 @@ create_private_CA (TALLOC_CTX *mem_ctx,
 
   /* Restrict signing to the hostname and subjectAltNames of the
        service certificate */
-  name_constraint = talloc_asprintf (tmp_ctx,
-                                     "permitted;DNS:%s",
-                                     options->hostname);
+  name_constraint =
+    talloc_asprintf (tmp_ctx, "permitted;DNS:%s", options->hostname);
   CHECK_MEM (name_constraint);
 
   if (options->subject_alt_names)
