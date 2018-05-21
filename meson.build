@@ -49,6 +49,10 @@ else
     popt_incdirs = include_directories('subprojects/popt')
 endif
 
+sscg_bin_srcs = [
+    'src/sscg.c',
+]
+
 sscg_lib_srcs = [
     'src/authority.c',
     'src/bignum.c',
@@ -78,7 +82,7 @@ sscg_lib = static_library(
 
 sscg = executable(
     'sscg',
-    'src/sscg.c',
+    sscg_bin_srcs,
     link_with : sscg_lib,
         dependencies : [
             path_utils,
@@ -88,6 +92,12 @@ sscg = executable(
     include_directories : popt_incdirs,
     install : true,
 )
+
+# Fake test to ensure that all sources and headers are formatted properly
+test_clang_format = find_program('clang-format')
+clang_args = [ '-i' ]
+test('test_clang_format', test_clang_format,
+     args : clang_args + files(sscg_lib_srcs + sscg_lib_hdrs + sscg_bin_srcs))
 
 create_ca_test = executable(
     'create_ca_test',
