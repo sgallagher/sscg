@@ -174,13 +174,13 @@ main (int argc, const char **argv)
 
   options->verbosity = SSCG_DEFAULT;
   struct poptOption long_options[] = {
-    POPT_AUTOHELP{ "quiet",
-                   'q',
-                   POPT_ARG_VAL,
-                   &options->verbosity,
-                   SSCG_QUIET,
-                   _ ("Display no output unless there is an error."),
-                   NULL },
+    POPT_AUTOHELP { "quiet",
+                    'q',
+                    POPT_ARG_VAL,
+                    &options->verbosity,
+                    SSCG_QUIET,
+                    _ ("Display no output unless there is an error."),
+                    NULL },
     { "verbose",
       'v',
       POPT_ARG_VAL,
