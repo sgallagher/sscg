@@ -7,7 +7,7 @@ project('sscg', 'c',
           'b_asneeded=true',
         ],
         license : 'MIT',
-        meson_version : '>=0.36.0')
+        meson_version : '>=0.40.0')
 
 cc = meson.get_compiler('c')
 test_cflags = [
@@ -151,3 +151,23 @@ configure_file(
     output : 'config.h',
     configuration : cdata)
 
+# Generate a manpage from the POPT documentation
+help2man = find_program('help2man')
+
+manpage = custom_target('manpage',
+    output : 'sscg.8',
+    capture : true,
+    command : [
+        help2man,
+        '-s', '8',
+        '-n', 'Tool for generating x.509 certificates',
+        '-N',
+        sscg,
+    ],
+    install : true,
+    build_by_default : true,
+    install_dir : join_paths(
+        get_option('prefix'),
+        get_option('mandir'),
+        'man8'),
+)
