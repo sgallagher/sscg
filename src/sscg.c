@@ -17,6 +17,7 @@
     Copyright 2017 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
+#define _GNU_SOURCE
 #include <popt.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,6 +26,7 @@
 #include <path_utils.h>
 #include <unistd.h>
 #include <openssl/evp.h>
+#include <openssl/ssl.h>
 #include <sys/param.h>
 
 #include "config.h"
@@ -33,10 +35,58 @@
 #include "include/service.h"
 
 static int
+get_security_level (void)
+{
+#ifdef HAVE_SSL_CTX_GET_SECURITY_LEVEL
+  SSL_CTX *ssl_ctx = SSL_CTX_new (TLS_method ());
+  int security_level = SSL_CTX_get_security_level (ssl_ctx);
+  SSL_CTX_free (ssl_ctx);
+  ssl_ctx = NULL;
+  return security_level;
+#else
+  return 0;
+#endif
+}
+
+static int
 set_default_options (struct sscg_options *opts)
 {
+  int security_level = get_security_level ();
+
   opts->lifetime = 3650;
-  opts->key_strength = 2048;
+
+  /* Select the default key strength based on the system security level
+   * See:
+   * https://www.openssl.org/docs/man1.1.0/ssl/SSL_CTX_get_security_level.html
+   * for the specification of the minimums.
+   */
+  switch (security_level)
+    {
+    case 0:
+    case 1:
+    case 2:
+      /* Security level 2 and below permits lower key-strengths, but SSCG
+       * will set a minimum of 2048 bits
+       */
+      opts->key_strength = 2048;
+      break;
+
+    case 3: opts->key_strength = 3072; break;
+
+    case 4: opts->key_strength = 7680; break;
+
+    default:
+      /* Unknown security level. Default to the highest we know about */
+      fprintf (stderr,
+               "Unknown system security level %d. Defaulting to highest-known "
+               "level.\n",
+               security_level);
+      /* Fall through */
+
+    case 5: opts->key_strength = 15360; break;
+    }
+
+  opts->minimum_key_strength = opts->key_strength;
   return 0;
 }
 
@@ -117,6 +167,7 @@ main (int argc, const char **argv)
   size_t i;
   poptContext pc;
   struct sscg_options *options;
+  char *minimum_key_strength_help = NULL;
 
   char *country = NULL;
   char *state = NULL;
@@ -171,6 +222,9 @@ main (int argc, const char **argv)
   ret = set_default_options (options);
   if (ret != EOK)
     goto done;
+
+  minimum_key_strength_help =
+    talloc_asprintf (main_ctx, "%d or larger", options->minimum_key_strength);
 
   options->verbosity = SSCG_DEFAULT;
   struct poptOption long_options[] = {
@@ -293,7 +347,7 @@ main (int argc, const char **argv)
       &options->key_strength,
       0,
       _ ("Strength of the certificate private keys in bits."),
-      _ ("{512,1024,2048,4096}") },
+      minimum_key_strength_help },
     {
       "hash-alg",
       '\0',
@@ -529,11 +583,11 @@ main (int argc, const char **argv)
         }
     }
 
-  if (options->key_strength != 512 && options->key_strength != 1024 &&
-      options->key_strength != 2048 && options->key_strength != 4096)
+  if (options->key_strength < options->minimum_key_strength)
     {
       fprintf (stderr,
-               "Key strength must be one of {512, 1024, 2048, 4096}.\n");
+               "Key strength must be at least %d bits.\n",
+               options->minimum_key_strength);
       ret = EINVAL;
       goto done;
     }

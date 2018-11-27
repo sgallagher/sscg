@@ -34,6 +34,7 @@ endforeach
 
 pkg = import('pkgconfig')
 crypto = dependency('libcrypto')
+ssl = dependency('libssl')
 path_utils = dependency('path_utils')
 talloc = dependency('talloc')
 
@@ -48,6 +49,10 @@ else
     popt = subproject('popt').get_variable('libpopt_a')
     popt_incdirs = include_directories('subprojects/popt')
 endif
+
+has_get_sec_level = cc.has_function(
+    'SSL_CTX_get_security_level',
+    dependencies: [ ssl])
 
 sscg_bin_srcs = [
     'src/sscg.c',
@@ -74,6 +79,7 @@ sscg_lib = static_library(
     sources : sscg_lib_srcs,
     dependencies : [
         crypto,
+        ssl,
         talloc,
     ],
     install : false,
@@ -145,9 +151,9 @@ init_bignum_test = executable(
 test('init_bignum_test', init_bignum_test)
 
 cdata = configuration_data()
-cdata.set('version', meson.project_version())
+cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
+cdata.set('HAVE_SSL_CTX_GET_SECURITY_LEVEL', has_get_sec_level)
 configure_file(
-    input : 'config.h.in',
     output : 'config.h',
     configuration : cdata)
 
