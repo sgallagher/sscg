@@ -187,7 +187,6 @@ main (int argc, const char **argv)
   char *email = NULL;
   char *hostname = NULL;
   char *packagename;
-  char *hash_alg = NULL;
   char **alternative_names = NULL;
 
   char *ca_file = NULL;
@@ -602,17 +601,10 @@ main (int argc, const char **argv)
       goto done;
     }
 
-  if (!hash_alg)
-    {
-      /* Default to SHA256 */
-      options->hash_fn = EVP_sha256 ();
-    }
-  else
-    {
-      /* TODO: restrict this to approved hashes.
-         * For now, we'll only list SHA[256|384|512] in the help */
-      options->hash_fn = EVP_get_digestbyname (hash_alg);
-    }
+  /* TODO: restrict this to approved hashes.
+   * For now, we'll only list SHA[256|384|512] in the help */
+  options->hash_fn = EVP_get_digestbyname (options->hash_alg);
+
   if (!options->hash_fn)
     {
       fprintf (stderr, "Unsupported hashing algorithm.");
