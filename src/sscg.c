@@ -66,14 +66,21 @@ set_default_options (struct sscg_options *opts)
     case 1:
     case 2:
       /* Security level 2 and below permits lower key-strengths, but SSCG
-       * will set a minimum of 2048 bits
+       * will set a minimum of 2048 bits and the sha256 hash algorithm.
        */
+      opts->hash_alg = talloc_strdup (opts, "sha256");
       opts->key_strength = 2048;
       break;
 
-    case 3: opts->key_strength = 3072; break;
+    case 3:
+      opts->hash_alg = talloc_strdup (opts, "sha256");
+      opts->key_strength = 3072;
+      break;
 
-    case 4: opts->key_strength = 7680; break;
+    case 4:
+      opts->hash_alg = talloc_strdup (opts, "sha384");
+      opts->key_strength = 7680;
+      break;
 
     default:
       /* Unknown security level. Default to the highest we know about */
@@ -83,7 +90,10 @@ set_default_options (struct sscg_options *opts)
                security_level);
       /* Fall through */
 
-    case 5: opts->key_strength = 15360; break;
+    case 5:
+      opts->hash_alg = talloc_strdup (opts, "sha512");
+      opts->key_strength = 15360;
+      break;
     }
 
   opts->minimum_key_strength = opts->key_strength;
@@ -351,10 +361,10 @@ main (int argc, const char **argv)
     {
       "hash-alg",
       '\0',
-      POPT_ARG_STRING,
-      &hash_alg,
+      POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT,
+      &options->hash_alg,
       0,
-      _ ("Hashing algorithm to use for signing. (default: sha256)"),
+      _ ("Hashing algorithm to use for signing."),
       _ ("{sha256,sha384,sha512}"),
     },
     {

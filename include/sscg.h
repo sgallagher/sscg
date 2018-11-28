@@ -140,6 +140,7 @@ struct sscg_options
   /* Encryption requirements */
   int key_strength;
   int minimum_key_strength;
+  char *hash_alg;
   const EVP_MD *hash_fn;
 
   /* Output Files */
