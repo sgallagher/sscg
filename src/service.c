@@ -126,6 +126,7 @@ create_service_cert (TALLOC_CTX *mem_ctx,
 
   /* Finalize the CSR */
   ret = sscg_x509v3_csr_finalize (svc_certinfo, pkey, csr);
+  CHECK_OK (ret);
 
   if (options->verbosity >= SSCG_DEBUG)
     {

@@ -41,6 +41,7 @@ sscg_generate_serial (TALLOC_CTX *mem_ctx, struct sscg_bignum **serial)
     }
 
   ret = sscg_init_bignum (tmp_ctx, 0, &bn);
+  CHECK_OK (ret);
 
   /* We'll create a random number of sizeof(unsigned long) - 1 bits
        to use as the serial. We use unsigned long to ensure that it
