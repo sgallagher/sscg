@@ -218,6 +218,11 @@ main (int argc, const char **argv)
        user. */
   umask (0577);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+  /* In OpenSSL <1.1.0, we need to initialize the library. */
+  OpenSSL_add_all_algorithms();
+#endif
+
   TALLOC_CTX *main_ctx = talloc_new (NULL);
   if (!main_ctx)
     {
