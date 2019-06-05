@@ -141,7 +141,14 @@ struct sscg_options
   int key_strength;
   int minimum_key_strength;
   char *hash_alg;
+  char *cipher_alg;
+  const EVP_CIPHER *cipher;
   const EVP_MD *hash_fn;
+
+  bool ca_key_pass_prompt;
+  char *ca_key_pass;
+  bool cert_key_pass_prompt;
+  char *cert_key_pass;
 
   /* Output Files */
   char *ca_file;

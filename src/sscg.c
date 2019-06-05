@@ -97,6 +97,9 @@ set_default_options (struct sscg_options *opts)
     }
 
   opts->minimum_key_strength = opts->key_strength;
+
+  opts->cipher_alg = talloc_strdup (opts, "aes-256-cbc");
+
   return 0;
 }
 
@@ -170,6 +173,42 @@ done:
   return ret;
 }
 
+
+/* This function takes a copy of a string into a talloc hierarchy and memsets
+ * the original string to zeroes to avoid leaking it when that memory is freed.
+ */
+static char *
+sscg_secure_string_steal (TALLOC_CTX *mem_ctx, char *src)
+{
+  char *dest = talloc_strdup (mem_ctx, src);
+
+  memset (src, 0, strlen (src));
+
+  return dest;
+}
+
+
+static int
+sscg_options_destructor (TALLOC_CTX *opts)
+{
+  struct sscg_options *options =
+    talloc_get_type_abort (opts, struct sscg_options);
+
+  /* Zero out the memory before freeing it so we don't leak passwords */
+  if (options->ca_key_pass)
+    {
+      memset (options->ca_key_pass, 0, strlen (options->ca_key_pass));
+    }
+
+  if (options->cert_key_pass)
+    {
+      memset (options->cert_key_pass, 0, strlen (options->cert_key_pass));
+    }
+
+  return 0;
+}
+
+
 int
 main (int argc, const char **argv)
 {
@@ -196,8 +235,11 @@ main (int argc, const char **argv)
 
   int ca_mode = 0644;
   int ca_key_mode = 0600;
+  char *ca_key_password = NULL;
+
   int cert_mode = 0644;
   int cert_key_mode = 0600;
+  char *cert_key_password = NULL;
 
   char *create_mode = NULL;
 
@@ -232,6 +274,7 @@ main (int argc, const char **argv)
 
   options = talloc_zero (main_ctx, struct sscg_options);
   CHECK_MEM (options);
+  talloc_set_destructor ((TALLOC_CTX *)options, sscg_options_destructor);
 
   ret = set_default_options (options);
   if (ret != EOK)
@@ -420,6 +463,16 @@ main (int argc, const char **argv)
     },
 
     {
+      "cipher-alg",
+      '\0',
+      POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT,
+      &options->cipher_alg,
+      0,
+      _ ("Cipher to use for encrypting key files."),
+      _ ("{des-ede3-cbc,aes-256-cbc}"),
+    },
+
+    {
       "ca-file",
       '\0',
       POPT_ARG_STRING,
@@ -462,6 +515,29 @@ main (int argc, const char **argv)
     },
 
     {
+      "ca-key-password",
+      '\0',
+      POPT_ARG_STRING,
+      &ca_key_password,
+      0,
+      _ ("Provide a password for the CA key file. Note that this will be "
+         "visible in the process table for all users, so it should be used "
+         "for testing purposes only. Use --ca-keypassfile or "
+         "--ca-key-password-prompt for secure password entry."),
+      NULL
+    },
+
+    {
+      "ca-key-password-prompt",
+      'C',
+      POPT_ARG_NONE,
+      &options->ca_key_pass_prompt,
+      0,
+      _ ("Prompt to enter a password for the CA key file."),
+      NULL
+    },
+
+    {
       "cert-file",
       '\0',
       POPT_ARG_STRING,
@@ -501,6 +577,29 @@ main (int argc, const char **argv)
       0,
       _ ("File mode of the created certificate key. (default: 0600)"),
       _ ("0600"),
+    },
+
+    {
+      "cert-key-password",
+      'p',
+      POPT_ARG_STRING,
+      &cert_key_password,
+      0,
+      _ ("Provide a password for the service key file. Note that this will be "
+         "visible in the process table for all users, so this flag should be "
+         "used for testing purposes only. Use --cert-keypassfile or "
+         "--cert-key-password-prompt for secure password entry."),
+      NULL
+    },
+
+    {
+      "cert-key-password-prompt",
+      'P',
+      POPT_ARG_NONE,
+      &options->cert_key_pass_prompt,
+      0,
+      _ ("Prompt to enter a password for the service key file."),
+      NULL
     },
 
     POPT_TABLEEND
@@ -654,11 +753,34 @@ main (int argc, const char **argv)
         }
     }
 
+  /* Password handling */
+  if (ca_key_password)
+    {
+      options->ca_key_pass =
+        sscg_secure_string_steal (options, ca_key_password);
+    }
+
+  if (cert_key_password)
+    {
+      options->cert_key_pass =
+        sscg_secure_string_steal (options, cert_key_password);
+    }
+
+
   if (options->key_strength < options->minimum_key_strength)
     {
       fprintf (stderr,
                "Key strength must be at least %d bits.\n",
                options->minimum_key_strength);
+      ret = EINVAL;
+      goto done;
+    }
+
+  /* Make sure we have a valid cipher */
+  options->cipher = EVP_get_cipherbyname (options->cipher_alg);
+  if (!options->cipher)
+    {
+      fprintf (stderr, "Invalid cipher specified: %s\n", options->cipher_alg);
       ret = EINVAL;
       goto done;
     }
@@ -758,8 +880,21 @@ main (int argc, const char **argv)
   cert_key_out = BIO_new_file (options->cert_key_file, create_mode);
   CHECK_BIO (cert_key_out, options->cert_key_file);
 
+  /* This function has a default mechanism for prompting for the
+   * password if it is passed a cipher and gets a NULL password.
+   *
+   * Only pass the cipher if we have a password or were instructed
+   * to prompt for one.
+   */
   sret = PEM_write_bio_PrivateKey (
-    cert_key_out, svc_key->evp_pkey, NULL, NULL, 0, NULL, NULL);
+    cert_key_out,
+    svc_key->evp_pkey,
+    options->cert_key_pass_prompt || options->cert_key_pass ? options->cipher :
+                                                              NULL,
+    (unsigned char *)options->cert_key_pass,
+    options->cert_key_pass ? strlen (options->cert_key_pass) : 0,
+    NULL,
+    NULL);
   CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
   BIO_get_fp (cert_key_out, &fp);
 
@@ -838,8 +973,21 @@ main (int argc, const char **argv)
         }
       CHECK_BIO (ca_key_out, options->ca_key_file);
 
+      /* This function has a default mechanism for prompting for the
+       * password if it is passed a cipher and gets a NULL password.
+       *
+       * Only pass the cipher if we have a password or were instructed
+       * to prompt for one.
+       */
       sret = PEM_write_bio_PrivateKey (
-        ca_key_out, cakey->evp_pkey, NULL, NULL, 0, NULL, NULL);
+        ca_key_out,
+        cakey->evp_pkey,
+        options->ca_key_pass_prompt || options->ca_key_pass ? options->cipher :
+                                                              NULL,
+        (unsigned char *)options->ca_key_pass,
+        options->ca_key_pass ? strlen (options->ca_key_pass) : 0,
+        NULL,
+        NULL);
       CHECK_SSL (sret, PEM_write_bio_PrivateKey (CA));
       BIO_get_fp (ca_key_out, &fp);
       if (options->verbosity >= SSCG_DEBUG)
