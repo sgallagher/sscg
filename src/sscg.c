@@ -241,101 +241,144 @@ main (int argc, const char **argv)
     talloc_asprintf (main_ctx, "%d or larger", options->minimum_key_strength);
 
   options->verbosity = SSCG_DEFAULT;
+  // clang-format off
   struct poptOption long_options[] = {
-    POPT_AUTOHELP { "quiet",
-                    'q',
-                    POPT_ARG_VAL,
-                    &options->verbosity,
-                    SSCG_QUIET,
-                    _ ("Display no output unless there is an error."),
-                    NULL },
-    { "verbose",
+    POPT_AUTOHELP
+
+    {
+      "quiet",
+      'q',
+      POPT_ARG_VAL,
+      &options->verbosity,
+      SSCG_QUIET,
+       ("Display no output unless there is an error."),
+      NULL
+    },
+
+    {
+      "verbose",
       'v',
       POPT_ARG_VAL,
       &options->verbosity,
       SSCG_VERBOSE,
       _ ("Display progress messages."),
-      NULL },
-    { "debug",
+      NULL
+    },
+
+    {
+      "debug",
       'd',
       POPT_ARG_VAL,
       &options->verbosity,
       SSCG_DEBUG,
       _ ("Enable logging of debug messages. Implies verbose. Warning! "
          "This will print private key information to the screen!"),
-      NULL },
-    { "version",
+      NULL
+    },
+
+    {
+      "version",
       'V',
       POPT_ARG_NONE,
       &options->print_version,
       0,
       _ ("Display the version number and exit."),
-      NULL },
-    { "force",
+      NULL
+    },
+
+    {
+      "force",
       'f',
       POPT_ARG_NONE,
       &options->overwrite,
       0,
       _ ("Overwrite any pre-existing files in the requested locations"),
-      NULL },
-    { "lifetime",
+      NULL
+    },
+
+    {
+      "lifetime",
       '\0',
       POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
       &options->lifetime,
       0,
       _ ("Certificate lifetime (days)."),
-      _ ("1-3650") },
-    { "country",
+      _ ("1-3650")
+    },
+
+    {
+      "country",
       '\0',
       POPT_ARG_STRING,
       &country,
       0,
       _ ("Certificate DN: Country (C). (default: \"US\")"),
-      _ ("US, CZ, etc.") },
-    { "state",
+      _ ("US, CZ, etc.")
+    },
+
+    {
+      "state",
       '\0',
       POPT_ARG_STRING,
       &state,
       0,
       _ ("Certificate DN: State or Province (ST)."),
-      _ ("Massachusetts, British Columbia, etc.") },
-    { "locality",
+      _ ("Massachusetts, British Columbia, etc.")
+    },
+
+    {
+      "locality",
       '\0',
       POPT_ARG_STRING,
       &locality,
       0,
       _ ("Certificate DN: Locality (L)."),
-      _ ("Westford, Paris, etc.") },
-    { "organization",
+      _ ("Westford, Paris, etc.")
+    },
+
+    {
+      "organization",
       '\0',
       POPT_ARG_STRING,
       &organization,
       0,
       _ ("Certificate DN: Organization (O). (default: \"Unspecified\")"),
-      _ ("My Company") },
-    { "organizational-unit",
+      _ ("My Company")
+    },
+
+    {
+      "organizational-unit",
       '\0',
       POPT_ARG_STRING,
       &organizational_unit,
       0,
       _ ("Certificate DN: Organizational Unit (OU)."),
-      _ ("Engineering, etc.") },
-    { "email",
+      _ ("Engineering, etc.")
+    },
+
+    {
+      "email",
       '\0',
       POPT_ARG_STRING,
       &email,
       0,
       _ ("Certificate DN: Email Address (Email)."),
-      _ ("myname@example.com") },
-    { "hostname",
+      _ ("myname@example.com")
+    },
+
+    {
+      "hostname",
       '\0',
       POPT_ARG_STRING,
       &hostname,
       0,
       _ ("The valid hostname of the certificate. Must be an FQDN. (default: "
          "current system FQDN)"),
-      _ ("server.example.com") },
-    { "subject-alt-name",
+      _ ("server.example.com")
+    },
+
+    {
+      "subject-alt-name",
       '\0',
       POPT_ARG_ARGV,
       &alternative_names,
@@ -345,7 +388,9 @@ main (int argc, const char **argv)
          "supported by RFC 5280 such as "
          "IP:xxx.xxx.xxx.xxx/yyy.yyy.yyy.yyy "
          "May be specified multiple times."),
-      _ ("alt.example.com") },
+      _ ("alt.example.com")
+    },
+
     {
       "package",
       '\0',
@@ -355,7 +400,9 @@ main (int argc, const char **argv)
       _ ("Unused. Retained for compatibility with earlier versions of sscg."),
       NULL,
     },
-    { "key-strength",
+
+    {
+      "key-strength",
       '\0',
       POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
       &options->key_strength,
@@ -371,6 +418,7 @@ main (int argc, const char **argv)
       _ ("Hashing algorithm to use for signing."),
       _ ("{sha256,sha384,sha512}"),
     },
+
     {
       "ca-file",
       '\0',
@@ -381,6 +429,7 @@ main (int argc, const char **argv)
          "\"./ca.crt\")"),
       NULL,
     },
+
     {
       "ca-mode",
       '\0',
@@ -390,6 +439,7 @@ main (int argc, const char **argv)
       _ ("File mode of the created CA certificate. (default: 0644)"),
       _ ("0644"),
     },
+
     {
       "ca-key-file",
       '\0',
@@ -400,6 +450,7 @@ main (int argc, const char **argv)
          "the key will be destroyed rather than written to the disk."),
       NULL,
     },
+
     {
       "ca-key-mode",
       '\0',
@@ -409,6 +460,7 @@ main (int argc, const char **argv)
       _ ("File mode of the created CA key. (default: 0600)"),
       _ ("0600"),
     },
+
     {
       "cert-file",
       '\0',
@@ -419,6 +471,7 @@ main (int argc, const char **argv)
          "(default \"./service.pem\")"),
       NULL,
     },
+
     {
       "cert-mode",
       '\0',
@@ -428,6 +481,7 @@ main (int argc, const char **argv)
       _ ("File mode of the created certificate. (default: 0644)"),
       _ ("0644"),
     },
+
     {
       "cert-key-file",
       '\0',
@@ -438,6 +492,7 @@ main (int argc, const char **argv)
          "(default \"service-key.pem\")"),
       NULL,
     },
+
     {
       "cert-key-mode",
       '\0',
@@ -447,8 +502,10 @@ main (int argc, const char **argv)
       _ ("File mode of the created certificate key. (default: 0600)"),
       _ ("0600"),
     },
+
     POPT_TABLEEND
   };
+  // clang-format on
 
   pc = poptGetContext (argv[0], argc, argv, long_options, 0);
   while ((opt = poptGetNextOpt (pc)) != -1)
