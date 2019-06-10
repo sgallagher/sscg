@@ -34,6 +34,10 @@
 #include "include/authority.h"
 #include "include/service.h"
 
+
+/* Same as OpenSSL CLI */
+#define MAX_PW_LEN 1024
+
 static int
 get_security_level (void)
 {
@@ -209,6 +213,44 @@ sscg_options_destructor (TALLOC_CTX *opts)
 }
 
 
+static char *
+sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
+{
+  int i;
+  BIO *pwdbio = NULL;
+  char tpass[MAX_PW_LEN];
+  char *tmp = NULL;
+  char *password = NULL;
+
+  pwdbio = BIO_new_file (path, "r");
+  if (pwdbio == NULL)
+    {
+      fprintf (stderr, "Can't open file %s\n", path);
+      return NULL;
+    }
+
+  i = BIO_gets (pwdbio, tpass, MAX_PW_LEN);
+  BIO_free_all (pwdbio);
+  pwdbio = NULL;
+
+  if (i <= 0)
+    {
+      fprintf (stderr, "Error reading password from BIO\n");
+      return NULL;
+    }
+
+  tmp = strchr (tpass, '\n');
+  if (tmp != NULL)
+    *tmp = 0;
+
+  password = talloc_strdup (mem_ctx, tpass);
+
+  memset (tpass, 0, MAX_PW_LEN);
+
+  return password;
+}
+
+
 int
 main (int argc, const char **argv)
 {
@@ -236,10 +278,12 @@ main (int argc, const char **argv)
   int ca_mode = 0644;
   int ca_key_mode = 0600;
   char *ca_key_password = NULL;
+  char *ca_key_passfile = NULL;
 
   int cert_mode = 0644;
   int cert_key_mode = 0600;
   char *cert_key_password = NULL;
+  char *cert_key_passfile = NULL;
 
   char *create_mode = NULL;
 
@@ -528,6 +572,16 @@ main (int argc, const char **argv)
     },
 
     {
+      "ca-key-passfile",
+      '\0',
+      POPT_ARG_STRING,
+      &ca_key_passfile,
+      0,
+      _ ("A file containing the password to encrypt the CA key file."),
+      NULL
+    },
+
+    {
       "ca-key-password-prompt",
       'C',
       POPT_ARG_NONE,
@@ -589,6 +643,16 @@ main (int argc, const char **argv)
          "visible in the process table for all users, so this flag should be "
          "used for testing purposes only. Use --cert-keypassfile or "
          "--cert-key-password-prompt for secure password entry."),
+      NULL
+    },
+
+    {
+      "cert-key-passfile",
+      '\0',
+      POPT_ARG_STRING,
+      &cert_key_passfile,
+      0,
+      _ ("A file containing the password to encrypt the service key file."),
       NULL
     },
 
@@ -759,11 +823,31 @@ main (int argc, const char **argv)
       options->ca_key_pass =
         sscg_secure_string_steal (options, ca_key_password);
     }
+  else if (ca_key_passfile)
+    {
+      options->ca_key_pass = sscg_read_pw_file (options, ca_key_passfile);
+      if (!options->ca_key_pass)
+        {
+          fprintf (
+            stderr, "Failed to read passphrase from %s", ca_key_passfile);
+          goto done;
+        }
+    }
 
   if (cert_key_password)
     {
       options->cert_key_pass =
         sscg_secure_string_steal (options, cert_key_password);
+    }
+  else if (cert_key_passfile)
+    {
+      options->cert_key_pass = sscg_read_pw_file (options, cert_key_passfile);
+      if (!options->cert_key_pass)
+        {
+          fprintf (
+            stderr, "Failed to read passphrase from %s", cert_key_passfile);
+          goto done;
+        }
     }
 
 
