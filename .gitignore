@@ -50,4 +50,18 @@ m4/ulonglong.m4
 m4/wchar_t.m4
 m4/wint_t.m4
 m4/xsize.m4
+# Common config files for IDEs
+/.buildconfig
+/.project
+/.vscode
+/settings.json
+# Common meson build directories
+/build
+/debugbuild
+/x86_64
+/i*86
+/aarch64
+/armv7hl
+/ppc64le
+/s390*
 
