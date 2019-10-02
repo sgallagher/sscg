@@ -280,6 +280,9 @@ main (int argc, const char **argv)
   char *ca_key_password = NULL;
   char *ca_key_passfile = NULL;
 
+  int crl_mode = 0644;
+  char *crl_file = NULL;
+
   int cert_mode = 0644;
   int cert_key_mode = 0600;
   char *cert_key_password = NULL;
@@ -296,6 +299,7 @@ main (int argc, const char **argv)
   BIO *ca_key_out = NULL;
   BIO *cert_out = NULL;
   BIO *cert_key_out = NULL;
+  BIO *crl_out = NULL;
 
   FILE *fp;
 
@@ -589,6 +593,29 @@ main (int argc, const char **argv)
       0,
       _ ("Prompt to enter a password for the CA key file."),
       NULL
+    },
+
+    {
+      "crl-file",
+      '\0',
+      POPT_ARG_STRING,
+      &crl_file,
+      0,
+      _ ("Path where an (empty) Certificate Revocation List file will be "
+         "created, for applications that expect such a file to exist. If "
+         "unspecified, no such file will be created."),
+      NULL
+    },
+
+    {
+      "crl-mode",
+      '\0',
+      POPT_ARG_INT,
+      &crl_mode,
+      0,
+      _ ("File mode of the created Certificate Revocation List. "
+         "(default: 0644)"),
+      _ ("0644"),
     },
 
     {
@@ -899,6 +926,10 @@ main (int argc, const char **argv)
     }
 
   ret = _sscg_normalize_path (
+    options, crl_file, NULL, &options->crl_file);
+  CHECK_OK (ret);
+
+  ret = _sscg_normalize_path (
     options, cert_file, "./service.pem", &options->cert_file);
   CHECK_OK (ret);
 
@@ -1128,6 +1159,28 @@ main (int argc, const char **argv)
   BIO_free (cert_out);
   cert_out = NULL;
 
+  /* Create CRL file */
+  if (options->crl_file)
+    {
+      if (options->verbosity >= SSCG_DEFAULT)
+        {
+          fprintf (
+            stdout, "Writing empty CRL to %s\n", options->crl_file);
+        }
+      crl_out = BIO_new_file (options->crl_file, create_mode);
+      CHECK_BIO (crl_out, options->crl_file);
+
+      BIO_get_fp (crl_out, &fp);
+      if (options->verbosity >= SSCG_DEBUG)
+        {
+          fprintf (
+            stdout, "DEBUG: Setting CRL file permissions to %o\n", crl_mode);
+        }
+      fchmod (fileno (fp), crl_mode);
+      BIO_free (crl_out);
+      crl_out = NULL;
+    }
+
 
   ret = EOK;
 done:
@@ -1135,6 +1188,7 @@ done:
   BIO_free (cert_out);
   BIO_free (ca_key_out);
   BIO_free (ca_out);
+  BIO_free (crl_out);
 
   talloc_zfree (main_ctx);
   if (ret != EOK)
