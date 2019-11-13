@@ -157,6 +157,11 @@ struct sscg_options
   char *cert_key_file;
   char *crl_file;
 
+  /* Diffie-Hellman Parameters */
+  char *dhparams_file;
+  int dhparams_prime_len;
+  int dhparams_generator;
+
   /* Overwrite the output files */
   bool overwrite;
 };

@@ -32,6 +32,7 @@
 #include "config.h"
 #include "include/sscg.h"
 #include "include/authority.h"
+#include "include/dhparams.h"
 #include "include/service.h"
 
 
@@ -58,6 +59,8 @@ set_default_options (struct sscg_options *opts)
   int security_level = get_security_level ();
 
   opts->lifetime = 3650;
+  opts->dhparams_prime_len = 2048;
+  opts->dhparams_generator = 2;
 
   /* Select the default key strength based on the system security level
    * See:
@@ -274,6 +277,7 @@ main (int argc, const char **argv)
   char *ca_key_file = NULL;
   char *cert_file = NULL;
   char *cert_key_file = NULL;
+  char *dhparams_file = NULL;
 
   int ca_mode = 0644;
   int ca_key_mode = 0600;
@@ -300,8 +304,12 @@ main (int argc, const char **argv)
   BIO *cert_out = NULL;
   BIO *cert_key_out = NULL;
   BIO *crl_out = NULL;
+  BIO *dhparams_out = NULL;
 
   FILE *fp;
+
+  int dhparams_mode = 0644;
+  struct sscg_dhparams *dhparams = NULL;
 
   /* Always use umask 0577 for generating certificates and keys
        This means that it's opened as write-only by the effective
@@ -693,6 +701,37 @@ main (int argc, const char **argv)
       NULL
     },
 
+    {
+      "dhparams-file",
+      '\0',
+      POPT_ARG_STRING,
+      &dhparams_file,
+      0,
+      _("A file to contain a set of generated Diffie-Hellman parameters. "
+        "If unspecified, no such file will be created."),
+      NULL
+    },
+
+    {
+      "dhparams-prime-len",
+      '\0',
+      POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
+      &options->dhparams_prime_len,
+      0,
+      _ ("The length of the prime number to generate for dhparams, in bits."),
+      NULL
+    },
+
+    {
+      "dhparams-generator",
+      '\0',
+      POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
+      &options->dhparams_generator,
+      0,
+      _ ("The generator value for dhparams."),
+      _("{2,3,5}")
+    },
+
     POPT_TABLEEND
   };
   // clang-format on
@@ -936,6 +975,10 @@ main (int argc, const char **argv)
     options, cert_key_file, "./service-key.pem", &options->cert_key_file);
   CHECK_OK (ret);
 
+  ret = _sscg_normalize_path (
+    options, dhparams_file, NULL, &options->dhparams_file);
+  CHECK_OK (ret);
+
   poptFreeContext (pc);
 
   /* Validate the file paths */
@@ -1177,6 +1220,44 @@ main (int argc, const char **argv)
       fchmod (fileno (fp), crl_mode);
       BIO_free (crl_out);
       crl_out = NULL;
+    }
+
+
+  /* Create DH parameters file */
+  if (options->dhparams_file)
+    {
+      /* Open the file before generating the parameters. This avoids wasting
+       * the time to generate them if the destination is not writable.
+       */
+      if (options->verbosity >= SSCG_DEFAULT)
+        {
+          fprintf (stdout,
+                   "Writing DH parameters file to %s\n",
+                   options->dhparams_file);
+        }
+      dhparams_out = BIO_new_file (options->dhparams_file, create_mode);
+      CHECK_BIO (dhparams_out, options->dhparams_file);
+
+      ret = create_dhparams (main_ctx,
+                             options->verbosity,
+                             options->dhparams_prime_len,
+                             options->dhparams_generator,
+                             &dhparams);
+      CHECK_OK (ret);
+
+      /* Export the DH parameters to the file */
+      sret = PEM_write_bio_DHparams (dhparams_out, dhparams->dh);
+      CHECK_SSL (sret, PEM_write_bio_DHparams ());
+
+      BIO_get_fp (dhparams_out, &fp);
+      if (options->verbosity >= SSCG_DEBUG)
+        {
+          fprintf (stdout,
+                   "DEBUG: Setting DH parameters file permissions to %o\n",
+                   dhparams_mode);
+        }
+      fchmod (fileno (fp), dhparams_mode);
+      BIO_free (dhparams_out);
     }
 
 
