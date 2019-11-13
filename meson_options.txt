@@ -1,0 +1,24 @@
+# This file is part of sscg.
+#
+# sscg is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# sscg is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with sscg.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Copyright 2019 by Stephen Gallagher <sgallagh@redhat.com>
+
+# Generating 4096-bit Diffie-Hellman parameters can take over ten minutes on a
+# fast system. We skip testing it by default.
+
+# Some tests take a long time (dozens of seconds or even minutes)
+# For general development, we will skip them and run them only in the CI
+# environment.
+option('run_slow_tests', type : 'boolean', value : false)

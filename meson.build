@@ -52,7 +52,12 @@ endif
 
 has_get_sec_level = cc.has_function(
     'SSL_CTX_get_security_level',
-    dependencies: [ ssl])
+    dependencies: [ ssl ])
+
+has_generator_3 = cc.has_header_symbol(
+    'openssl/dh.h',
+    'DH_GENERATOR_3',
+    dependencies: [ ssl ])
 
 sscg_bin_srcs = [
     'src/sscg.c',
@@ -61,6 +66,7 @@ sscg_bin_srcs = [
 sscg_lib_srcs = [
     'src/authority.c',
     'src/bignum.c',
+    'src/dhparams.c',
     'src/key.c',
     'src/service.c',
     'src/x509.c',
@@ -69,6 +75,7 @@ sscg_lib_srcs = [
 sscg_lib_hdrs = [
     'include/authority.h',
     'include/bignum.h',
+    'include/dhparams.h',
     'include/key.h',
     'include/service.h',
     'include/x509.h',
@@ -149,6 +156,42 @@ init_bignum_test = executable(
     install : false,
 )
 test('init_bignum_test', init_bignum_test)
+
+dhparams_test = executable(
+    'dhparams_test',
+    'test/dhparams_test.c',
+    link_with : sscg_lib,
+    dependencies: [],
+    install : false
+)
+
+# Test generating 512-bit, 1024-bit and 2048-bit DH params with multiple
+# generators. 4096-bit and larger takes over ten minutes, so it's excluded from
+# the test suite by default.
+prime_lengths = [ 512, 1024 ]
+dhparam_timeout = 120
+
+if get_option('run_slow_tests')
+    prime_lengths = prime_lengths + [ 2048, 4096 ]
+    dhparam_timeout = 900
+endif
+
+generators = [ 2, 5 ]
+
+if (has_generator_3)
+    generators += [ 3 ]
+endif
+
+foreach prime_len : prime_lengths
+    foreach g : generators
+        test('dhparams_test_' + prime_len.to_string() + '_' + g.to_string(),
+             dhparams_test,
+             args: [ prime_len.to_string(), g.to_string() ],
+             timeout: dhparam_timeout)
+    endforeach
+endforeach
+
+
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
