@@ -5,12 +5,9 @@ set -e
 
 pushd /builddir/
 
-meson --buildtype=debug travis
+meson --buildtype=debug -Dtest_dhparams_4096=true travis
 
-ninja -C travis test
-if [ $? != 0 ]; then
-    cat /builddir/travis/meson-logs/testlog.txt
-fi
+meson test -C travis --verbose
 
 meson --buildtype=debug coverity
 pushd coverity
