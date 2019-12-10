@@ -11,9 +11,9 @@ env:
 
 jobs:
   include:
-    - name: "Fedora 29"
-      script: ./.travis/travis-fedora.sh
     - name: "Fedora 30"
+      script: ./.travis/travis-fedora.sh
+    - name: "Fedora 31"
       script: ./.travis/travis-fedora.sh
     - name: "Fedora rawhide"
       script: ./.travis/travis-fedora.sh
