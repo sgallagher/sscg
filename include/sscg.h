@@ -108,6 +108,13 @@
     }                                                                         \
   while (0)
 
+
+#define SSCG_CERT_DEFAULT_MODE 0644
+#define SSCG_CERT_DEFAULT_MODE_HELP _ ("0644")
+#define SSCG_KEY_DEFAULT_MODE 0600
+#define SSCG_KEY_DEFAULT_MODE_HELP _ ("0600")
+
+
 enum sscg_verbosity
 {
   SSCG_QUIET = -1,

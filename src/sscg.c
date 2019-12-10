@@ -279,16 +279,16 @@ main (int argc, const char **argv)
   char *cert_key_file = NULL;
   char *dhparams_file = NULL;
 
-  int ca_mode = 0644;
-  int ca_key_mode = 0600;
+  int ca_mode = SSCG_CERT_DEFAULT_MODE;
+  int ca_key_mode = SSCG_KEY_DEFAULT_MODE;
   char *ca_key_password = NULL;
   char *ca_key_passfile = NULL;
 
-  int crl_mode = 0644;
+  int crl_mode = SSCG_CERT_DEFAULT_MODE;
   char *crl_file = NULL;
 
-  int cert_mode = 0644;
-  int cert_key_mode = 0600;
+  int cert_mode = SSCG_CERT_DEFAULT_MODE;
+  int cert_key_mode = SSCG_KEY_DEFAULT_MODE;
   char *cert_key_password = NULL;
   char *cert_key_passfile = NULL;
 
@@ -308,7 +308,7 @@ main (int argc, const char **argv)
 
   FILE *fp;
 
-  int dhparams_mode = 0644;
+  int dhparams_mode = SSCG_CERT_DEFAULT_MODE;
   struct sscg_dhparams *dhparams = NULL;
 
   /* Always use umask 0577 for generating certificates and keys
@@ -545,8 +545,8 @@ main (int argc, const char **argv)
       POPT_ARG_INT,
       &ca_mode,
       0,
-      _ ("File mode of the created CA certificate. (default: 0644)"),
-      _ ("0644"),
+      _ ("File mode of the created CA certificate."),
+      SSCG_CERT_DEFAULT_MODE_HELP,
     },
 
     {
@@ -566,8 +566,8 @@ main (int argc, const char **argv)
       POPT_ARG_INT,
       &ca_key_mode,
       0,
-      _ ("File mode of the created CA key. (default: 0600)"),
-      _ ("0600"),
+      _ ("File mode of the created CA key."),
+      SSCG_KEY_DEFAULT_MODE_HELP,
     },
 
     {
@@ -621,9 +621,8 @@ main (int argc, const char **argv)
       POPT_ARG_INT,
       &crl_mode,
       0,
-      _ ("File mode of the created Certificate Revocation List. "
-         "(default: 0644)"),
-      _ ("0644"),
+      _ ("File mode of the created Certificate Revocation List."),
+      SSCG_CERT_DEFAULT_MODE_HELP,
     },
 
     {
@@ -643,8 +642,8 @@ main (int argc, const char **argv)
       POPT_ARG_INT,
       &cert_mode,
       0,
-      _ ("File mode of the created certificate. (default: 0644)"),
-      _ ("0644"),
+      _ ("File mode of the created certificate."),
+      SSCG_CERT_DEFAULT_MODE_HELP,
     },
 
     {
@@ -664,8 +663,8 @@ main (int argc, const char **argv)
       POPT_ARG_INT,
       &cert_key_mode,
       0,
-      _ ("File mode of the created certificate key. (default: 0600)"),
-      _ ("0600"),
+      _ ("File mode of the created certificate key."),
+      SSCG_KEY_DEFAULT_MODE_HELP,
     },
 
     {
