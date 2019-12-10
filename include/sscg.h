@@ -166,4 +166,11 @@ struct sscg_options
   bool overwrite;
 };
 
+enum sscg_cert_type {
+  SSCG_CERT_TYPE_UNKNOWN = -1,
+  SSCG_CERT_TYPE_SERVER,
+
+  SSCG_CERT_TYPE_SENTINEL
+};
+
 #endif /* _SSCG_H */

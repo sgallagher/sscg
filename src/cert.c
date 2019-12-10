@@ -19,23 +19,24 @@
 
 
 #include "include/sscg.h"
-#include "include/service.h"
+#include "include/cert.h"
 #include "include/x509.h"
 #include "include/key.h"
 
 int
-create_service_cert (TALLOC_CTX *mem_ctx,
-                     const struct sscg_options *options,
-                     struct sscg_x509_cert *ca_cert,
-                     struct sscg_evp_pkey *ca_key,
-                     struct sscg_x509_cert **_svc_cert,
-                     struct sscg_evp_pkey **_svc_key)
+create_cert (TALLOC_CTX *mem_ctx,
+             const struct sscg_options *options,
+             struct sscg_x509_cert *ca_cert,
+             struct sscg_evp_pkey *ca_key,
+             enum sscg_cert_type type,
+             struct sscg_x509_cert **_cert,
+             struct sscg_evp_pkey **_key)
 {
   int ret;
   size_t i;
   struct sscg_bignum *e;
   struct sscg_bignum *serial;
-  struct sscg_cert_info *svc_certinfo;
+  struct sscg_cert_info *certinfo;
   struct sscg_x509_req *csr;
   struct sscg_evp_pkey *pkey;
   struct sscg_x509_cert *cert;
@@ -50,45 +51,45 @@ create_service_cert (TALLOC_CTX *mem_ctx,
   ret = sscg_generate_serial (tmp_ctx, &serial);
   CHECK_OK (ret);
 
-  svc_certinfo = sscg_cert_info_new (tmp_ctx, options->hash_fn);
-  CHECK_MEM (svc_certinfo);
+  certinfo = sscg_cert_info_new (tmp_ctx, options->hash_fn);
+  CHECK_MEM (certinfo);
 
   /* Populate cert_info from options */
-  svc_certinfo->country = talloc_strdup (svc_certinfo, options->country);
-  CHECK_MEM (svc_certinfo->country);
+  certinfo->country = talloc_strdup (certinfo, options->country);
+  CHECK_MEM (certinfo->country);
 
-  svc_certinfo->state = talloc_strdup (svc_certinfo, options->state);
-  CHECK_MEM (svc_certinfo->state);
+  certinfo->state = talloc_strdup (certinfo, options->state);
+  CHECK_MEM (certinfo->state);
 
-  svc_certinfo->locality = talloc_strdup (svc_certinfo, options->locality);
-  CHECK_MEM (svc_certinfo->locality);
+  certinfo->locality = talloc_strdup (certinfo, options->locality);
+  CHECK_MEM (certinfo->locality);
 
-  svc_certinfo->org = talloc_strdup (svc_certinfo, options->org);
-  CHECK_MEM (svc_certinfo->org);
+  certinfo->org = talloc_strdup (certinfo, options->org);
+  CHECK_MEM (certinfo->org);
 
-  svc_certinfo->org_unit = talloc_strdup (svc_certinfo, options->org_unit);
-  CHECK_MEM (svc_certinfo->org_unit);
+  certinfo->org_unit = talloc_strdup (certinfo, options->org_unit);
+  CHECK_MEM (certinfo->org_unit);
 
-  svc_certinfo->email = talloc_strdup (svc_certinfo, options->email);
-  CHECK_MEM (svc_certinfo->email);
+  certinfo->email = talloc_strdup (certinfo, options->email);
+  CHECK_MEM (certinfo->email);
 
-  svc_certinfo->cn = talloc_strdup (svc_certinfo, options->hostname);
-  CHECK_MEM (svc_certinfo->cn);
+  certinfo->cn = talloc_strdup (certinfo, options->hostname);
+  CHECK_MEM (certinfo->cn);
 
   if (options->subject_alt_names)
     {
       for (i = 0; options->subject_alt_names[i]; i++)
         {
-          svc_certinfo->subject_alt_names = talloc_realloc (
-            svc_certinfo, svc_certinfo->subject_alt_names, char *, i + 2);
-          CHECK_MEM (svc_certinfo->subject_alt_names);
+          certinfo->subject_alt_names = talloc_realloc (
+            certinfo, certinfo->subject_alt_names, char *, i + 2);
+          CHECK_MEM (certinfo->subject_alt_names);
 
-          svc_certinfo->subject_alt_names[i] = talloc_strdup (
-            svc_certinfo->subject_alt_names, options->subject_alt_names[i]);
-          CHECK_MEM (svc_certinfo->subject_alt_names[i]);
+          certinfo->subject_alt_names[i] = talloc_strdup (
+            certinfo->subject_alt_names, options->subject_alt_names[i]);
+          CHECK_MEM (certinfo->subject_alt_names[i]);
 
           /* Add a NULL terminator to the end */
-          svc_certinfo->subject_alt_names[i + 1] = NULL;
+          certinfo->subject_alt_names[i + 1] = NULL;
         }
     }
 
@@ -97,19 +98,31 @@ create_service_cert (TALLOC_CTX *mem_ctx,
   ex = X509V3_EXT_conf_nid (
     NULL, NULL, NID_key_usage, "critical,digitalSignature,keyEncipherment");
   CHECK_MEM (ex);
-  sk_X509_EXTENSION_push (svc_certinfo->extensions, ex);
+  sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
   extended = sk_ASN1_OBJECT_new_null ();
-  sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_server_auth));
+
+  switch (type)
+    {
+    case SSCG_CERT_TYPE_SERVER:
+      sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_server_auth));
+      break;
+
+    default:
+      fprintf (stdout, "Unknown certificate type!");
+      ret = EINVAL;
+      goto done;
+    }
+
 
   ex = X509V3_EXT_i2d (NID_ext_key_usage, 0, extended);
   sk_ASN1_OBJECT_pop_free (extended, ASN1_OBJECT_free);
-  sk_X509_EXTENSION_push (svc_certinfo->extensions, ex);
+  sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
   /* Mark it as not a CA */
   ex = X509V3_EXT_conf_nid (NULL, NULL, NID_basic_constraints, "CA:FALSE");
   CHECK_MEM (ex);
-  sk_X509_EXTENSION_push (svc_certinfo->extensions, ex);
+  sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
   /* Use an exponent value of RSA F4 aka 0x10001 (65537) */
   ret = sscg_init_bignum (tmp_ctx, RSA_F4, &e);
@@ -118,7 +131,7 @@ create_service_cert (TALLOC_CTX *mem_ctx,
   /* Generate an RSA keypair for this CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, "Generating RSA key for service certificate.\n");
+      fprintf (stdout, "Generating RSA key for certificate.\n");
     }
   /* TODO: support DSA keys as well */
   ret = sscg_generate_rsa_key (tmp_ctx, options->key_strength, e, &pkey);
@@ -127,21 +140,23 @@ create_service_cert (TALLOC_CTX *mem_ctx,
   /* Create a certificate signing request for the private CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, "Generating CSR for service certificate.\n");
+      fprintf (stdout, "Generating CSR for certificate.\n");
     }
-  ret = sscg_x509v3_csr_new (tmp_ctx, svc_certinfo, pkey, &csr);
+  ret = sscg_x509v3_csr_new (tmp_ctx, certinfo, pkey, &csr);
   CHECK_OK (ret);
 
   /* Finalize the CSR */
-  ret = sscg_x509v3_csr_finalize (svc_certinfo, pkey, csr);
+  ret = sscg_x509v3_csr_finalize (certinfo, pkey, csr);
   CHECK_OK (ret);
 
   if (options->verbosity >= SSCG_DEBUG)
     {
-      fprintf (stderr,
-               "DEBUG: Writing service certificate CSR to ./debug-svc.csr\n");
-      BIO *svc_csr_out = BIO_new_file ("./debug-svc.csr", "w");
-      int sslret = PEM_write_bio_X509_REQ (svc_csr_out, csr->x509_req);
+      const char *tempcert =
+        SSCG_CERT_TYPE_SERVER ? "./debug-service.csr" : "debug-client.csr";
+
+      fprintf (stderr, "DEBUG: Writing certificate CSR to %s\n", tempcert);
+      BIO *csr_out = BIO_new_file (tempcert, "w");
+      int sslret = PEM_write_bio_X509_REQ (csr_out, csr->x509_req);
       CHECK_SSL (sslret, PEM_write_bio_X509_REQ);
     }
 
@@ -149,7 +164,7 @@ create_service_cert (TALLOC_CTX *mem_ctx,
 
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, "Signing CSR for service certificate. \n");
+      fprintf (stdout, "Signing CSR for certificate. \n");
     }
 
   ret = sscg_sign_x509_csr (tmp_ctx,
@@ -162,8 +177,8 @@ create_service_cert (TALLOC_CTX *mem_ctx,
                             &cert);
   CHECK_OK (ret);
 
-  *_svc_cert = talloc_steal (mem_ctx, cert);
-  *_svc_key = talloc_steal (mem_ctx, pkey);
+  *_cert = talloc_steal (mem_ctx, cert);
+  *_key = talloc_steal (mem_ctx, pkey);
 
   ret = EOK;
 done:

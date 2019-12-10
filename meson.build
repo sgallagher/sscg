@@ -66,18 +66,18 @@ sscg_bin_srcs = [
 sscg_lib_srcs = [
     'src/authority.c',
     'src/bignum.c',
+    'src/cert.c',
     'src/dhparams.c',
     'src/key.c',
-    'src/service.c',
     'src/x509.c',
 ]
 
 sscg_lib_hdrs = [
     'include/authority.h',
     'include/bignum.h',
+    'include/cert.h',
     'include/dhparams.h',
     'include/key.h',
-    'include/service.h',
     'include/x509.h',
 ]
 

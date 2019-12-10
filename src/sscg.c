@@ -32,8 +32,8 @@
 #include "config.h"
 #include "include/sscg.h"
 #include "include/authority.h"
+#include "include/cert.h"
 #include "include/dhparams.h"
-#include "include/service.h"
 
 
 /* Same as OpenSSL CLI */
@@ -1009,8 +1009,13 @@ main (int argc, const char **argv)
   CHECK_OK (ret);
 
   /* Generate the service certificate and sign it with the private CA */
-  ret = create_service_cert (
-    main_ctx, options, cacert, cakey, &svc_cert, &svc_key);
+  ret = create_cert (main_ctx,
+                     options,
+                     cacert,
+                     cakey,
+                     SSCG_CERT_TYPE_SERVER,
+                     &svc_cert,
+                     &svc_key);
   CHECK_OK (ret);
 
 
