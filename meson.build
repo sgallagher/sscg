@@ -68,6 +68,7 @@ sscg_lib_srcs = [
     'src/bignum.c',
     'src/cert.c',
     'src/dhparams.c',
+    'src/io_utils.c',
     'src/key.c',
     'src/x509.c',
 ]
@@ -77,6 +78,7 @@ sscg_lib_hdrs = [
     'include/bignum.h',
     'include/cert.h',
     'include/dhparams.h',
+    'include/io_utils.h',
     'include/key.h',
     'include/x509.h',
 ]
