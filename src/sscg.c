@@ -34,6 +34,10 @@
 #include "include/authority.h"
 #include "include/cert.h"
 #include "include/dhparams.h"
+#include "include/io_utils.h"
+
+
+int verbosity;
 
 
 /* Same as OpenSSL CLI */
@@ -135,51 +139,6 @@ print_options (struct sscg_options *opts)
   fprintf (stdout, "=================\n");
 }
 
-static int
-_sscg_normalize_path (TALLOC_CTX *mem_ctx,
-                      const char *path,
-                      const char *path_default,
-                      char **_normalized_path)
-{
-  int ret;
-  char *orig_path = NULL;
-  char *normalized_path = NULL;
-
-  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
-  CHECK_MEM (tmp_ctx);
-
-  if (path)
-    {
-      orig_path = talloc_strdup (tmp_ctx, path);
-    }
-  else
-    {
-      if (!path_default)
-        {
-          /* If no default is set and no path was provided,
-             * return NULL */
-          *_normalized_path = NULL;
-          ret = EOK;
-          goto done;
-        }
-      orig_path = talloc_strdup (tmp_ctx, path_default);
-      CHECK_MEM (orig_path);
-    }
-
-  normalized_path = talloc_zero_array (tmp_ctx, char, PATH_MAX);
-  CHECK_MEM (normalized_path);
-
-  ret = make_normalized_absolute_path (normalized_path, PATH_MAX, orig_path);
-  CHECK_OK (ret);
-
-  *_normalized_path = talloc_steal (mem_ctx, normalized_path);
-  ret = EOK;
-
-done:
-  talloc_free (tmp_ctx);
-  return ret;
-}
-
 
 /* This function takes a copy of a string into a talloc hierarchy and memsets
  * the original string to zeroes to avoid leaking it when that memory is freed.
@@ -254,6 +213,53 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
 }
 
 
+const char *
+sscg_get_verbosity_name (enum sscg_verbosity type)
+{
+  switch (type)
+    {
+    case SSCG_DEFAULT:
+    case SSCG_VERBOSE: return "";
+
+    case SSCG_DEBUG: return "DEBUG: ";
+
+    default: break;
+    }
+
+  /* If it wasn't one of these, we have a bug */
+  return "Unknown Verbosity (bug):";
+}
+
+
+const char *
+sscg_get_file_type_name (enum sscg_file_type type)
+{
+  switch (type)
+    {
+    case SSCG_FILE_TYPE_CA: return "CA certificate";
+
+    case SSCG_FILE_TYPE_CA_KEY: return "CA certificate key";
+
+    case SSCG_FILE_TYPE_SVC: return "service certificate";
+
+    case SSCG_FILE_TYPE_SVC_KEY: return "service certificate key";
+
+    case SSCG_FILE_TYPE_CLIENT: return "client auth certificate";
+
+    case SSCG_FILE_TYPE_CLIENT_KEY: return "client auth certificate key";
+
+    case SSCG_FILE_TYPE_CRL: return "certificate revocation list";
+
+    case SSCG_FILE_TYPE_DHPARAMS: return "Diffie-Hellman parameters";
+
+    default: break;
+    }
+
+  /* If it wasn't one of these, we have a bug */
+  return "Unknown (bug)";
+}
+
+
 int
 main (int argc, const char **argv)
 {
@@ -292,21 +298,10 @@ main (int argc, const char **argv)
   char *cert_key_password = NULL;
   char *cert_key_passfile = NULL;
 
-  char *create_mode = NULL;
-
   struct sscg_x509_cert *cacert;
   struct sscg_evp_pkey *cakey;
   struct sscg_x509_cert *svc_cert;
   struct sscg_evp_pkey *svc_key;
-
-  BIO *ca_out = NULL;
-  BIO *ca_key_out = NULL;
-  BIO *cert_out = NULL;
-  BIO *cert_key_out = NULL;
-  BIO *crl_out = NULL;
-  BIO *dhparams_out = NULL;
-
-  FILE *fp;
 
   int dhparams_mode = SSCG_CERT_DEFAULT_MODE;
   struct sscg_dhparams *dhparams = NULL;
@@ -331,6 +326,9 @@ main (int argc, const char **argv)
   options = talloc_zero (main_ctx, struct sscg_options);
   CHECK_MEM (options);
   talloc_set_destructor ((TALLOC_CTX *)options, sscg_options_destructor);
+
+  options->streams =
+    talloc_zero_array (options, struct sscg_stream *, SSCG_NUM_FILE_TYPES);
 
   ret = set_default_options (options);
   if (ret != EOK)
@@ -757,6 +755,8 @@ main (int argc, const char **argv)
       return 0;
     }
 
+  verbosity = options->verbosity;
+
   /* Process the Subject information */
 
   if (country)
@@ -949,59 +949,44 @@ main (int argc, const char **argv)
   if (options->verbosity >= SSCG_VERBOSE)
     print_options (options);
 
-  /* Get the paths of the output files */
-  ret = _sscg_normalize_path (options, ca_file, "./ca.crt", &options->ca_file);
+  /* Prepare the output files */
+  ret = sscg_io_utils_add_output_file (options->streams,
+                                       SSCG_FILE_TYPE_CA,
+                                       ca_file ? ca_file : "./ca.crt",
+                                       ca_mode);
   CHECK_OK (ret);
 
-  ret =
-    _sscg_normalize_path (options, ca_key_file, NULL, &options->ca_key_file);
-  CHECK_OK (ret);
-  if (options->verbosity >= SSCG_DEBUG)
-    {
-      fprintf (stdout,
-               "DEBUG: CA Key file path: %s\n",
-               options->ca_key_file ? options->ca_key_file : "(N/A)");
-    }
-
-  ret = _sscg_normalize_path (options, crl_file, NULL, &options->crl_file);
+  ret = sscg_io_utils_add_output_file (
+    options->streams, SSCG_FILE_TYPE_CA_KEY, ca_key_file, ca_key_mode);
   CHECK_OK (ret);
 
-  ret = _sscg_normalize_path (
-    options, cert_file, "./service.pem", &options->cert_file);
+  ret = sscg_io_utils_add_output_file (options->streams,
+                                       SSCG_FILE_TYPE_SVC,
+                                       cert_file ? cert_file : "./service.pem",
+                                       cert_mode);
   CHECK_OK (ret);
 
-  ret = _sscg_normalize_path (
-    options, cert_key_file, "./service-key.pem", &options->cert_key_file);
+  ret = sscg_io_utils_add_output_file (options->streams,
+                                       SSCG_FILE_TYPE_SVC_KEY,
+                                       cert_key_file ? cert_key_file :
+                                                       "./service-key.pem",
+                                       cert_key_mode);
   CHECK_OK (ret);
 
-  ret = _sscg_normalize_path (
-    options, dhparams_file, NULL, &options->dhparams_file);
+  ret = sscg_io_utils_add_output_file (
+    options->streams, SSCG_FILE_TYPE_CRL, crl_file, crl_mode);
+  CHECK_OK (ret);
+
+  ret = sscg_io_utils_add_output_file (
+    options->streams, SSCG_FILE_TYPE_DHPARAMS, dhparams_file, dhparams_mode);
   CHECK_OK (ret);
 
   poptFreeContext (pc);
 
-  /* Validate the file paths */
+  /* Validate and open the file paths */
+  ret = sscg_io_utils_open_output_files (options->streams, options->overwrite);
+  CHECK_OK (ret);
 
-  /* Only one key can exist in a single file */
-  if (options->ca_key_file &&
-      strcmp (options->ca_key_file, options->cert_key_file) == 0)
-    {
-      fprintf (stderr,
-               "Certificate key and CA key may not be in the same file.\n");
-      ret = EINVAL;
-      goto done;
-    }
-
-  /* The CA key must not be in the same file as the service cert */
-  if (options->ca_key_file &&
-      strcmp (options->ca_key_file, options->cert_file) == 0)
-    {
-      fprintf (
-        stderr,
-        "CA key and service certificate may not be in the same file.\n");
-      ret = EINVAL;
-      goto done;
-    }
 
   /* Generate the private CA for the certificate */
   ret = create_private_CA (main_ctx, options, &cacert, &cakey);
@@ -1020,26 +1005,6 @@ main (int argc, const char **argv)
 
   /* ==== Output the final files ==== */
 
-  /* Set the file-creation mode */
-  if (options->overwrite)
-    {
-      create_mode = talloc_strdup (main_ctx, "w");
-    }
-  else
-    {
-      create_mode = talloc_strdup (main_ctx, "wx");
-    }
-  CHECK_MEM (create_mode);
-
-  /* Create certificate private key file */
-  if (options->verbosity >= SSCG_DEFAULT)
-    {
-      fprintf (
-        stdout, "Writing svc private key to %s \n", options->cert_key_file);
-    }
-
-  cert_key_out = BIO_new_file (options->cert_key_file, create_mode);
-  CHECK_BIO (cert_key_out, options->cert_key_file);
 
   /* This function has a default mechanism for prompting for the
    * password if it is passed a cipher and gets a NULL password.
@@ -1048,7 +1013,7 @@ main (int argc, const char **argv)
    * to prompt for one.
    */
   sret = PEM_write_bio_PrivateKey (
-    cert_key_out,
+    GET_BIO (SSCG_FILE_TYPE_SVC_KEY),
     svc_key->evp_pkey,
     options->cert_key_pass_prompt || options->cert_key_pass ? options->cipher :
                                                               NULL,
@@ -1057,83 +1022,19 @@ main (int argc, const char **argv)
     NULL,
     NULL);
   CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
-  BIO_get_fp (cert_key_out, &fp);
-
-  if (options->verbosity >= SSCG_DEBUG)
-    {
-      fprintf (stdout,
-               "DEBUG: Setting svc key file permissions to %o\n",
-               cert_key_mode);
-    }
-  fchmod (fileno (fp), cert_key_mode);
-
-  BIO_free (cert_key_out);
-  cert_key_out = NULL;
+  ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC_KEY);
 
 
   /* Create service public certificate */
-  if (options->verbosity >= SSCG_DEFAULT)
-    {
-      fprintf (stdout,
-               "Writing service public certificate to %s\n",
-               options->cert_file);
-    }
-  if (strcmp (options->cert_key_file, options->cert_file) == 0)
-    {
-      cert_out = BIO_new_file (options->cert_file, "a");
-    }
-  else
-    {
-      cert_out = BIO_new_file (options->cert_file, create_mode);
-    }
-  CHECK_BIO (cert_out, options->cert_file);
-
-  sret = PEM_write_bio_X509 (cert_out, svc_cert->certificate);
+  sret =
+    PEM_write_bio_X509 (GET_BIO (SSCG_FILE_TYPE_SVC), svc_cert->certificate);
   CHECK_SSL (sret, PEM_write_bio_X509 (svc));
-  BIO_get_fp (cert_out, &fp);
-
-  /* If this file matches the keyfile, do not set its permissions */
-  if (strcmp (options->cert_file, options->cert_key_file) == 0)
-    {
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (stdout,
-                   "DEBUG: Not setting service cert file permissions: "
-                   "superseded by the key\n");
-        }
-    }
-  else
-    {
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (stdout,
-                   "DEBUG: Setting service cert file permissions to %o\n",
-                   cert_mode);
-        }
-      fchmod (fileno (fp), cert_mode);
-    }
-  BIO_free (cert_out);
-  cert_out = NULL;
+  ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC);
 
 
   /* Create CA private key, if requested */
-  if (options->ca_key_file)
+  if (GET_BIO (SSCG_FILE_TYPE_CA_KEY))
     {
-      if (options->verbosity >= SSCG_DEFAULT)
-        {
-          fprintf (
-            stdout, "Writing CA private key to %s\n", options->ca_key_file);
-        }
-      if (strcmp (options->ca_file, options->ca_key_file) == 0)
-        {
-          ca_key_out = BIO_new_file (options->ca_key_file, "a");
-        }
-      else
-        {
-          ca_key_out = BIO_new_file (options->ca_key_file, create_mode);
-        }
-      CHECK_BIO (ca_key_out, options->ca_key_file);
-
       /* This function has a default mechanism for prompting for the
        * password if it is passed a cipher and gets a NULL password.
        *
@@ -1141,7 +1042,7 @@ main (int argc, const char **argv)
        * to prompt for one.
        */
       sret = PEM_write_bio_PrivateKey (
-        ca_key_out,
+        GET_BIO (SSCG_FILE_TYPE_CA_KEY),
         cakey->evp_pkey,
         options->ca_key_pass_prompt || options->ca_key_pass ? options->cipher :
                                                               NULL,
@@ -1150,97 +1051,35 @@ main (int argc, const char **argv)
         NULL,
         NULL);
       CHECK_SSL (sret, PEM_write_bio_PrivateKey (CA));
-      BIO_get_fp (ca_key_out, &fp);
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (stdout,
-                   "DEBUG: Setting CA key file permissions to %o\n",
-                   ca_key_mode);
-        }
-      fchmod (fileno (fp), ca_key_mode);
-      BIO_free (ca_key_out);
-      ca_key_out = NULL;
+      ANNOUNCE_WRITE (SSCG_FILE_TYPE_CA_KEY);
     }
 
 
   /* Create CA public certificate */
-  if (options->verbosity >= SSCG_DEFAULT)
-    {
-      fprintf (
-        stdout, "Writing CA public certificate to %s\n", options->ca_file);
-    }
-  if (strcmp (options->ca_file, options->cert_file) == 0)
-    {
-      ca_out = BIO_new_file (options->ca_file, "a");
-    }
-  else
-    {
-      ca_out = BIO_new_file (options->ca_file, create_mode);
-    }
-  CHECK_BIO (ca_out, options->ca_file);
-
-  sret = PEM_write_bio_X509 (ca_out, cacert->certificate);
+  struct sscg_stream *stream =
+    sscg_io_utils_get_stream_by_type (options->streams, SSCG_FILE_TYPE_CA);
+  sret = PEM_write_bio_X509 (stream->bio, cacert->certificate);
   CHECK_SSL (sret, PEM_write_bio_X509 (CA));
-  BIO_get_fp (ca_out, &fp);
-  /* If this file matches the keyfile, do not set its permissions */
-  if (options->ca_key_file &&
-      strcmp (options->ca_file, options->ca_key_file) == 0)
-    {
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (
-            stdout,
-            "DEBUG: Not setting CA file permissions: superseded by a key\n");
-        }
-    }
-  else
-    {
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (
-            stdout, "DEBUG: Setting CA file permissions to %o\n", ca_mode);
-        }
-      fchmod (fileno (fp), ca_mode);
-    }
-  BIO_free (cert_out);
-  cert_out = NULL;
+  ANNOUNCE_WRITE (SSCG_FILE_TYPE_CA);
+
 
   /* Create CRL file */
-  if (options->crl_file)
+  if (GET_BIO (SSCG_FILE_TYPE_CRL))
     {
-      if (options->verbosity >= SSCG_DEFAULT)
-        {
-          fprintf (stdout, "Writing empty CRL to %s\n", options->crl_file);
-        }
-      crl_out = BIO_new_file (options->crl_file, create_mode);
-      CHECK_BIO (crl_out, options->crl_file);
-
-      BIO_get_fp (crl_out, &fp);
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (
-            stdout, "DEBUG: Setting CRL file permissions to %o\n", crl_mode);
-        }
-      fchmod (fileno (fp), crl_mode);
-      BIO_free (crl_out);
-      crl_out = NULL;
+      /* The CRL file is left intentionally blank, so do nothing here. The
+       * file was created as empty, so it will just be closed and have its
+       * permissions set later.
+       */
+      ANNOUNCE_WRITE (SSCG_FILE_TYPE_CRL);
     }
 
 
   /* Create DH parameters file */
-  if (options->dhparams_file)
+  if (GET_BIO (SSCG_FILE_TYPE_DHPARAMS))
     {
       /* Open the file before generating the parameters. This avoids wasting
        * the time to generate them if the destination is not writable.
        */
-      if (options->verbosity >= SSCG_DEFAULT)
-        {
-          fprintf (stdout,
-                   "Writing DH parameters file to %s\n",
-                   options->dhparams_file);
-        }
-      dhparams_out = BIO_new_file (options->dhparams_file, create_mode);
-      CHECK_BIO (dhparams_out, options->dhparams_file);
 
       ret = create_dhparams (main_ctx,
                              options->verbosity,
@@ -1250,33 +1089,23 @@ main (int argc, const char **argv)
       CHECK_OK (ret);
 
       /* Export the DH parameters to the file */
-      sret = PEM_write_bio_DHparams (dhparams_out, dhparams->dh);
+      sret = PEM_write_bio_DHparams (GET_BIO (SSCG_FILE_TYPE_DHPARAMS),
+                                     dhparams->dh);
       CHECK_SSL (sret, PEM_write_bio_DHparams ());
-
-      BIO_get_fp (dhparams_out, &fp);
-      if (options->verbosity >= SSCG_DEBUG)
-        {
-          fprintf (stdout,
-                   "DEBUG: Setting DH parameters file permissions to %o\n",
-                   dhparams_mode);
-        }
-      fchmod (fileno (fp), dhparams_mode);
-      BIO_free (dhparams_out);
+      ANNOUNCE_WRITE (SSCG_FILE_TYPE_DHPARAMS);
     }
 
 
-  ret = EOK;
-done:
-  BIO_free (cert_key_out);
-  BIO_free (cert_out);
-  BIO_free (ca_key_out);
-  BIO_free (ca_out);
-  BIO_free (crl_out);
+  /* Set the final file permissions */
+  sscg_io_utils_finalize_output_files (options->streams);
 
+  ret = EOK;
+
+done:
   talloc_zfree (main_ctx);
   if (ret != EOK)
     {
-      fprintf (stderr, "%s\n", strerror (ret));
+      SSCG_ERROR ("%s\n", strerror (ret));
     }
   return ret;
 }

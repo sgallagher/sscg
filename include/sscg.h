@@ -27,6 +27,8 @@
 #include <talloc.h>
 #include <stdint.h>
 
+#include "include/io_utils.h"
+
 #ifndef _SSCG_H
 #define _SSCG_H
 
@@ -123,6 +125,67 @@ enum sscg_verbosity
   SSCG_DEBUG
 };
 
+extern int verbosity;
+
+const char *sscg_get_verbosity_name (enum sscg_verbosity);
+
+#define SSCG_LOG(_level, _format, ...)                                        \
+  do                                                                          \
+    {                                                                         \
+      if (verbosity >= _level)                                                \
+        {                                                                     \
+          printf ("%s", sscg_get_verbosity_name (_level));                    \
+          printf (_format, ##__VA_ARGS__);                                    \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+
+#define SSCG_ERROR(_format, ...)                                              \
+  do                                                                          \
+    {                                                                         \
+      if (verbosity > SSCG_QUIET)                                             \
+        {                                                                     \
+          fprintf (stderr, "ERROR: ");                                        \
+          fprintf (stderr, _format, ##__VA_ARGS__);                           \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+
+
+enum sscg_file_type
+{
+  SSCG_FILE_TYPE_UNKNOWN = -1,
+  SSCG_FILE_TYPE_CA,
+  SSCG_FILE_TYPE_CA_KEY,
+  SSCG_FILE_TYPE_SVC,
+  SSCG_FILE_TYPE_SVC_KEY,
+  SSCG_FILE_TYPE_CLIENT,
+  SSCG_FILE_TYPE_CLIENT_KEY,
+  SSCG_FILE_TYPE_CRL,
+  SSCG_FILE_TYPE_DHPARAMS,
+
+  SSCG_NUM_FILE_TYPES
+};
+
+#define SSCG_FILE_TYPE_KEYS                                                   \
+  ((1 << SSCG_FILE_TYPE_CA_KEY) | (1 << SSCG_FILE_TYPE_SVC_KEY) |             \
+   (1 << SSCG_FILE_TYPE_CLIENT_KEY))
+
+
+const char *
+sscg_get_file_type_name (enum sscg_file_type _type);
+
+#define GET_BIO(_type) sscg_io_utils_get_bio_by_type (options->streams, _type)
+
+#define GET_PATH(_type)                                                       \
+  sscg_io_utils_get_path_by_type (options->streams, _type)
+
+#define ANNOUNCE_WRITE(_type)                                                 \
+  SSCG_LOG (SSCG_DEFAULT,                                                     \
+            "Wrote %s to %s\n",                                               \
+            sscg_get_file_type_name (_type),                                  \
+            GET_PATH (_type));
+
 struct sscg_options
 {
   /* How noisy to be when printing information */
@@ -158,14 +221,9 @@ struct sscg_options
   char *cert_key_pass;
 
   /* Output Files */
-  char *ca_file;
-  char *ca_key_file;
-  char *cert_file;
-  char *cert_key_file;
-  char *crl_file;
+  struct sscg_stream **streams;
 
   /* Diffie-Hellman Parameters */
-  char *dhparams_file;
   int dhparams_prime_len;
   int dhparams_generator;
 
@@ -173,11 +231,14 @@ struct sscg_options
   bool overwrite;
 };
 
-enum sscg_cert_type {
+
+enum sscg_cert_type
+{
   SSCG_CERT_TYPE_UNKNOWN = -1,
   SSCG_CERT_TYPE_SERVER,
+  SSCG_CERT_TYPE_CLIENT,
 
-  SSCG_CERT_TYPE_SENTINEL
+  SSCG_NUM_CERT_TYPES
 };
 
 #endif /* _SSCG_H */
