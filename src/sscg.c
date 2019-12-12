@@ -283,6 +283,8 @@ main (int argc, const char **argv)
   char *ca_key_file = NULL;
   char *cert_file = NULL;
   char *cert_key_file = NULL;
+  char *client_file = NULL;
+  char *client_key_file = NULL;
   char *dhparams_file = NULL;
 
   int ca_mode = SSCG_CERT_DEFAULT_MODE;
@@ -298,10 +300,17 @@ main (int argc, const char **argv)
   char *cert_key_password = NULL;
   char *cert_key_passfile = NULL;
 
+  int client_mode = SSCG_CERT_DEFAULT_MODE;
+  int client_key_mode = SSCG_KEY_DEFAULT_MODE;
+  char *client_key_password = NULL;
+  char *client_key_passfile = NULL;
+
   struct sscg_x509_cert *cacert;
   struct sscg_evp_pkey *cakey;
   struct sscg_x509_cert *svc_cert;
   struct sscg_evp_pkey *svc_key;
+  struct sscg_x509_cert *client_cert;
+  struct sscg_evp_pkey *client_key;
 
   int dhparams_mode = SSCG_CERT_DEFAULT_MODE;
   struct sscg_dhparams *dhparams = NULL;
@@ -699,6 +708,81 @@ main (int argc, const char **argv)
     },
 
     {
+      "client-file",
+      '\0',
+      POPT_ARG_STRING,
+      &client_file,
+      0,
+      _ ("Path where a client authentication certificate will be stored."),
+      NULL
+    },
+    {
+      "client-mode",
+      '\0',
+      POPT_ARG_INT,
+      &client_mode,
+      0,
+      _ ("File mode of the created certificate."),
+      SSCG_CERT_DEFAULT_MODE_HELP,
+    },
+
+    {
+      "client-key-file",
+      '\0',
+      POPT_ARG_STRING,
+      &client_key_file,
+      0,
+      _ ("Path where the client's private key will be stored. "
+         "(default is client-file with a .key suffix, if "
+         "--client-file was passed, otherwise this file will not "
+         "be generated.)"),
+      NULL,
+    },
+
+    {
+      "client-key-mode",
+      '\0',
+      POPT_ARG_INT,
+      &client_key_mode,
+      0,
+      _ ("File mode of the created certificate key."),
+      SSCG_KEY_DEFAULT_MODE_HELP,
+    },
+
+    {
+      "client-key-password",
+      '\0',
+      POPT_ARG_STRING,
+      &client_key_password,
+      0,
+      _ ("Provide a password for the client key file. Note that this will be "
+         "visible in the process table for all users, so this flag should be "
+         "used for testing purposes only. Use --client-keypassfile or "
+         "--client-key-password-prompt for secure password entry."),
+      NULL
+    },
+
+    {
+      "client-key-passfile",
+      '\0',
+      POPT_ARG_STRING,
+      &client_key_passfile,
+      0,
+      _ ("A file containing the password to encrypt the client key file."),
+      NULL
+    },
+
+    {
+      "client-key-password-prompt",
+      '\0',
+      POPT_ARG_NONE,
+      &options->client_key_pass_prompt,
+      0,
+      _ ("Prompt to enter a password for the client key file."),
+      NULL
+    },
+
+    {
       "dhparams-file",
       '\0',
       POPT_ARG_STRING,
@@ -915,6 +999,22 @@ main (int argc, const char **argv)
         }
     }
 
+  if (client_key_password)
+    {
+      options->client_key_pass =
+        sscg_secure_string_steal (options, client_key_password);
+    }
+  else if (client_key_passfile)
+    {
+      options->client_key_pass =
+        sscg_read_pw_file (options, client_key_passfile);
+      if (!options->client_key_pass)
+        {
+          fprintf (
+            stderr, "Failed to read passphrase from %s", client_key_passfile);
+          goto done;
+        }
+    }
 
   if (options->key_strength < options->minimum_key_strength)
     {
@@ -973,6 +1073,19 @@ main (int argc, const char **argv)
                                        cert_key_mode);
   CHECK_OK (ret);
 
+
+  ret = sscg_io_utils_add_output_file (
+    options->streams, SSCG_FILE_TYPE_CLIENT, client_file, client_mode);
+  CHECK_OK (ret);
+
+
+  ret = sscg_io_utils_add_output_file (options->streams,
+                                       SSCG_FILE_TYPE_CLIENT_KEY,
+                                       client_key_file ? client_key_file :
+                                                         client_file,
+                                       client_key_mode);
+  CHECK_OK (ret);
+
   ret = sscg_io_utils_add_output_file (
     options->streams, SSCG_FILE_TYPE_CRL, crl_file, crl_mode);
   CHECK_OK (ret);
@@ -1002,9 +1115,48 @@ main (int argc, const char **argv)
                      &svc_key);
   CHECK_OK (ret);
 
+  /* If requested, generate the client auth certificate and sign it with the
+   * private CA.
+   */
+  if (GET_BIO (SSCG_FILE_TYPE_CLIENT))
+    {
+      ret = create_cert (main_ctx,
+                         options,
+                         cacert,
+                         cakey,
+                         SSCG_CERT_TYPE_CLIENT,
+                         &client_cert,
+                         &client_key);
+      CHECK_OK (ret);
+    }
+
 
   /* ==== Output the final files ==== */
 
+
+  /* Write private keys first */
+
+  if (GET_BIO (SSCG_FILE_TYPE_CLIENT_KEY))
+    {
+      /* This function has a default mechanism for prompting for the
+       * password if it is passed a cipher and gets a NULL password.
+       *
+       * Only pass the cipher if we have a password or were instructed
+       * to prompt for one.
+       */
+      sret = PEM_write_bio_PrivateKey (
+        GET_BIO (SSCG_FILE_TYPE_CLIENT_KEY),
+        client_key->evp_pkey,
+        options->client_key_pass_prompt || options->client_key_pass ?
+          options->cipher :
+          NULL,
+        (unsigned char *)options->client_key_pass,
+        options->client_key_pass ? strlen (options->client_key_pass) : 0,
+        NULL,
+        NULL);
+      CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
+      ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC_KEY);
+    }
 
   /* This function has a default mechanism for prompting for the
    * password if it is passed a cipher and gets a NULL password.
@@ -1023,14 +1175,6 @@ main (int argc, const char **argv)
     NULL);
   CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
   ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC_KEY);
-
-
-  /* Create service public certificate */
-  sret =
-    PEM_write_bio_X509 (GET_BIO (SSCG_FILE_TYPE_SVC), svc_cert->certificate);
-  CHECK_SSL (sret, PEM_write_bio_X509 (svc));
-  ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC);
-
 
   /* Create CA private key, if requested */
   if (GET_BIO (SSCG_FILE_TYPE_CA_KEY))
@@ -1054,6 +1198,23 @@ main (int argc, const char **argv)
       ANNOUNCE_WRITE (SSCG_FILE_TYPE_CA_KEY);
     }
 
+  /* Public keys come next, in chain order */
+
+  /* Start with the client certificate */
+  if (GET_BIO (SSCG_FILE_TYPE_CLIENT))
+    {
+      sret = PEM_write_bio_X509 (GET_BIO (SSCG_FILE_TYPE_CLIENT),
+                                 client_cert->certificate);
+      CHECK_SSL (sret, PEM_write_bio_X509 (client));
+      ANNOUNCE_WRITE (SSCG_FILE_TYPE_CLIENT);
+    }
+
+  /* Create service public certificate */
+  sret =
+    PEM_write_bio_X509 (GET_BIO (SSCG_FILE_TYPE_SVC), svc_cert->certificate);
+  CHECK_SSL (sret, PEM_write_bio_X509 (svc));
+  ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC);
+
 
   /* Create CA public certificate */
   struct sscg_stream *stream =
@@ -1062,6 +1223,8 @@ main (int argc, const char **argv)
   CHECK_SSL (sret, PEM_write_bio_X509 (CA));
   ANNOUNCE_WRITE (SSCG_FILE_TYPE_CA);
 
+
+  /* Then write any non-certificate files */
 
   /* Create CRL file */
   if (GET_BIO (SSCG_FILE_TYPE_CRL))

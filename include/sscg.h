@@ -227,6 +227,8 @@ struct sscg_options
   char *ca_key_pass;
   bool cert_key_pass_prompt;
   char *cert_key_pass;
+  bool client_key_pass_prompt;
+  char *client_key_pass;
 
   /* Output Files */
   struct sscg_stream **streams;

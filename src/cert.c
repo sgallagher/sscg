@@ -108,6 +108,10 @@ create_cert (TALLOC_CTX *mem_ctx,
       sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_server_auth));
       break;
 
+    case SSCG_CERT_TYPE_CLIENT:
+      sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_client_auth));
+      break;
+
     default:
       fprintf (stdout, "Unknown certificate type!");
       ret = EINVAL;
