@@ -233,7 +233,10 @@ enum io_utils_errors
   IO_UTILS_OK = 0,
   IO_UTILS_TOOMANYKEYS,
   IO_UTILS_DHPARAMS_NON_EXCLUSIVE,
-  IO_UTILS_CRL_NON_EXCLUSIVE
+  IO_UTILS_CRL_NON_EXCLUSIVE,
+  IO_UTILS_SVC_UNMATCHED,
+  IO_UTILS_CLIENT_UNMATCHED,
+  IO_UTILS_CA_UNMATCHED
 };
 
 static enum io_utils_errors
@@ -242,10 +245,13 @@ io_utils_validate (struct sscg_stream **streams)
   enum io_utils_errors ret;
   struct sscg_stream *stream = NULL;
   int keybits;
+  int allbits = 0;
 
   for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
     {
       SSCG_LOG (SSCG_DEBUG, "filetypes: 0x%.4x\n", stream->filetypes);
+
+      allbits |= stream->filetypes;
 
       /* No file may contain two different private keys */
       /* First check if any private keys are in this file */
@@ -281,6 +287,39 @@ io_utils_validate (struct sscg_stream **streams)
         }
     }
 
+  SSCG_LOG (SSCG_DEBUG, "allbits: 0x%.4x\n", allbits);
+
+  /* If the public or private key is present for the service cert, the other
+   * must be present also
+   */
+  if ((allbits & SSCG_FILE_TYPE_SVC_TYPES) &&
+      ((allbits & SSCG_FILE_TYPE_SVC_TYPES) != SSCG_FILE_TYPE_SVC_TYPES))
+    {
+      ret = IO_UTILS_SVC_UNMATCHED;
+      goto done;
+    }
+
+  /* If the public or private key is present for the client cert, the other
+   * must be present also
+   */
+  if ((allbits & SSCG_FILE_TYPE_CLIENT_TYPES) &&
+      ((allbits & SSCG_FILE_TYPE_CLIENT_TYPES) != SSCG_FILE_TYPE_CLIENT_TYPES))
+    {
+      ret = IO_UTILS_CLIENT_UNMATCHED;
+      goto done;
+    }
+
+  /* If the private key is present for the CA cert, the public key must be
+   * present also
+   */
+  if ((allbits & (1 << SSCG_FILE_TYPE_CA_KEY)) &&
+      !(allbits & (1 << SSCG_FILE_TYPE_CA)))
+    {
+      ret = IO_UTILS_CA_UNMATCHED;
+      goto done;
+    }
+
+
   ret = IO_UTILS_OK;
 
 done:
@@ -315,7 +354,27 @@ sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
       ret = EINVAL;
       goto done;
 
-    default: break;
+    case IO_UTILS_SVC_UNMATCHED:
+      SSCG_ERROR (
+        "The service certificate must have both public and private key "
+        "locations specified.\n");
+      ret = EINVAL;
+      goto done;
+
+    case IO_UTILS_CLIENT_UNMATCHED:
+      SSCG_ERROR (
+        "The client certificate must have both public and private key "
+        "locations specified.\n");
+      ret = EINVAL;
+      goto done;
+
+    case IO_UTILS_CA_UNMATCHED:
+      SSCG_ERROR (
+        "The CA certificate must have a public key location specified.\n");
+      ret = EINVAL;
+      goto done;
+
+    case IO_UTILS_OK: break;
     }
 
   tmp_ctx = talloc_new (NULL);

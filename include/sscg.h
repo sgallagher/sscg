@@ -171,6 +171,14 @@ enum sscg_file_type
   ((1 << SSCG_FILE_TYPE_CA_KEY) | (1 << SSCG_FILE_TYPE_SVC_KEY) |             \
    (1 << SSCG_FILE_TYPE_CLIENT_KEY))
 
+#define SSCG_FILE_TYPE_SVC_TYPES                                              \
+  ((1 << SSCG_FILE_TYPE_SVC) | (1 << SSCG_FILE_TYPE_SVC_KEY))
+
+#define SSCG_FILE_TYPE_CLIENT_TYPES                                           \
+  ((1 << SSCG_FILE_TYPE_CLIENT) | (1 << SSCG_FILE_TYPE_CLIENT_KEY))
+
+#define SSCG_FILE_TYPE_CA_TYPES                                               \
+  ((1 << SSCG_FILE_TYPE_CA) | (1 << SSCG_FILE_TYPE_CA_KEY))
 
 const char *
 sscg_get_file_type_name (enum sscg_file_type _type);
