@@ -300,6 +300,7 @@ main (int argc, const char **argv)
   char *cert_key_password = NULL;
   char *cert_key_passfile = NULL;
 
+  bool build_client_cert = false;
   int client_mode = SSCG_CERT_DEFAULT_MODE;
   int client_key_mode = SSCG_KEY_DEFAULT_MODE;
   char *client_key_password = NULL;
@@ -1121,7 +1122,8 @@ main (int argc, const char **argv)
   /* If requested, generate the client auth certificate and sign it with the
    * private CA.
    */
-  if (GET_BIO (SSCG_FILE_TYPE_CLIENT))
+  build_client_cert = !!(GET_BIO (SSCG_FILE_TYPE_CLIENT));
+  if (build_client_cert)
     {
       ret = create_cert (main_ctx,
                          options,
@@ -1139,7 +1141,7 @@ main (int argc, const char **argv)
 
   /* Write private keys first */
 
-  if (GET_BIO (SSCG_FILE_TYPE_CLIENT_KEY))
+  if (build_client_cert)
     {
       /* This function has a default mechanism for prompting for the
        * password if it is passed a cipher and gets a NULL password.
@@ -1204,7 +1206,7 @@ main (int argc, const char **argv)
   /* Public keys come next, in chain order */
 
   /* Start with the client certificate */
-  if (GET_BIO (SSCG_FILE_TYPE_CLIENT))
+  if (build_client_cert)
     {
       sret = PEM_write_bio_X509 (GET_BIO (SSCG_FILE_TYPE_CLIENT),
                                  client_cert->certificate);
