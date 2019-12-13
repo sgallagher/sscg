@@ -9,6 +9,10 @@ meson --buildtype=debug -Dtest_dhparams_4096=true travis
 
 meson test -C travis --verbose
 
+# Run clang-analyzer
+meson --buildtype=debug clang-analyzer
+ninja -C clang-analyzer scan-build
+
 meson --buildtype=debug coverity
 pushd coverity
 
