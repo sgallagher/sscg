@@ -325,6 +325,9 @@ main (int argc, const char **argv)
   OpenSSL_add_all_algorithms ();
 #endif
 
+  if (getenv ("SSCG_TALLOC_REPORT"))
+    talloc_enable_null_tracking();
+
   TALLOC_CTX *main_ctx = talloc_new (NULL);
   if (!main_ctx)
     {
@@ -1270,5 +1273,8 @@ done:
     {
       SSCG_ERROR ("%s\n", strerror (ret));
     }
+  if (getenv ("SSCG_TALLOC_REPORT"))
+    talloc_report_full(NULL, stderr);
+
   return ret;
 }
