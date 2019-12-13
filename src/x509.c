@@ -482,6 +482,6 @@ done:
       *_cert = talloc_steal (mem_ctx, scert);
     }
   X509_NAME_free (subject);
-  talloc_free(tmp_ctx);
+  talloc_free (tmp_ctx);
   return ret;
 }
