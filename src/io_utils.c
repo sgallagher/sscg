@@ -363,8 +363,8 @@ sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
 
     case IO_UTILS_CLIENT_UNMATCHED:
       SSCG_ERROR (
-        "The client certificate must have both public and private key "
-        "locations specified.\n");
+        "The client certificate must have the public key location "
+        "specified.\n");
       ret = EINVAL;
       goto done;
 
