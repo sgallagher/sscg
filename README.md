@@ -26,27 +26,37 @@ Usage: sscg [OPTION...]
   -d, --debug                                           Enable logging of debug messages. Implies verbose. Warning! This will print
                                                         private key information to the screen!
   -V, --version                                         Display the version number and exit.
+  -f, --force                                           Overwrite any pre-existing files in the requested locations
       --lifetime=1-3650                                 Certificate lifetime (days). (default: 3650)
       --country=US, CZ, etc.                            Certificate DN: Country (C). (default: "US")
       --state=Massachusetts, British Columbia, etc.     Certificate DN: State or Province (ST).
       --locality=Westford, Paris, etc.                  Certificate DN: Locality (L).
       --organization=My Company                         Certificate DN: Organization (O). (default: "Unspecified")
       --organizational-unit=Engineering, etc.           Certificate DN: Organizational Unit (OU).
-      --hostname=server.example.com                     The valid hostname of the certificate. Must be an FQDN. (default: current system
-                                                        FQDN)
-      --subject-alt-name alt.example.com                Optional additional valid hostnames for the certificate. May be specified multiple
-                                                        times.
+      --email=myname@example.com                        Certificate DN: Email Address (Email).
+      --hostname=server.example.com                     The valid hostname of the certificate. Must be an FQDN. (default: current
+                                                        system FQDN)
+      --subject-alt-name alt.example.com                Optional additional valid hostnames for the certificate. In addition to
+                                                        hostnames, this option also accepts explicit values supported by RFC 5280 such
+                                                        as IP:xxx.xxx.xxx.xxx/yyy.yyy.yyy.yyy May be specified multiple times.
       --package=STRING                                  Unused. Retained for compatibility with earlier versions of sscg.
-      --key-strength={512,1024,2048,4096}               Strength of the certificate private keys in bits. (default: 2048)
-      --hash-alg={sha256,sha384,sha512}                 Hashing algorithm to use for signing. (default: sha256)
+      --key-strength=2048 or larger                     Strength of the certificate private keys in bits. (default: 2048)
+      --hash-alg={sha256,sha384,sha512}                 Hashing algorithm to use for signing. (default: "sha256")
       --ca-file=STRING                                  Path where the public CA certificate will be stored. (default: "./ca.crt")
-      --ca-key-file=STRING                              Path where the CA's private key will be stored. If unspecified, the key will be
-                                                        destroyed rather than written to the disk.
-      --cert-file=STRING                                Path where the public service certificate will be stored. (default "./service.pem")
-      --cert-key-file=STRING                            Path where the service's private key will be stored. (default "service-key.pem")
+      --ca-mode=0644                                    File mode of the created CA certificate. (default: 0644)
+      --ca-key-file=STRING                              Path where the CA's private key will be stored. If unspecified, the key will
+                                                        be destroyed rather than written to the disk.
+      --ca-key-mode=0600                                File mode of the created CA key. (default: 0600)
+      --cert-file=STRING                                Path where the public service certificate will be stored. (default
+                                                        "./service.pem")
+      --cert-mode=0644                                  File mode of the created certificate. (default: 0644)
+      --cert-key-file=STRING                            Path where the service's private key will be stored. (default
+                                                        "service-key.pem")
+      --cert-key-mode=0600                              File mode of the created certificate key. (default: 0600)
 
 Help options:
   -?, --help                                            Show this help message
       --usage                                           Display brief usage message
-
 ```
+
+For developers, you can run with the environment variable `SSCG_TALLOC_REPORT=true` to get a memory leak report.
