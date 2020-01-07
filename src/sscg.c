@@ -737,8 +737,7 @@ main (int argc, const char **argv)
       &client_key_file,
       0,
       _ ("Path where the client's private key will be stored. "
-         "(default is the client-file, if --client-file was passed, "
-         "otherwise this file will not be generated.)"),
+         "(default is the client-file)"),
       NULL,
     },
 
