@@ -260,6 +260,28 @@ sscg_get_file_type_name (enum sscg_file_type type)
 }
 
 
+static int
+validate_passphrase (const char *passphrase)
+{
+  /* Ignore unset passwords; these will be prompted for when writing out the
+   * key file
+   */
+  if (!passphrase)
+    return EOK;
+
+  size_t pass_len = strnlen (passphrase, SSCG_MAX_KEY_PASS_LEN + 1);
+
+  if ((pass_len < SSCG_MIN_KEY_PASS_LEN) || (pass_len > SSCG_MAX_KEY_PASS_LEN))
+    {
+      SSCG_ERROR ("Passphrases must be between %d and %d characters. \n",
+                  SSCG_MIN_KEY_PASS_LEN,
+                  SSCG_MAX_KEY_PASS_LEN);
+      return EINVAL;
+    }
+  return EOK;
+}
+
+
 int
 main (int argc, const char **argv)
 {
@@ -981,9 +1003,13 @@ main (int argc, const char **argv)
         {
           fprintf (
             stderr, "Failed to read passphrase from %s", ca_key_passfile);
+          ret = EIO;
           goto done;
         }
     }
+  ret = validate_passphrase (options->ca_key_pass);
+  if (ret != EOK)
+    goto done;
 
   if (cert_key_password)
     {
@@ -997,9 +1023,13 @@ main (int argc, const char **argv)
         {
           fprintf (
             stderr, "Failed to read passphrase from %s", cert_key_passfile);
+          ret = EIO;
           goto done;
         }
     }
+  ret = validate_passphrase (options->cert_key_pass);
+  if (ret != EOK)
+    goto done;
 
   if (client_key_password)
     {
@@ -1014,9 +1044,13 @@ main (int argc, const char **argv)
         {
           fprintf (
             stderr, "Failed to read passphrase from %s", client_key_passfile);
+          ret = EIO;
           goto done;
         }
     }
+  ret = validate_passphrase (options->client_key_pass);
+  if (ret != EOK)
+    goto done;
 
   if (options->key_strength < options->minimum_key_strength)
     {

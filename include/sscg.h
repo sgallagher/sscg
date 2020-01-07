@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/uierr.h>
 #include <stdbool.h>
 #include <talloc.h>
 #include <stdint.h>
@@ -87,9 +88,23 @@
       if (_sslret != 1)                                                       \
         {                                                                     \
           /* Get information about error from OpenSSL */                      \
+          unsigned long _ssl_error = ERR_get_error ();                        \
+          if ((ERR_GET_LIB (_ssl_error) == ERR_LIB_UI) &&                     \
+              (ERR_GET_FUNC (_ssl_error) == UI_F_UI_SET_RESULT_EX) &&         \
+              ((ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_LARGE) ||      \
+               (ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_SMALL)))       \
+            {                                                                 \
+              fprintf (                                                       \
+                stderr,                                                       \
+                "Passphrases must be between %d and %d characters. \n",       \
+                SSCG_MIN_KEY_PASS_LEN,                                        \
+                SSCG_MAX_KEY_PASS_LEN);                                       \
+              ret = EINVAL;                                                   \
+              goto done;                                                      \
+            }                                                                 \
           fprintf (stderr,                                                    \
                    "Error occurred in " #_fn ": [%s].\n",                     \
-                   ERR_error_string (ERR_get_error (), NULL));                \
+                   ERR_error_string (_ssl_error, NULL));                      \
           ret = EIO;                                                          \
           goto done;                                                          \
         }                                                                     \
@@ -250,5 +265,8 @@ enum sscg_cert_type
 
   SSCG_NUM_CERT_TYPES
 };
+
+#define SSCG_MIN_KEY_PASS_LEN 4
+#define SSCG_MAX_KEY_PASS_LEN 1023
 
 #endif /* _SSCG_H */

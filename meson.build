@@ -80,6 +80,7 @@ sscg_lib_hdrs = [
     'include/dhparams.h',
     'include/io_utils.h',
     'include/key.h',
+    'include/sscg.h',
     'include/x509.h',
 ]
 
