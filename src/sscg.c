@@ -1181,17 +1181,17 @@ main (int argc, const char **argv)
        * Only pass the cipher if we have a password or were instructed
        * to prompt for one.
        */
-      sret = PEM_write_bio_PrivateKey (
+      sret = PEM_write_bio_PKCS8PrivateKey (
         GET_BIO (SSCG_FILE_TYPE_CLIENT_KEY),
         client_key->evp_pkey,
         options->client_key_pass_prompt || options->client_key_pass ?
           options->cipher :
           NULL,
-        (unsigned char *)options->client_key_pass,
+        options->client_key_pass,
         options->client_key_pass ? strlen (options->client_key_pass) : 0,
         NULL,
         NULL);
-      CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
+      CHECK_SSL (sret, PEM_write_bio_PKCS8PrivateKey (svc));
       ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC_KEY);
     }
 
@@ -1201,16 +1201,16 @@ main (int argc, const char **argv)
    * Only pass the cipher if we have a password or were instructed
    * to prompt for one.
    */
-  sret = PEM_write_bio_PrivateKey (
+  sret = PEM_write_bio_PKCS8PrivateKey (
     GET_BIO (SSCG_FILE_TYPE_SVC_KEY),
     svc_key->evp_pkey,
     options->cert_key_pass_prompt || options->cert_key_pass ? options->cipher :
                                                               NULL,
-    (unsigned char *)options->cert_key_pass,
+    options->cert_key_pass,
     options->cert_key_pass ? strlen (options->cert_key_pass) : 0,
     NULL,
     NULL);
-  CHECK_SSL (sret, PEM_write_bio_PrivateKey (svc));
+  CHECK_SSL (sret, PEM_write_bio_PKCS8PrivateKey (svc));
   ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC_KEY);
 
   /* Create CA private key, if requested */
@@ -1222,16 +1222,16 @@ main (int argc, const char **argv)
        * Only pass the cipher if we have a password or were instructed
        * to prompt for one.
        */
-      sret = PEM_write_bio_PrivateKey (
+      sret = PEM_write_bio_PKCS8PrivateKey (
         GET_BIO (SSCG_FILE_TYPE_CA_KEY),
         cakey->evp_pkey,
         options->ca_key_pass_prompt || options->ca_key_pass ? options->cipher :
                                                               NULL,
-        (unsigned char *)options->ca_key_pass,
+        options->ca_key_pass,
         options->ca_key_pass ? strlen (options->ca_key_pass) : 0,
         NULL,
         NULL);
-      CHECK_SSL (sret, PEM_write_bio_PrivateKey (CA));
+      CHECK_SSL (sret, PEM_write_bio_PKCS8PrivateKey (CA));
       ANNOUNCE_WRITE (SSCG_FILE_TYPE_CA_KEY);
     }
 
