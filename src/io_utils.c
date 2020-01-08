@@ -24,7 +24,13 @@
 #include <talloc.h>
 
 #include "include/io_utils.h"
+#include "include/key.h"
 #include "include/sscg.h"
+
+
+/* Same as OpenSSL CLI */
+#define MAX_PW_LEN 1024
+
 
 int
 sscg_normalize_path (TALLOC_CTX *mem_ctx,
@@ -61,6 +67,12 @@ sscg_stream_destructor (TALLOC_CTX *ptr)
   struct sscg_stream *stream = talloc_get_type_abort (ptr, struct sscg_stream);
 
   BIO_free (stream->bio);
+
+  /* Zero out the memory before freeing it so we don't leak passwords */
+  if (stream->passphrase)
+    {
+      memset (stream->passphrase, 0, strnlen (stream->passphrase, MAX_PW_LEN));
+    }
 
   return 0;
 }
@@ -147,11 +159,92 @@ sscg_io_utils_get_path_by_type (struct sscg_stream **streams,
 }
 
 
+/* This function takes a copy of a string into a talloc hierarchy and memsets
+ * the original string to zeroes to avoid leaking it when that memory is freed.
+ */
+static char *
+sscg_secure_string_steal (TALLOC_CTX *mem_ctx, char *src)
+{
+  char *dest = talloc_strdup (mem_ctx, src);
+
+  memset ((void *)src, 0, strlen (src));
+
+  return dest;
+}
+
+
+static int
+validate_passphrase (struct sscg_stream *stream)
+{
+  /* Ignore non-key types */
+  if (!(stream->filetypes & SSCG_FILE_TYPE_KEYS))
+    return EOK;
+
+  /* Ignore unset passwords; these will be prompted for when writing out the
+   * key file
+   */
+  if (!stream->passphrase)
+    return EOK;
+
+  size_t pass_len = strnlen (stream->passphrase, SSCG_MAX_KEY_PASS_LEN + 1);
+
+  if ((pass_len < SSCG_MIN_KEY_PASS_LEN) || (pass_len > SSCG_MAX_KEY_PASS_LEN))
+    {
+      SSCG_ERROR ("Passphrases must be between %d and %d characters. \n",
+                  SSCG_MIN_KEY_PASS_LEN,
+                  SSCG_MAX_KEY_PASS_LEN);
+      return EINVAL;
+    }
+  return EOK;
+}
+
+
+static char *
+sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
+{
+  int i;
+  BIO *pwdbio = NULL;
+  char tpass[MAX_PW_LEN];
+  char *tmp = NULL;
+  char *password = NULL;
+
+  pwdbio = BIO_new_file (path, "r");
+  if (pwdbio == NULL)
+    {
+      fprintf (stderr, "Can't open file %s\n", path);
+      return NULL;
+    }
+
+  i = BIO_gets (pwdbio, tpass, MAX_PW_LEN);
+  BIO_free_all (pwdbio);
+  pwdbio = NULL;
+
+  if (i <= 0)
+    {
+      fprintf (stderr, "Error reading password from BIO\n");
+      return NULL;
+    }
+
+  tmp = strchr (tpass, '\n');
+  if (tmp != NULL)
+    *tmp = 0;
+
+  password = talloc_strdup (mem_ctx, tpass);
+
+  memset (tpass, 0, MAX_PW_LEN);
+
+  return password;
+}
+
+
 int
-sscg_io_utils_add_output_file (struct sscg_stream **streams,
-                               enum sscg_file_type filetype,
-                               const char *path,
-                               int mode)
+sscg_io_utils_add_output_key (struct sscg_stream **streams,
+                              enum sscg_file_type filetype,
+                              const char *path,
+                              int mode,
+                              bool pass_prompt,
+                              char *passphrase,
+                              char *passfile)
 {
   int ret, i;
   TALLOC_CTX *tmp_ctx = NULL;
@@ -163,6 +256,21 @@ sscg_io_utils_add_output_file (struct sscg_stream **streams,
    */
   if (path == NULL)
     {
+      if (pass_prompt)
+        {
+          SSCG_ERROR (
+            "Passphrase prompt requested for %s, but no file path provided.",
+            sscg_get_file_type_name (filetype));
+          return EINVAL;
+        }
+
+      if (passphrase)
+        {
+          SSCG_ERROR ("Passphrase provided for %s, but no file path provided.",
+                      sscg_get_file_type_name (filetype));
+          return EINVAL;
+        }
+
       SSCG_LOG (SSCG_DEBUG,
                 "Got a NULL path with filetype: %s\n",
                 sscg_get_file_type_name (filetype));
@@ -220,11 +328,45 @@ sscg_io_utils_add_output_file (struct sscg_stream **streams,
   /* Add the file type */
   stream->filetypes |= (1 << filetype);
 
+
+  /* Set the password options */
+  stream->pass_prompt = pass_prompt;
+
+  if (passphrase)
+    {
+      stream->passphrase = sscg_secure_string_steal (stream, passphrase);
+      ret = validate_passphrase (stream);
+      if (ret != EOK)
+        goto done;
+    }
+  else if (passfile)
+    {
+      stream->passphrase = sscg_read_pw_file (stream, passfile);
+      if (!stream->passphrase)
+        {
+          fprintf (stderr, "Failed to read passphrase from %s", passfile);
+          ret = EIO;
+          goto done;
+        }
+    }
+  ret = validate_passphrase (stream);
+
   ret = EOK;
 
 done:
   talloc_free (tmp_ctx);
   return ret;
+}
+
+
+int
+sscg_io_utils_add_output_file (struct sscg_stream **streams,
+                               enum sscg_file_type filetype,
+                               const char *path,
+                               int mode)
+{
+  return sscg_io_utils_add_output_key (
+    streams, filetype, path, mode, false, NULL, NULL);
 }
 
 
@@ -396,6 +538,43 @@ sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
   ret = EOK;
 done:
   talloc_free (tmp_ctx);
+  return ret;
+}
+
+
+int
+sscg_io_utils_write_privatekey (struct sscg_stream **streams,
+                                enum sscg_file_type filetype,
+                                struct sscg_evp_pkey *key,
+                                struct sscg_options *options)
+{
+  int ret, sret;
+
+  struct sscg_stream *stream =
+    sscg_io_utils_get_stream_by_type (streams, filetype);
+  if (stream)
+    {
+      /* This function has a default mechanism for prompting for the
+       * password if it is passed a cipher and gets a NULL password.
+       *
+       * Only pass the cipher if we have a password or were instructed
+       * to prompt for one.
+       */
+      sret = PEM_write_bio_PKCS8PrivateKey (
+        stream->bio,
+        key->evp_pkey,
+        stream->pass_prompt || stream->passphrase ? options->cipher : NULL,
+        stream->passphrase,
+        stream->passphrase ? strlen (stream->passphrase) : 0,
+        NULL,
+        NULL);
+      CHECK_SSL (sret, PEM_write_bio_PKCS8PrivateKey);
+      ANNOUNCE_WRITE (filetype);
+    }
+
+  ret = EOK;
+
+done:
   return ret;
 }
 

@@ -17,14 +17,14 @@
     Copyright 2017 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
+#ifndef _SSCG_KEY_H
+#define _SSCG_KEY_H
+
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 
 #include "include/sscg.h"
 #include "include/bignum.h"
-
-#ifndef _SSCG_KEY_H
-#define _SSCG_KEY_H
 
 struct sscg_evp_pkey
 {

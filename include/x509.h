@@ -17,15 +17,15 @@
     Copyright 2017 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
+#ifndef _SSCG_X509_H
+#define _SSCG_X509_H
+
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "include/sscg.h"
 #include "include/bignum.h"
 #include "include/key.h"
-
-#ifndef _SSCG_X509_H
-#define _SSCG_X509_H
 
 struct sscg_cert_info
 {

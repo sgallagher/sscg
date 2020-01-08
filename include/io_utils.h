@@ -24,6 +24,7 @@
 #include <stdbool.h>
 #include <talloc.h>
 
+#include "include/key.h"
 #include "include/sscg.h"
 
 
@@ -33,6 +34,9 @@ struct sscg_stream
   char *path;
   int mode;
   int filetypes;
+
+  bool pass_prompt;
+  char *passphrase;
 };
 
 
@@ -69,8 +73,6 @@ sscg_io_utils_get_path_by_type (struct sscg_stream **streams,
  * @path: The path to the file on disk.
  * @mode: The filesystem mode this file should have when written to disk.
  * See chmod(1) for the possible values.
- * @overwrite: If true, replace any existing file at @normalized_path. If
- * false, opening will fail if it already exists and return an error.
  *
  * Prepares all output filenames to be opened. Files are not created until
  * sscg_io_utils_open_output_files() is called.
@@ -82,8 +84,39 @@ sscg_io_utils_add_output_file (struct sscg_stream **streams,
                                int mode);
 
 
+/**
+ * sscg_io_utils_add_output_key:
+ * @streams: The array of streams from the sscg_options
+ * @filetype:
+ * @path: The path to the file on disk.
+ * @mode: The filesystem mode this file should have when written to disk.
+ * See chmod(1) for the possible values.
+ * @pass_prompt: Whether the user should be prompted to enter a passphrase
+ * interactively.
+ * @passphrase: The passphrase supplied at the command line.
+ * @passfile: The path to a file containing the passphrase.
+ *
+ * Prepares all output filenames to be opened. Files are not created until
+ * sscg_io_utils_open_output_files() is called.
+ */
+int
+sscg_io_utils_add_output_key (struct sscg_stream **streams,
+                              enum sscg_file_type filetype,
+                              const char *path,
+                              int mode,
+                              bool pass_prompt,
+                              char *passphrase,
+                              char *passfile);
+
+
 int
 sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite);
+
+int
+sscg_io_utils_write_privatekey (struct sscg_stream **streams,
+                                enum sscg_file_type filetype,
+                                struct sscg_evp_pkey *key,
+                                struct sscg_options *options);
 
 /* If this function fails, some of the output files may be left as 0400 */
 int

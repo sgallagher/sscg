@@ -20,6 +20,10 @@
 /* This is a master header file that should be included by all
    sscg source files. */
 
+
+#ifndef _SSCG_H
+#define _SSCG_H
+
 #include <errno.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -28,10 +32,6 @@
 #include <talloc.h>
 #include <stdint.h>
 
-#include "include/io_utils.h"
-
-#ifndef _SSCG_H
-#define _SSCG_H
 
 /* TODO: implement internationalization */
 
@@ -239,11 +239,8 @@ struct sscg_options
   const EVP_MD *hash_fn;
 
   bool ca_key_pass_prompt;
-  char *ca_key_pass;
   bool cert_key_pass_prompt;
-  char *cert_key_pass;
   bool client_key_pass_prompt;
-  char *client_key_pass;
 
   /* Output Files */
   struct sscg_stream **streams;

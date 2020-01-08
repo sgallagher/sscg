@@ -18,6 +18,7 @@
 */
 
 #define _GNU_SOURCE
+#include <assert.h>
 #include <popt.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,9 +40,6 @@
 
 int verbosity;
 
-
-/* Same as OpenSSL CLI */
-#define MAX_PW_LEN 1024
 
 static int
 get_security_level (void)
@@ -140,79 +138,6 @@ print_options (struct sscg_options *opts)
 }
 
 
-/* This function takes a copy of a string into a talloc hierarchy and memsets
- * the original string to zeroes to avoid leaking it when that memory is freed.
- */
-static char *
-sscg_secure_string_steal (TALLOC_CTX *mem_ctx, char *src)
-{
-  char *dest = talloc_strdup (mem_ctx, src);
-
-  memset (src, 0, strlen (src));
-
-  return dest;
-}
-
-
-static int
-sscg_options_destructor (TALLOC_CTX *opts)
-{
-  struct sscg_options *options =
-    talloc_get_type_abort (opts, struct sscg_options);
-
-  /* Zero out the memory before freeing it so we don't leak passwords */
-  if (options->ca_key_pass)
-    {
-      memset (options->ca_key_pass, 0, strlen (options->ca_key_pass));
-    }
-
-  if (options->cert_key_pass)
-    {
-      memset (options->cert_key_pass, 0, strlen (options->cert_key_pass));
-    }
-
-  return 0;
-}
-
-
-static char *
-sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
-{
-  int i;
-  BIO *pwdbio = NULL;
-  char tpass[MAX_PW_LEN];
-  char *tmp = NULL;
-  char *password = NULL;
-
-  pwdbio = BIO_new_file (path, "r");
-  if (pwdbio == NULL)
-    {
-      fprintf (stderr, "Can't open file %s\n", path);
-      return NULL;
-    }
-
-  i = BIO_gets (pwdbio, tpass, MAX_PW_LEN);
-  BIO_free_all (pwdbio);
-  pwdbio = NULL;
-
-  if (i <= 0)
-    {
-      fprintf (stderr, "Error reading password from BIO\n");
-      return NULL;
-    }
-
-  tmp = strchr (tpass, '\n');
-  if (tmp != NULL)
-    *tmp = 0;
-
-  password = talloc_strdup (mem_ctx, tpass);
-
-  memset (tpass, 0, MAX_PW_LEN);
-
-  return password;
-}
-
-
 const char *
 sscg_get_verbosity_name (enum sscg_verbosity type)
 {
@@ -257,28 +182,6 @@ sscg_get_file_type_name (enum sscg_file_type type)
 
   /* If it wasn't one of these, we have a bug */
   return "Unknown (bug)";
-}
-
-
-static int
-validate_passphrase (const char *passphrase)
-{
-  /* Ignore unset passwords; these will be prompted for when writing out the
-   * key file
-   */
-  if (!passphrase)
-    return EOK;
-
-  size_t pass_len = strnlen (passphrase, SSCG_MAX_KEY_PASS_LEN + 1);
-
-  if ((pass_len < SSCG_MIN_KEY_PASS_LEN) || (pass_len > SSCG_MAX_KEY_PASS_LEN))
-    {
-      SSCG_ERROR ("Passphrases must be between %d and %d characters. \n",
-                  SSCG_MIN_KEY_PASS_LEN,
-                  SSCG_MAX_KEY_PASS_LEN);
-      return EINVAL;
-    }
-  return EOK;
 }
 
 
@@ -338,6 +241,8 @@ main (int argc, const char **argv)
   int dhparams_mode = SSCG_CERT_DEFAULT_MODE;
   struct sscg_dhparams *dhparams = NULL;
 
+  struct sscg_stream *stream = NULL;
+
   /* Always use umask 0577 for generating certificates and keys
        This means that it's opened as write-only by the effective
        user. */
@@ -360,7 +265,6 @@ main (int argc, const char **argv)
 
   options = talloc_zero (main_ctx, struct sscg_options);
   CHECK_MEM (options);
-  talloc_set_destructor ((TALLOC_CTX *)options, sscg_options_destructor);
 
   options->streams =
     talloc_zero_array (options, struct sscg_stream *, SSCG_NUM_FILE_TYPES);
@@ -990,68 +894,6 @@ main (int argc, const char **argv)
         }
     }
 
-  /* Password handling */
-  if (ca_key_password)
-    {
-      options->ca_key_pass =
-        sscg_secure_string_steal (options, ca_key_password);
-    }
-  else if (ca_key_passfile)
-    {
-      options->ca_key_pass = sscg_read_pw_file (options, ca_key_passfile);
-      if (!options->ca_key_pass)
-        {
-          fprintf (
-            stderr, "Failed to read passphrase from %s", ca_key_passfile);
-          ret = EIO;
-          goto done;
-        }
-    }
-  ret = validate_passphrase (options->ca_key_pass);
-  if (ret != EOK)
-    goto done;
-
-  if (cert_key_password)
-    {
-      options->cert_key_pass =
-        sscg_secure_string_steal (options, cert_key_password);
-    }
-  else if (cert_key_passfile)
-    {
-      options->cert_key_pass = sscg_read_pw_file (options, cert_key_passfile);
-      if (!options->cert_key_pass)
-        {
-          fprintf (
-            stderr, "Failed to read passphrase from %s", cert_key_passfile);
-          ret = EIO;
-          goto done;
-        }
-    }
-  ret = validate_passphrase (options->cert_key_pass);
-  if (ret != EOK)
-    goto done;
-
-  if (client_key_password)
-    {
-      options->client_key_pass =
-        sscg_secure_string_steal (options, client_key_password);
-    }
-  else if (client_key_passfile)
-    {
-      options->client_key_pass =
-        sscg_read_pw_file (options, client_key_passfile);
-      if (!options->client_key_pass)
-        {
-          fprintf (
-            stderr, "Failed to read passphrase from %s", client_key_passfile);
-          ret = EIO;
-          goto done;
-        }
-    }
-  ret = validate_passphrase (options->client_key_pass);
-  if (ret != EOK)
-    goto done;
-
   if (options->key_strength < options->minimum_key_strength)
     {
       fprintf (stderr,
@@ -1092,8 +934,13 @@ main (int argc, const char **argv)
                                        ca_mode);
   CHECK_OK (ret);
 
-  ret = sscg_io_utils_add_output_file (
-    options->streams, SSCG_FILE_TYPE_CA_KEY, ca_key_file, ca_key_mode);
+  ret = sscg_io_utils_add_output_key (options->streams,
+                                      SSCG_FILE_TYPE_CA_KEY,
+                                      ca_key_file,
+                                      ca_key_mode,
+                                      options->ca_key_pass_prompt,
+                                      ca_key_password,
+                                      ca_key_passfile);
   CHECK_OK (ret);
 
   ret = sscg_io_utils_add_output_file (options->streams,
@@ -1102,11 +949,14 @@ main (int argc, const char **argv)
                                        cert_mode);
   CHECK_OK (ret);
 
-  ret = sscg_io_utils_add_output_file (options->streams,
-                                       SSCG_FILE_TYPE_SVC_KEY,
-                                       cert_key_file ? cert_key_file :
-                                                       "./service-key.pem",
-                                       cert_key_mode);
+  ret = sscg_io_utils_add_output_key (options->streams,
+                                      SSCG_FILE_TYPE_SVC_KEY,
+                                      cert_key_file ? cert_key_file :
+                                                      "./service-key.pem",
+                                      cert_key_mode,
+                                      options->cert_key_pass_prompt,
+                                      cert_key_password,
+                                      cert_key_passfile);
   CHECK_OK (ret);
 
 
@@ -1115,11 +965,14 @@ main (int argc, const char **argv)
   CHECK_OK (ret);
 
 
-  ret = sscg_io_utils_add_output_file (options->streams,
-                                       SSCG_FILE_TYPE_CLIENT_KEY,
-                                       client_key_file ? client_key_file :
-                                                         client_file,
-                                       client_key_mode);
+  ret = sscg_io_utils_add_output_key (options->streams,
+                                      SSCG_FILE_TYPE_CLIENT_KEY,
+                                      client_key_file ? client_key_file :
+                                                        client_file,
+                                      client_key_mode,
+                                      options->client_key_pass_prompt,
+                                      client_key_password,
+                                      client_key_passfile);
   CHECK_OK (ret);
 
   ret = sscg_io_utils_add_output_file (
@@ -1173,67 +1026,17 @@ main (int argc, const char **argv)
 
   /* Write private keys first */
 
-  if (build_client_cert)
-    {
-      /* This function has a default mechanism for prompting for the
-       * password if it is passed a cipher and gets a NULL password.
-       *
-       * Only pass the cipher if we have a password or were instructed
-       * to prompt for one.
-       */
-      sret = PEM_write_bio_PKCS8PrivateKey (
-        GET_BIO (SSCG_FILE_TYPE_CLIENT_KEY),
-        client_key->evp_pkey,
-        options->client_key_pass_prompt || options->client_key_pass ?
-          options->cipher :
-          NULL,
-        options->client_key_pass,
-        options->client_key_pass ? strlen (options->client_key_pass) : 0,
-        NULL,
-        NULL);
-      CHECK_SSL (sret, PEM_write_bio_PKCS8PrivateKey (svc));
-      ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC_KEY);
-    }
+  ret = sscg_io_utils_write_privatekey (
+    options->streams, SSCG_FILE_TYPE_CLIENT_KEY, client_key, options);
+  CHECK_OK (ret);
 
-  /* This function has a default mechanism for prompting for the
-   * password if it is passed a cipher and gets a NULL password.
-   *
-   * Only pass the cipher if we have a password or were instructed
-   * to prompt for one.
-   */
-  sret = PEM_write_bio_PKCS8PrivateKey (
-    GET_BIO (SSCG_FILE_TYPE_SVC_KEY),
-    svc_key->evp_pkey,
-    options->cert_key_pass_prompt || options->cert_key_pass ? options->cipher :
-                                                              NULL,
-    options->cert_key_pass,
-    options->cert_key_pass ? strlen (options->cert_key_pass) : 0,
-    NULL,
-    NULL);
-  CHECK_SSL (sret, PEM_write_bio_PKCS8PrivateKey (svc));
-  ANNOUNCE_WRITE (SSCG_FILE_TYPE_SVC_KEY);
+  ret = sscg_io_utils_write_privatekey (
+    options->streams, SSCG_FILE_TYPE_SVC_KEY, svc_key, options);
+  CHECK_OK (ret);
 
-  /* Create CA private key, if requested */
-  if (GET_BIO (SSCG_FILE_TYPE_CA_KEY))
-    {
-      /* This function has a default mechanism for prompting for the
-       * password if it is passed a cipher and gets a NULL password.
-       *
-       * Only pass the cipher if we have a password or were instructed
-       * to prompt for one.
-       */
-      sret = PEM_write_bio_PKCS8PrivateKey (
-        GET_BIO (SSCG_FILE_TYPE_CA_KEY),
-        cakey->evp_pkey,
-        options->ca_key_pass_prompt || options->ca_key_pass ? options->cipher :
-                                                              NULL,
-        options->ca_key_pass,
-        options->ca_key_pass ? strlen (options->ca_key_pass) : 0,
-        NULL,
-        NULL);
-      CHECK_SSL (sret, PEM_write_bio_PKCS8PrivateKey (CA));
-      ANNOUNCE_WRITE (SSCG_FILE_TYPE_CA_KEY);
-    }
+  ret = sscg_io_utils_write_privatekey (
+    options->streams, SSCG_FILE_TYPE_CA_KEY, cakey, options);
+  CHECK_OK (ret);
 
   /* Public keys come next, in chain order */
 
@@ -1254,7 +1057,7 @@ main (int argc, const char **argv)
 
 
   /* Create CA public certificate */
-  struct sscg_stream *stream =
+  stream =
     sscg_io_utils_get_stream_by_type (options->streams, SSCG_FILE_TYPE_CA);
   sret = PEM_write_bio_X509 (stream->bio, cacert->certificate);
   CHECK_SSL (sret, PEM_write_bio_X509 (CA));
