@@ -72,7 +72,7 @@ _sscg_certinfo_destructor (TALLOC_CTX *ctx)
   struct sscg_cert_info *certinfo =
     talloc_get_type_abort (ctx, struct sscg_cert_info);
 
-  sk_X509_EXTENSION_pop_free(certinfo->extensions, X509_EXTENSION_free);
+  sk_X509_EXTENSION_pop_free (certinfo->extensions, X509_EXTENSION_free);
 
   return 0;
 }

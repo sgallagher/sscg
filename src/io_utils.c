@@ -266,8 +266,9 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
 
       if (passphrase)
         {
-          SSCG_ERROR ("Passphrase provided for %s, but no file path provided.\n",
-                      sscg_get_file_type_name (filetype));
+          SSCG_ERROR (
+            "Passphrase provided for %s, but no file path provided.\n",
+            sscg_get_file_type_name (filetype));
           return EINVAL;
         }
 
