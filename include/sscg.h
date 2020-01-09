@@ -238,9 +238,9 @@ struct sscg_options
   const EVP_CIPHER *cipher;
   const EVP_MD *hash_fn;
 
-  bool ca_key_pass_prompt;
-  bool cert_key_pass_prompt;
-  bool client_key_pass_prompt;
+  int ca_key_pass_prompt;
+  int cert_key_pass_prompt;
+  int client_key_pass_prompt;
 
   /* Output Files */
   struct sscg_stream **streams;
