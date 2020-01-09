@@ -72,7 +72,7 @@ _sscg_certinfo_destructor (TALLOC_CTX *ctx)
   struct sscg_cert_info *certinfo =
     talloc_get_type_abort (ctx, struct sscg_cert_info);
 
-  sk_X509_EXTENSION_free (certinfo->extensions);
+  sk_X509_EXTENSION_pop_free(certinfo->extensions, X509_EXTENSION_free);
 
   return 0;
 }
@@ -461,6 +461,8 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
         }
       sslret = X509_add_ext (cert, ext, -1);
       CHECK_SSL (sslret, X509_add_ext);
+
+      X509_EXTENSION_free (ext);
     }
 
   /* Sign the new certificate */
