@@ -235,8 +235,8 @@ main (int argc, const char **argv)
   struct sscg_evp_pkey *cakey;
   struct sscg_x509_cert *svc_cert;
   struct sscg_evp_pkey *svc_key;
-  struct sscg_x509_cert *client_cert;
-  struct sscg_evp_pkey *client_key;
+  struct sscg_x509_cert *client_cert = NULL;
+  struct sscg_evp_pkey *client_key = NULL;
 
   int dhparams_mode = SSCG_CERT_DEFAULT_MODE;
   struct sscg_dhparams *dhparams = NULL;
