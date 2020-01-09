@@ -27,7 +27,7 @@
 #include <errno.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <openssl/uierr.h>
+#include <openssl/ui.h>
 #include <stdbool.h>
 #include <talloc.h>
 #include <stdint.h>
@@ -81,6 +81,11 @@
         }                                                                     \
     }                                                                         \
   while (0)
+
+/* The function changed in 1.1, but the library and reason names did not */
+#ifndef UI_F_UI_SET_RESULT_EX
+#define UI_F_UI_SET_RESULT_EX UI_F_UI_SET_RESULT
+#endif
 
 #define CHECK_SSL(_sslret, _fn)                                               \
   do                                                                          \
