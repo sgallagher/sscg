@@ -204,7 +204,8 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
 {
   int i;
   BIO *pwdbio = NULL;
-  char tpass[MAX_PW_LEN];
+  char tpass[MAX_PW_LEN + 1];
+  int offset = 0;
   char *tmp = NULL;
   char *password = NULL;
 
@@ -215,11 +216,19 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
       return NULL;
     }
 
-  i = BIO_gets (pwdbio, tpass, MAX_PW_LEN);
+  /* Read up to one more character than the MAX_PW_LEN */
+  for (offset = 0;
+       (i = BIO_read (pwdbio, tpass + offset, MAX_PW_LEN + 1 - offset)) > 0 &&
+       offset < (MAX_PW_LEN + 1);
+       offset += i)
+    ;
+
+  tpass[MAX_PW_LEN] = '\0';
+
   BIO_free_all (pwdbio);
   pwdbio = NULL;
 
-  if (i <= 0)
+  if (i < 0)
     {
       fprintf (stderr, "Error reading password from BIO\n");
       return NULL;
@@ -231,7 +240,7 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
 
   password = talloc_strdup (mem_ctx, tpass);
 
-  memset (tpass, 0, MAX_PW_LEN);
+  memset (tpass, 0, MAX_PW_LEN + 1);
 
   return password;
 }
@@ -351,7 +360,8 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
         }
     }
   ret = validate_passphrase (stream);
-  if (ret != EOK) goto done;
+  if (ret != EOK)
+    goto done;
 
   ret = EOK;
 
