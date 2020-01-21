@@ -351,6 +351,7 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
         }
     }
   ret = validate_passphrase (stream);
+  if (ret != EOK) goto done;
 
   ret = EOK;
 
