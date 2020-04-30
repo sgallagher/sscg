@@ -11,12 +11,11 @@ env:
 
 jobs:
   include:
-    - name: "Fedora 30"
-      script: ./.travis/travis-fedora.sh
     - name: "Fedora 31"
+      script: ./.travis/travis-fedora.sh
+    - name: "Fedora 32"
       script: ./.travis/travis-fedora.sh
     - name: "Fedora rawhide"
       script: ./.travis/travis-fedora.sh
     - name: "CentOS 7"
       script: ./.travis/travis-centos7.sh
-    

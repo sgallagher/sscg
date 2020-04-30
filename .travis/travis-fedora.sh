@@ -30,8 +30,9 @@ sed -e "s/@RELEASE@/$release/" $SCRIPT_DIR/fedora/Dockerfile.tmpl > $SCRIPT_DIR/
 sudo docker build -f $SCRIPT_DIR/fedora/Dockerfile.deps.$release -t sgallagher/sscg-deps-$release .
 sudo docker build -f $SCRIPT_DIR/fedora/Dockerfile-$release -t sgallagher/sscg:$release --build-arg TARBALL=$TARBALL .
 
-if [ $release != "rawhide" ]; then
-  # Only run Coverity scan on Rawhide since we have a limited number of scans per week.
+if [ $release != "31" ]; then
+  # Only run Coverity scan on one release since we have a limited number of scans per week.
+  # Currently, Coverity doesn't support recent GCC, so we need to use older Fedora.
   unset COVERITY_SCAN_TOKEN
 fi
 
