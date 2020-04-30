@@ -7,7 +7,7 @@ project('sscg', 'c',
           'b_asneeded=true',
         ],
         license : 'MIT',
-        meson_version : '>=0.40.0')
+        meson_version : '>=0.44.0')
 
 cc = meson.get_compiler('c')
 test_cflags = [
@@ -110,7 +110,11 @@ sscg = executable(
 )
 
 # Fake test to ensure that all sources and headers are formatted properly
-test_clang_format = find_program('clang-format')
+test_clang_format = find_program('clang-format', required: false)
+if not test_clang_format.found()
+    test_clang_format = disabler()
+endif
+
 clang_args = [ '-i' ]
 test('test_clang_format', test_clang_format,
      args : clang_args + files(sscg_lib_srcs + sscg_lib_hdrs + sscg_bin_srcs))
