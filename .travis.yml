@@ -10,6 +10,7 @@ env:
     - secure: "Aca0+L1CYqdRTi5T9aeDM7Es6E9eIbRyFhUlBjqEpSJVkk5mgXWAANuiiqWSr69k7aI5WDiuAZGyGqg/9nkVOaJfiJ1a+AmtN/UEvT0IXmn4nCZupiR4aGHUGYwwY6UD9nvHL92BFx21oTyEnd+XlcHjP0jcwmma0P7fc4xK5bIXPHF/nLs2Xm3aw9iuD6WY7gZ+NZPr/BAcAAc3RQtBWC8hQaTn3V1NDTx7Vj5SolQCDii1lwNSw7L8ozaaKFrkwaJqtClkVqQwujYnP4gnFIURRPiM8sy2mKWlQMj5aOyZP7oEuSYMV5Qe9QS6MYqNc8jSHyswM58s1dVnHtaeL/k5fwwyXKA8eEpmpsy1iNzyru6A36mH94QzTVxqjJO5BeQCo18CveqsxP2Y/HE1JeO/79IRpKBWzB99PDzu5QfQvxLRYzn67QWnzYDGJFUPAkvAiEDFyUglGVWv0Ww67zk+s+UFV62rp8EX9xZxYHab9bWufrqj3Lv8qWMYzP7Fy8yJ/BhmHxxXqDtJWgsq1O3IIiaBjq1ZHGldZe63J6C+F1H5Xa1WyoLqv3CRbfkDOlQh4XGA9FM9tfLAfuVwyfMTc0qPuetGsZuirDIiiHaEb6KXU8YSHVgnjhdJIXx7jcn1DqZ1gHv0nMGZyqF2yjDJaTHMb0lwUedzwOXCXAw="
 
 jobs:
+  fast_finish: true
   include:
     - name: "Fedora 31"
       script: ./.travis/travis-fedora.sh
@@ -21,3 +22,19 @@ jobs:
       script: ./.travis/travis-centos.sh
     - name: "CentOS 8"
       script: ./.travis/travis-centos.sh
+
+    - name: "Fedora 31"
+      script: ./.travis/travis-fedora.sh
+      arch: arm64
+    - name: "Fedora 32"
+      script: ./.travis/travis-fedora.sh
+      arch: arm64
+    - name: "Fedora rawhide"
+      script: ./.travis/travis-fedora.sh
+      arch: arm64
+    - name: "CentOS 7"
+      script: ./.travis/travis-centos.sh
+      arch: arm64
+    - name: "CentOS 8"
+      script: ./.travis/travis-centos.sh
+      arch: arm64
