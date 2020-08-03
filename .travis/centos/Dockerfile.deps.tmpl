@@ -4,8 +4,12 @@ MAINTAINER Stephen Gallagher <sgallagh@redhat.com>
 
 ARG TARBALL
 
-RUN yum -y install epel-release && \
-    yum -y install \
+RUN yum -y install epel-release \
+ifelse(eval(_RELEASE_ >= 8), 1, `dnl
+    && yum -y install dnf-plugins-core \
+    && yum config-manager --enable PowerTools \
+')dnl
+    && yum -y install \
 	clang \
 	git-core \
 	help2man \
