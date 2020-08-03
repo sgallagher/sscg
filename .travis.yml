@@ -38,3 +38,7 @@ jobs:
     - name: "CentOS 8"
       script: ./.travis/travis-centos.sh
       arch: arm64
+
+    - stage: "Static Analysis"
+      name: "Coverity Scan"
+      script: ./.travis/travis-coverity.sh

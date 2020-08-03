@@ -1,0 +1,14 @@
+FROM sgallagher/sscg-deps-centos:8
+
+MAINTAINER Stephen Gallagher <sgallagh@redhat.com>
+
+RUN dnf -y --setopt=install_weak_deps=False --nogpgcheck install rsync \
+    && dnf -y clean all
+
+ARG TARBALL
+
+ADD $TARBALL /builddir/
+
+RUN  /builddir/.travis/coverity_prep.sh
+
+ENTRYPOINT /builddir/.travis/coverity/travis-tasks.sh
