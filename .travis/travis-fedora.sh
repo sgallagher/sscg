@@ -8,9 +8,9 @@ source $SCRIPT_DIR/travis-common.inc
 set -e
 set -x
 
-JOB_NAME=${TRAVIS_JOB_NAME:-Fedora rawhide}
+JOB_NAME=${DISTRO:-Fedora rawhide}
 
-arr=($JOB_NAME)
+arr=(${DISTRO:-Fedora rawhide})
 release=${arr[1]:-rawhide}
 
 if [ $release = rawhide ]; then
