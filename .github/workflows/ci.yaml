@@ -1,0 +1,177 @@
+name: Continuous Integration
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  ubuntu:
+    name: Ubuntu
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+          - ubuntu-20.04
+        compiler:
+          - gcc
+          - clang
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install build dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y meson pkgconf libssl-dev libpath-utils-dev libtalloc-dev help2man libpopt-dev ${{ matrix.compiler }}
+
+    - name: Configure build directory
+      run: |
+        CC=${{ matrix.compiler}} meson -Drun_slow_tests=true ${{ matrix.os }}
+
+    - name: Build SSCG
+      run: |
+        ninja -C ${{ matrix.os }}
+
+    - name: Run in-tree tests
+      run: |
+        meson test -t 5 --print-errorlogs -C ${{ matrix.os }}
+
+
+  fedora:
+    name: Fedora x86_64
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        release:
+          - 32
+          - 33
+          - 34
+        compiler:
+          - gcc
+          - clang
+
+    container:
+      image: fedora:${{ matrix.release }}
+
+    steps:
+    - name: Identify the system
+      run: |
+        cat /etc/os-release
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install build dependencies
+      run: |
+        dnf install -y meson pkgconf openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+
+    - name: Configure build directory
+      run: |
+        CC=${{ matrix.compiler}} meson -Drun_slow_tests=true fedora-${{ matrix.release }}
+
+    - name: Build SSCG
+      run: |
+        ninja -C fedora-${{ matrix.release }}
+
+    - name: Run in-tree tests
+      run: |
+        meson test -t 5 --print-errorlogs -C fedora-${{ matrix.release }}
+
+
+  fedora_multiarch:
+    name: Fedora non-x86_64
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+          - aarch64
+          - ppc64le
+          - s390x
+        compiler:
+          - gcc
+          - clang
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - uses: uraimo/run-on-arch-action@v2.0.8
+        name: Perform upstream tests
+
+        with:
+          arch: ${{ matrix.arch }}
+          distro: fedora_latest
+
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          githubToken: ${{ github.token }}
+
+          install: |
+            dnf update -y --refresh
+            dnf install -y meson pkgconf openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+
+          run: |
+            CC=${{ matrix.compiler}} meson fedora-${{ matrix.arch }}
+            meson test -t 5 --print-errorlogs -C fedora-${{ matrix.arch }}
+
+
+  centos:
+    name: CentOS
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        release:
+          - 7
+          - 8
+        compiler:
+          - gcc
+          - clang
+        exclude:
+          - release: 7
+            compiler: clang
+
+    container:
+      image: centos:${{ matrix.release }}
+
+    steps:
+    - name: Identify the system
+      run: |
+        cat /etc/os-release
+
+    - name: Checkout SSCG code
+      uses: actions/checkout@v2
+
+    - name: Checkout popt subproject
+      if: matrix.release == '7'
+      uses: actions/checkout@v2
+      with:
+        repository: sgallagher/POPT
+        path: subprojects/popt
+
+    - name: Enable EPEL
+      run: |
+        yum -y install epel-release
+
+    - name: Enable PowerTools
+      if: matrix.release == '8'
+      run: |
+        yum -y install dnf-plugins-core
+        yum config-manager --set-enabled powertools
+
+    - name: Install build dependencies
+      run: |
+        yum install -y git-core glibc-devel meson pkgconf openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+
+    - name: Configure build directory
+      run: |
+        CC=${{ matrix.compiler}} meson --errorlogs -Drun_slow_tests=true centos-${{ matrix.release }} || cat centos-7/meson-logs/meson-log.txt
+
+    - name: Build SSCG
+      run: |
+        ninja -C centos-${{ matrix.release }}
+
+    - name: Run in-tree tests
+      run: |
+        meson test -t 5 --print-errorlogs -C centos-${{ matrix.release }}
