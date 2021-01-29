@@ -1,0 +1,54 @@
+name: Upstreamed
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  coverity:
+    name: Coverity Static Analysis
+    runs-on: ubuntu-latest
+
+    container:
+      image: centos:8
+
+    steps:
+    - name: Install git
+      run: |
+        yum -y install git-core
+
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Enable EPEL
+      run: |
+        yum -y install epel-release
+
+    - name: Enable PowerTools
+      run: |
+        yum -y install dnf-plugins-core
+        yum config-manager --set-enabled powertools
+
+    - name: Install build dependencies
+      run: |
+        yum install -y clang help2man meson gcc ninja-build wget curl openssl popt-devel sudo pkgconfig redhat-rpm-config ruby rubygems "rubygem(json)" libtalloc-devel libpath_utils-devel openssl-devel
+
+    - name: Set Up Coverity Scanner
+      run: |
+        .ci/coverity_prep.sh
+
+    - name: Configure build directory
+      run: |
+        CC=gcc meson --errorlogs -Drun_slow_tests=true coverity
+
+    - name: Perform Coverity Scan Build
+      env:
+        TRAVIS_BRANCH: ${{ github.ref }}
+        COVERITY_SCAN_PROJECT_NAME: sgallagher/sscg
+        COVERITY_SCAN_NOTIFICATION_EMAIL: sgallagh@redhat.com
+        COVERITY_SCAN_BRANCH_PATTERN: .*main
+        COVERITY_SCAN_BUILD_COMMAND: ninja -C coverity
+        COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_TOKEN }}
+      run: |
+         /usr/bin/travisci_build_coverity_scan.sh ||: 
