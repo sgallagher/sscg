@@ -65,4 +65,5 @@ m4/xsize.m4
 /armv7hl
 /ppc64le
 /s390*
-
+*.rpm
+*.tar.gz
