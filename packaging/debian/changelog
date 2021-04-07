@@ -1,0 +1,5 @@
+sscg (0-1) unstable; urgency=low
+
+  * Initial release. (Closes: #986830)
+
+ -- Stephen Gallagher <sgallagh@redhat.com>  Wed, 07 Apr 2021 09:39:20 +0200
