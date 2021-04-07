@@ -25,6 +25,11 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y meson pkgconf libssl-dev libpath-utils-dev libtalloc-dev help2man libpopt-dev ${{ matrix.compiler }}
+        sudo apt install -y --no-install-recommends debhelper devscripts lintian
+        # 18.04's debhelper is too old, we want to use compat level 12
+        if grep -q 18.04 /etc/os-release; then
+            sudo apt install -y -t bionic-backports debhelper
+        fi
 
     - name: Configure build directory
       run: |
@@ -38,6 +43,31 @@ jobs:
       run: |
         meson test -t 5 --print-errorlogs -C ${{ matrix.os }}
 
+    - name: Build Debian source package
+      run: |
+        set -ex
+        mkdir deb
+        # keep version number as 0 for upstream, to match debian/changelog
+        git archive -o deb/sscg_0.orig.tar.gz --prefix sscg/ HEAD
+        cd deb
+        # unpack tar again to make sure the dist is complete and clean
+        tar xf sscg_*.tar.gz
+        cd sscg
+        cp -r packaging/debian .
+
+        # build source and binary package, with lintian
+        debuild -e CC=${{ matrix.compiler}} -us -uc
+
+    - name: Install built Debian binary package
+      run: |
+        sudo dpkg -i deb/sscg_*.deb
+
+    - name: Smoke test installed package
+      run: |
+        cd /tmp/
+        sscg
+        openssl x509 -in service.pem -text
+        openssl x509 -in ca.crt -text
 
   fedora:
     name: Fedora x86_64

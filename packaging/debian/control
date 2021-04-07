@@ -1,0 +1,29 @@
+Source: sscg
+Section: utils
+Priority: optional
+Build-Depends: debhelper-compat (= 12),
+ meson,
+ help2man,
+ libpath-utils-dev,
+ libpopt-dev,
+ libssl-dev,
+ libtalloc-dev,
+ pkgconf,
+Maintainer: Stephen Gallagher <sgallagh@redhat.com>
+Uploaders: Martin Pitt <mpitt@debian.org>
+Homepage: https://github.com/sgallagher/sscg/
+Standards-Version: 4.5.1
+Rules-Requires-Root: no
+
+Package: sscg
+Architecture: any
+Depends: ${shlibs:Depends},
+ ${misc:Depends}
+Recommends: python3, powertop
+Description: simple SSL certificate generator
+ sscg is a utility to aid in the creation of more secure "self-signed"
+ certificates. The certificates created by this tool are generated in a
+ way so as to create a CA certificate that can be safely imported into a
+ client machine to trust the service certificate without needing to set
+ up a full PKI environment and without exposing the machine to a risk of
+ false signatures from the service certificate.

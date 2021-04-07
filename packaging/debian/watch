@@ -1,0 +1,3 @@
+version=3
+opts=filenamemangle=s/.+\/(\d\S*)\.tar\.gz/sscg-$1\.tar\.gz/ \
+  https://github.com/sgallagher/sscg/tags .*/sscg-(\d\S*)\.tar\.gz
