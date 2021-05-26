@@ -32,7 +32,7 @@ main (int argc, char **argv)
   struct sscg_bignum *e;
   struct sscg_evp_pkey *pkey;
   size_t i, j;
-  unsigned long exp_list[] = { 3, 7, 65537, 0 };
+  unsigned long exp_list[] = { RSA_3, RSA_F4, 0 };
   int bits[] = { 512, 1024, 2048, 4096, 0 };
 
   TALLOC_CTX *tmp_ctx = talloc_new (NULL);

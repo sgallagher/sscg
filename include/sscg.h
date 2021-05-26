@@ -48,7 +48,7 @@
 #endif
 
 #ifndef discard_const
-#define discard_const(ptr) ((void *)((uintptr_t) (ptr)))
+#define discard_const(ptr) ((void *)((uintptr_t)(ptr)))
 #endif
 
 #ifndef talloc_zfree
