@@ -34,7 +34,6 @@ struct sscg_evp_pkey
 int
 sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
                        int bits,
-                       struct sscg_bignum *e,
                        struct sscg_evp_pkey **_key);
 
 

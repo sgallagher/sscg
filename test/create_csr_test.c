@@ -30,7 +30,6 @@ main (int argc, char **argv)
 {
   int ret, bits;
   struct sscg_cert_info *certinfo;
-  struct sscg_bignum *e;
   struct sscg_x509_req *csr = NULL;
   struct sscg_evp_pkey *pkey = NULL;
 
@@ -79,10 +78,7 @@ main (int argc, char **argv)
   /* Generate an RSA keypair */
   bits = 4096;
 
-  ret = sscg_init_bignum (tmp_ctx, RSA_F4, &e);
-  CHECK_OK (ret);
-
-  ret = sscg_generate_rsa_key (certinfo, bits, e, &pkey);
+  ret = sscg_generate_rsa_key (certinfo, bits, &pkey);
   CHECK_OK (ret);
 
   /* Create the CSR */
