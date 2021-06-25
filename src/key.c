@@ -18,6 +18,8 @@
 */
 
 #include <openssl/err.h>
+
+#include "config.h"
 #include "include/sscg.h"
 #include "include/key.h"
 
@@ -37,11 +39,21 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
                        int bits,
                        struct sscg_evp_pkey **_key)
 {
-  int ret, sslret;
-  RSA *rsa = NULL;
+  int ret;
   EVP_PKEY *pkey = NULL;
+  TALLOC_CTX *tmp_ctx = NULL;
+
+#ifdef HAVE_SSL_EVP_RSA_GEN
+
+  pkey = EVP_RSA_gen (bits);
+  CHECK_MEM (pkey);
+
+#else // HAVE_SSL_EVP_RSA_GEN
+  int sslret;
+  RSA *rsa = NULL;
   struct sscg_bignum *e;
-  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+
+  tmp_ctx = talloc_new (NULL);
 
   /* Create memory for the actual key */
   rsa = RSA_new ();
@@ -64,6 +76,7 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
   /* The memory for the RSA key is now maintained by the EVP_PKEY.
        Mark this variable as NULL so we don't free() it below */
   rsa = NULL;
+#endif // HAVE_SSL_EVP_RSA_GEN
 
   /* Create the talloc container to hold the memory */
   (*_key) = talloc_zero (mem_ctx, struct sscg_evp_pkey);
@@ -79,7 +92,10 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
   ret = EOK;
 
 done:
+#ifndef HAVE_SSL_EVP_RSA_GEN
   RSA_free (rsa);
+#endif //HAVE_SSL_EVP_RSA_GEN
+
   talloc_free (tmp_ctx);
   return ret;
 }

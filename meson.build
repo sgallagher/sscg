@@ -61,6 +61,11 @@ else
     popt_incdirs = include_directories('subprojects/popt')
 endif
 
+has_evp_rsa_gen = cc.has_header_symbol(
+    'openssl/rsa.h',
+    'EVP_RSA_gen',
+    dependencies: [ crypto ])
+
 sscg_bin_srcs = [
     'src/arguments.c',
     'src/sscg.c',
@@ -204,6 +209,7 @@ endforeach
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
+cdata.set('HAVE_SSL_EVP_RSA_GEN', has_evp_rsa_gen)
 configure_file(
     output : 'config.h',
     configuration : cdata)
