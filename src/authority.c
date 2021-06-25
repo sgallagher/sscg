@@ -33,7 +33,6 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   int bits;
   size_t i;
   TALLOC_CTX *tmp_ctx = NULL;
-  struct sscg_bignum *e;
   struct sscg_bignum *serial;
   struct sscg_cert_info *ca_certinfo;
   struct sscg_x509_req *csr;
@@ -137,8 +136,6 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   /* For the private CA, we always use 4096 bits and an exponent
        value of RSA F4 aka 0x10001 (65537) */
   bits = 4096;
-  ret = sscg_init_bignum (tmp_ctx, RSA_F4, &e);
-  CHECK_OK (ret);
 
   /* Generate an RSA keypair for this CA */
   if (options->verbosity >= SSCG_VERBOSE)
@@ -146,7 +143,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
       fprintf (stdout, "Generating RSA key for private CA.\n");
     }
   /* TODO: support DSA keys as well */
-  ret = sscg_generate_rsa_key (tmp_ctx, bits, e, &pkey);
+  ret = sscg_generate_rsa_key (tmp_ctx, bits, &pkey);
   CHECK_OK (ret);
 
   /* Create a certificate signing request for the private CA */

@@ -35,16 +35,21 @@ _sscg_evp_pkey_destructor (TALLOC_CTX *mem_ctx)
 int
 sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
                        int bits,
-                       struct sscg_bignum *e,
                        struct sscg_evp_pkey **_key)
 {
   int ret, sslret;
   RSA *rsa = NULL;
   EVP_PKEY *pkey = NULL;
+  struct sscg_bignum *e;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
 
   /* Create memory for the actual key */
   rsa = RSA_new ();
   CHECK_MEM (rsa);
+
+  /* Use an exponent value of RSA F4 aka 0x10001 (65537) */
+  ret = sscg_init_bignum (tmp_ctx, RSA_F4, &e);
+  CHECK_OK (ret);
 
   /* Generate a random RSA keypair */
   sslret = RSA_generate_key_ex (rsa, bits, e->bn, NULL);
@@ -75,5 +80,6 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
 
 done:
   RSA_free (rsa);
+  talloc_free (tmp_ctx);
   return ret;
 }

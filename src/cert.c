@@ -34,7 +34,6 @@ create_cert (TALLOC_CTX *mem_ctx,
 {
   int ret;
   size_t i;
-  struct sscg_bignum *e;
   struct sscg_bignum *serial;
   struct sscg_cert_info *certinfo;
   struct sscg_x509_req *csr;
@@ -128,17 +127,13 @@ create_cert (TALLOC_CTX *mem_ctx,
   CHECK_MEM (ex);
   sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
-  /* Use an exponent value of RSA F4 aka 0x10001 (65537) */
-  ret = sscg_init_bignum (tmp_ctx, RSA_F4, &e);
-  CHECK_OK (ret);
-
   /* Generate an RSA keypair for this CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
       fprintf (stdout, "Generating RSA key for certificate.\n");
     }
   /* TODO: support DSA keys as well */
-  ret = sscg_generate_rsa_key (tmp_ctx, options->key_strength, e, &pkey);
+  ret = sscg_generate_rsa_key (tmp_ctx, options->key_strength, &pkey);
   CHECK_OK (ret);
 
   /* Create a certificate signing request for the private CA */
