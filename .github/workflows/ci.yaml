@@ -205,3 +205,54 @@ jobs:
     - name: Run in-tree tests
       run: |
         meson test -t 5 --print-errorlogs -C centos-${{ matrix.release }}
+
+
+  centos-stream:
+    name: CentOS Stream
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    strategy:
+      matrix:
+        release:
+          - 9
+        compiler:
+          - gcc
+          - clang
+
+    container:
+      image: quay.io/centos/centos:stream9-development
+
+    steps:
+    - name: Identify the system
+      run: |
+        cat /etc/os-release
+
+    - name: Checkout SSCG code
+      uses: actions/checkout@v2
+
+    - name: Enable CRB
+      run: |
+        yum -y install dnf-plugins-core
+        yum config-manager --set-enabled crb
+
+    - name: Add OpenSSL 3.0 Beta Repo
+      working-directory: /etc/yum.repos.d
+      run: |
+        curl -O https://sgallagh.fedorapeople.org/repo/openssl3b/openssl3b.repo
+
+    - name: Install build dependencies
+      run: |
+        yum install -y meson pkgconf-pkg-config openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+
+    - name: Configure build directory
+      run: |
+        CC=${{ matrix.compiler}} meson --errorlogs -Drun_slow_tests=false centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
+
+    - name: Build SSCG
+      run: |
+        ninja -C centos-stream-${{ matrix.release }}
+
+    - name: Run in-tree tests
+      run: |
+        meson test -t 5 --print-errorlogs -C centos-stream-${{ matrix.release }}
