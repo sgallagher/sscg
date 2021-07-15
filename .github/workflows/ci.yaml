@@ -143,7 +143,7 @@ jobs:
 
           run: |
             CC=${{ matrix.compiler}} meson fedora-${{ matrix.arch }}
-            meson test -t 5 --print-errorlogs -C fedora-${{ matrix.arch }}
+            meson test -t 10 --print-errorlogs -C fedora-${{ matrix.arch }}
 
 
   centos:

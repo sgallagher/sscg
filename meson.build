@@ -66,6 +66,10 @@ has_evp_rsa_gen = cc.has_header_symbol(
     'EVP_RSA_gen',
     dependencies: [ crypto ])
 
+has_ossl_param = cc.has_header_symbol(
+    'openssl/core.h',
+    'OSSL_PARAM')
+
 sscg_bin_srcs = [
     'src/arguments.c',
     'src/sscg.c',
@@ -207,9 +211,20 @@ foreach prime_len : prime_lengths
 endforeach
 
 
+named_dhparams_test = executable(
+    'named_dhparams_test',
+    'test/named_dhparams_test.c',
+    link_with : sscg_lib,
+    dependencies: [ crypto ],
+    install : false,
+)
+test('named_dhparams_test', named_dhparams_test, timeout : 60)
+
+
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
 cdata.set('HAVE_SSL_EVP_RSA_GEN', has_evp_rsa_gen)
+cdata.set('HAVE_OSSL_PARAM', has_ossl_param)
 configure_file(
     output : 'config.h',
     configuration : cdata)
