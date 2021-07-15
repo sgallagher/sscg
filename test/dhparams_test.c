@@ -22,14 +22,16 @@
 #include <string.h>
 #include <talloc.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 #include "include/dhparams.h"
 
 int
 main (int argc, char **argv)
 {
-  int ret, sret, prime_len, generator;
-  struct sscg_dhparams *params = NULL;
+  int ret, prime_len, generator;
+  EVP_PKEY *params = NULL;
+  EVP_PKEY_CTX *pctx = NULL;
   TALLOC_CTX *main_ctx = NULL;
 
   if (getenv ("SSCG_SKIP_DHPARAMS"))
@@ -58,7 +60,7 @@ main (int argc, char **argv)
 
   main_ctx = talloc_new (NULL);
 
-  ret = create_dhparams (main_ctx, SSCG_DEBUG, prime_len, generator, &params);
+  ret = create_dhparams (SSCG_DEBUG, prime_len, generator, &params);
   if (ret != EOK)
     {
       fprintf (stderr,
@@ -67,33 +69,10 @@ main (int argc, char **argv)
       goto done;
     }
 
-  if (!DH_check (params->dh, &sret))
+  pctx = EVP_PKEY_CTX_new (params, NULL);
+  if (!EVP_PKEY_param_check(pctx))
     {
       ERR_print_errors_fp (stderr);
-      goto done;
-    }
-  if (sret & DH_CHECK_P_NOT_PRIME)
-    fprintf (stderr, "p value is not prime\n");
-  if (sret & DH_CHECK_P_NOT_SAFE_PRIME)
-    fprintf (stderr, "p value is not a safe prime\n");
-  if (sret & DH_CHECK_Q_NOT_PRIME)
-    fprintf (stderr, "q value is not a prime\n");
-  if (sret & DH_CHECK_INVALID_Q_VALUE)
-    fprintf (stderr, "q value is invalid\n");
-  if (sret & DH_CHECK_INVALID_J_VALUE)
-    fprintf (stderr, "j value is invalid\n");
-  if (sret & DH_UNABLE_TO_CHECK_GENERATOR)
-    fprintf (stderr, "unable to check the generator value\n");
-  if (sret & DH_NOT_SUITABLE_GENERATOR)
-    fprintf (stderr, "the g value is not a generator\n");
-
-  if (sret != 0)
-    {
-      /*
-       * We have generated parameters but DH_check() indicates they are
-       * invalid! This should never happen!
-       */
-      fprintf (stderr, "ERROR: Invalid parameters generated\n");
       ret = EIO;
       goto done;
     }
