@@ -19,29 +19,29 @@
 
 #include <assert.h>
 
+#include <openssl/evp.h>
+
+#include "config.h"
 #include "include/sscg.h"
 #include "include/dhparams.h"
 
 
 static int
-_sscg_dhparams_destructor (TALLOC_CTX *ctx);
-
-static int
-dh_cb (int p, int n, BN_GENCB *cb);
+evp_cb (EVP_PKEY_CTX *ctx);
 
 int
-create_dhparams (TALLOC_CTX *mem_ctx,
-                 enum sscg_verbosity verbosity,
+create_dhparams (enum sscg_verbosity verbosity,
                  int prime_len,
                  int generator,
-                 struct sscg_dhparams **_dhparams)
+                 EVP_PKEY **dhparams)
 {
   int ret;
-  struct sscg_dhparams *dhparams = NULL;
-  TALLOC_CTX *tmp_ctx = NULL;
+  EVP_PKEY_CTX *pctx = NULL;
+  EVP_PKEY *params = NULL;
+
 
   /* First validate the input */
-  assert (_dhparams && !*_dhparams);
+  assert (dhparams && !*dhparams);
 
   if (prime_len <= 0)
     {
@@ -57,42 +57,51 @@ create_dhparams (TALLOC_CTX *mem_ctx,
       goto done;
     }
 
-  tmp_ctx = talloc_new (NULL);
-  CHECK_MEM (tmp_ctx);
-
-  dhparams = talloc_zero (tmp_ctx, struct sscg_dhparams);
-  CHECK_MEM (dhparams);
-
-  dhparams->prime_len = prime_len;
-  dhparams->generator = generator;
-  talloc_set_destructor ((TALLOC_CTX *)dhparams, _sscg_dhparams_destructor);
 
   if (verbosity >= SSCG_DEFAULT)
     {
       fprintf (stdout,
                "Generating DH parameters of length %d and generator %d. "
                "This will take a long time.\n",
-               dhparams->prime_len,
-               dhparams->generator);
+               prime_len,
+               generator);
     }
 
-  dhparams->dh = DH_new ();
-
-  if (verbosity >= SSCG_VERBOSE)
+  /* Create the context for generating the parameters */
+  if (!(pctx = EVP_PKEY_CTX_new_id (EVP_PKEY_DH, NULL)))
     {
-      dhparams->cb = BN_GENCB_new ();
-      if (dhparams->cb == NULL)
-        {
-          ERR_print_errors_fp (stderr);
-          ret = ENOMEM;
-          goto done;
-        }
-
-      BN_GENCB_set (dhparams->cb, dh_cb, NULL);
+      ERR_print_errors_fp (stderr);
+      ret = ENOMEM;
+      goto done;
     }
 
-  if (!DH_generate_parameters_ex (
-        dhparams->dh, dhparams->prime_len, dhparams->generator, dhparams->cb))
+  if (!EVP_PKEY_paramgen_init (pctx))
+    {
+      ERR_print_errors_fp (stderr);
+      ret = EIO;
+      goto done;
+    }
+
+  /* Set up a callback to display progress */
+  EVP_PKEY_CTX_set_cb (pctx, evp_cb);
+
+  /* Set the parameter values */
+  if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len (pctx, prime_len))
+    {
+      ERR_print_errors_fp (stderr);
+      ret = EIO;
+      goto done;
+    }
+
+  if (!EVP_PKEY_CTX_set_dh_paramgen_generator (pctx, generator))
+    {
+      ERR_print_errors_fp (stderr);
+      ret = EIO;
+      goto done;
+    }
+
+  /* Generate parameters */
+  if (!EVP_PKEY_paramgen (pctx, &params))
     {
       ERR_print_errors_fp (stderr);
       ret = EIO;
@@ -100,39 +109,29 @@ create_dhparams (TALLOC_CTX *mem_ctx,
     }
 
   ret = EOK;
-  *_dhparams = talloc_steal (mem_ctx, dhparams);
+  *dhparams = params;
+  params = NULL;
 
 done:
-  talloc_free (tmp_ctx);
+  EVP_PKEY_free (params);
+  EVP_PKEY_CTX_free (pctx);
+
   return ret;
 }
 
-static int
-_sscg_dhparams_destructor (TALLOC_CTX *ctx)
-{
-  struct sscg_dhparams *params =
-    talloc_get_type_abort (ctx, struct sscg_dhparams);
-
-  if (params->dh != NULL)
-    {
-      DH_free (params->dh);
-      params->dh = NULL;
-    }
-
-  if (params->cb != NULL)
-    {
-      BN_GENCB_free (params->cb);
-      params->cb = NULL;
-    }
-
-  return 0;
-}
 
 static int
-dh_cb (int p, int n, BN_GENCB *cb)
+evp_cb (EVP_PKEY_CTX *ctx)
 {
-  static const char symbols[] = ".+*\n";
-  char c = (p >= 0 && (size_t)p < sizeof (symbols) - 1) ? symbols[p] : '?';
+  char c = '*';
+  int p = EVP_PKEY_CTX_get_keygen_info (ctx, 0);
+
+  // clang-format off
+  if (p == 0) c = '.';
+  if (p == 1) c = '+';
+  if (p == 2) c = '*';
+  if (p == 3) c = '\n';
+  // clang-format on
 
   fprintf (stdout, "%c", c);
 

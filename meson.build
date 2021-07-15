@@ -175,9 +175,10 @@ init_bignum_test = executable(
 test('init_bignum_test', init_bignum_test)
 
 
-# Test generating 512-bit, 1024-bit and 2048-bit DH params with multiple
-# generators. 4096-bit and larger takes over ten minutes, so it's excluded from
-# the test suite by default.
+# Test generating 512-bit, 1024-bit and 2048-bit and 4096 DH params with
+# multiple generators. 2048-bit and larger takes a long time, so they are
+# excluded from the test suite by default.
+
 prime_lengths = [ 512, 1024 ]
 dhparam_timeout = 120
 
@@ -204,7 +205,6 @@ foreach prime_len : prime_lengths
              timeout: dhparam_timeout)
     endforeach
 endforeach
-
 
 
 cdata = configuration_data()

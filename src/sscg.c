@@ -101,7 +101,8 @@ main (int argc, const char **argv)
   struct sscg_x509_cert *client_cert = NULL;
   struct sscg_evp_pkey *client_key = NULL;
 
-  struct sscg_dhparams *dhparams = NULL;
+  BIO *bp;
+  EVP_PKEY *dhparams = NULL;
 
   struct sscg_stream *stream = NULL;
 
@@ -280,24 +281,24 @@ main (int argc, const char **argv)
 
 
   /* Create DH parameters file */
-  if (GET_BIO (SSCG_FILE_TYPE_DHPARAMS))
+  bp = GET_BIO (SSCG_FILE_TYPE_DHPARAMS);
+  if (bp)
     {
       /* Open the file before generating the parameters. This avoids wasting
        * the time to generate them if the destination is not writable.
        */
 
-      ret = create_dhparams (main_ctx,
-                             options->verbosity,
+      ret = create_dhparams (options->verbosity,
                              options->dhparams_prime_len,
                              options->dhparams_generator,
                              &dhparams);
       CHECK_OK (ret);
 
       /* Export the DH parameters to the file */
-      sret = PEM_write_bio_DHparams (GET_BIO (SSCG_FILE_TYPE_DHPARAMS),
-                                     dhparams->dh);
-      CHECK_SSL (sret, PEM_write_bio_DHparams ());
+      sret = PEM_write_bio_Parameters (bp, dhparams);
+      CHECK_SSL (sret, PEM_write_bio_Parameters ());
       ANNOUNCE_WRITE (SSCG_FILE_TYPE_DHPARAMS);
+      EVP_PKEY_free (dhparams);
     }
 
 

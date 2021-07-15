@@ -21,22 +21,16 @@
 #define _SSCG_DHPARAMS_H
 
 #include <talloc.h>
+#include <openssl/evp.h>
 
 #include "include/sscg.h"
 
-struct sscg_dhparams
-{
-  int prime_len;
-  int generator;
-  DH *dh;
-  BN_GENCB *cb;
-};
 
 int
-create_dhparams (TALLOC_CTX *mem_ctx,
-                 enum sscg_verbosity options,
+create_dhparams (enum sscg_verbosity verbosity,
                  int prime_len,
                  int generator,
-                 struct sscg_dhparams **_dhparams);
+                 EVP_PKEY **dhparams);
+
 
 #endif /* _SSCG_DHPARAMS_H */
