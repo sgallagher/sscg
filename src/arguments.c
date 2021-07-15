@@ -600,6 +600,18 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     },
 
     {
+      "dhparams-named-group",
+      '\0',
+      POPT_ARG_STRING,
+      &options->dhparams_group,
+      0,
+      _("Output well-known DH parameters. See "
+        "https://www.openssl.org/docs/manmaster/man7/EVP_KEYMGMT-DH.html "
+        "for details on the available groups."),
+      NULL
+    },
+
+    {
       "dhparams-prime-len",
       '\0',
       POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,

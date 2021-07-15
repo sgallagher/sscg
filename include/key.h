@@ -21,6 +21,7 @@
 #define _SSCG_KEY_H
 
 #include <openssl/rsa.h>
+#include <openssl/dh.h>
 #include <openssl/evp.h>
 
 #include "include/sscg.h"

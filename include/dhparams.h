@@ -26,11 +26,17 @@
 #include "include/sscg.h"
 
 
+extern const char *dh_fips_groups[];
+extern const char *dh_nonfips_groups[];
+
+
 int
 create_dhparams (enum sscg_verbosity verbosity,
                  int prime_len,
                  int generator,
                  EVP_PKEY **dhparams);
 
+int
+get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams);
 
 #endif /* _SSCG_DHPARAMS_H */
