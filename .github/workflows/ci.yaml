@@ -190,9 +190,14 @@ jobs:
         yum -y install dnf-plugins-core
         yum config-manager --set-enabled powertools
 
+    - name: Install OpenSSL 1.1 Development Libraries
+      if: matrix.release == '7'
+      run: |
+        yum -y install openssl11-devel
+
     - name: Install build dependencies
       run: |
-        yum install -y git-core glibc-devel meson pkgconf openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+        yum install -y git-core glibc-devel openssl-devel meson pkgconf libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
 
     - name: Configure build directory
       run: |

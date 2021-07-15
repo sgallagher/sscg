@@ -1,5 +1,5 @@
 project('sscg', 'c',
-        version : '2.6.3',
+        version : '3.0.0',
         default_options : [
           'buildtype=debugoptimized',
           'c_std=gnu99',
@@ -33,8 +33,19 @@ foreach cflag: test_cflags
 endforeach
 
 pkg = import('pkgconfig')
-crypto = dependency('libcrypto')
-ssl = dependency('libssl')
+
+crypto = dependency('libcrypto11', version: '>= 1.1.0', required: false)
+if crypto.found()
+else
+    crypto = dependency('libcrypto', version: '>= 1.1.0')
+endif
+
+ssl = dependency('libssl11', version: '>= 1.1.0', required: false)
+if ssl.found()
+else
+    ssl = dependency('libssl', version: '>= 1.1.0')
+endif
+
 path_utils = dependency('path_utils')
 talloc = dependency('talloc')
 
@@ -49,15 +60,6 @@ else
     popt = subproject('popt').get_variable('libpopt_a')
     popt_incdirs = include_directories('subprojects/popt')
 endif
-
-has_get_sec_level = cc.has_function(
-    'SSL_CTX_get_security_level',
-    dependencies: [ ssl ])
-
-has_generator_3 = cc.has_header_symbol(
-    'openssl/dh.h',
-    'DH_GENERATOR_3',
-    dependencies: [ ssl ])
 
 sscg_bin_srcs = [
     'src/sscg.c',
@@ -100,11 +102,13 @@ sscg = executable(
     'sscg',
     sscg_bin_srcs,
     link_with : sscg_lib,
-        dependencies : [
-            path_utils,
-            popt,
-            talloc,
-        ],
+    dependencies : [
+        crypto,
+        path_utils,
+        popt,
+        ssl,
+        talloc,
+    ],
     include_directories : popt_incdirs,
     install : true,
 )
@@ -123,7 +127,7 @@ create_ca_test = executable(
     'create_ca_test',
     'test/create_ca_test.c',
     link_with : sscg_lib,
-        dependencies: [],
+        dependencies: [ crypto ],
     install:false,
 )
 test('create_ca_test', create_ca_test)
@@ -132,7 +136,7 @@ create_csr_test = executable(
     'create_csr_test',
     'test/create_csr_test.c',
     link_with : sscg_lib,
-        dependencies: [],
+        dependencies: [ crypto ],
     install:false,
 )
 test('create_csr_test', create_csr_test)
@@ -141,7 +145,7 @@ generate_rsa_key_test = executable(
     'generate_rsa_key_test',
     'test/generate_rsa_key_test.c',
     link_with : sscg_lib,
-        dependencies: [],
+        dependencies: [ crypto ],
     install:false,
 )
 test('generate_rsa_key_test', generate_rsa_key_test)
@@ -150,7 +154,7 @@ generate_serial_test = executable(
     'generate_serial_test',
     'test/generate_serial_test.c',
     link_with : sscg_lib,
-        dependencies: [],
+        dependencies: [ crypto ],
     install:false,
 )
 test('generate_serial_test', generate_serial_test)
@@ -159,18 +163,11 @@ init_bignum_test = executable(
     'init_bignum_test',
     'test/init_bignum_test.c',
     link_with : sscg_lib,
-        dependencies: [],
+        dependencies: [ crypto ],
     install : false,
 )
 test('init_bignum_test', init_bignum_test)
 
-dhparams_test = executable(
-    'dhparams_test',
-    'test/dhparams_test.c',
-    link_with : sscg_lib,
-    dependencies: [],
-    install : false
-)
 
 # Test generating 512-bit, 1024-bit and 2048-bit DH params with multiple
 # generators. 4096-bit and larger takes over ten minutes, so it's excluded from
@@ -185,9 +182,13 @@ endif
 
 generators = [ 2, 5 ]
 
-if (has_generator_3)
-    generators += [ 3 ]
-endif
+dhparams_test = executable(
+    'dhparams_test',
+    'test/dhparams_test.c',
+    link_with : sscg_lib,
+    dependencies: [ crypto ],
+    install : false
+)
 
 foreach prime_len : prime_lengths
     foreach g : generators
@@ -202,7 +203,6 @@ endforeach
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
-cdata.set('HAVE_SSL_CTX_GET_SECURITY_LEVEL', has_get_sec_level)
 configure_file(
     output : 'config.h',
     configuration : cdata)

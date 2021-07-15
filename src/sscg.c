@@ -44,15 +44,11 @@ int verbosity;
 static int
 get_security_level (void)
 {
-#ifdef HAVE_SSL_CTX_GET_SECURITY_LEVEL
   SSL_CTX *ssl_ctx = SSL_CTX_new (TLS_method ());
   int security_level = SSL_CTX_get_security_level (ssl_ctx);
   SSL_CTX_free (ssl_ctx);
   ssl_ctx = NULL;
   return security_level;
-#else
-  return 0;
-#endif
 }
 
 static int
@@ -247,11 +243,6 @@ main (int argc, const char **argv)
        This means that it's opened as write-only by the effective
        user. */
   umask (0577);
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-  /* In OpenSSL <1.1.0, we need to initialize the library. */
-  OpenSSL_add_all_algorithms ();
-#endif
 
   if (getenv ("SSCG_TALLOC_REPORT"))
     talloc_enable_null_tracking ();
