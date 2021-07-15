@@ -80,11 +80,7 @@ create_dhparams (TALLOC_CTX *mem_ctx,
 
   if (verbosity >= SSCG_VERBOSE)
     {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-      dhparams->cb = talloc_zero (dhparams, BN_GENCB);
-#else
       dhparams->cb = BN_GENCB_new ();
-#endif
       if (dhparams->cb == NULL)
         {
           ERR_print_errors_fp (stderr);
@@ -123,13 +119,11 @@ _sscg_dhparams_destructor (TALLOC_CTX *ctx)
       params->dh = NULL;
     }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
   if (params->cb != NULL)
     {
       BN_GENCB_free (params->cb);
       params->cb = NULL;
     }
-#endif
 
   return 0;
 }
