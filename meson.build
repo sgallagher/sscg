@@ -62,6 +62,7 @@ else
 endif
 
 sscg_bin_srcs = [
+    'src/arguments.c',
     'src/sscg.c',
 ]
 
