@@ -25,6 +25,7 @@
 #define _SSCG_H
 
 #include <errno.h>
+#include <openssl/bn.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
@@ -250,7 +251,35 @@ struct sscg_options
   /* Output Files */
   struct sscg_stream **streams;
 
+  char *ca_file;
+  char *ca_key_file;
+  int ca_mode;
+  int ca_key_mode;
+  char *ca_key_password;
+  char *ca_key_passfile;
+
+  char *cert_file;
+  char *cert_key_file;
+  int cert_mode;
+  int cert_key_mode;
+  char *cert_key_password;
+  char *cert_key_passfile;
+
+  char *client_file;
+  char *client_key_file;
+  int client_mode;
+  int client_key_mode;
+  char *client_key_password;
+  char *client_key_passfile;
+
+  char *crl_file;
+  int crl_mode;
+
+  char *dhparams_file;
+  int dhparams_mode;
+
   /* Diffie-Hellman Parameters */
+  char *dhparams_group;
   int dhparams_prime_len;
   int dhparams_generator;
 
@@ -270,5 +299,12 @@ enum sscg_cert_type
 
 #define SSCG_MIN_KEY_PASS_LEN 4
 #define SSCG_MAX_KEY_PASS_LEN 1023
+
+
+int
+sscg_handle_arguments (TALLOC_CTX *mem_ctx,
+                       int argc,
+                       const char **argv,
+                       struct sscg_options **config);
 
 #endif /* _SSCG_H */
