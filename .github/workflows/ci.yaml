@@ -33,7 +33,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson -Drun_slow_tests=true ${{ matrix.os }}
+        CC=${{ matrix.compiler}} meson ${{ matrix.os }}
 
     - name: Build SSCG
       run: |
@@ -99,7 +99,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson -Drun_slow_tests=true fedora-${{ matrix.release }}
+        CC=${{ matrix.compiler}} meson fedora-${{ matrix.release }}
 
     - name: Build SSCG
       run: |
@@ -201,7 +201,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson --errorlogs -Drun_slow_tests=true centos-${{ matrix.release }} || cat centos-7/meson-logs/meson-log.txt
+        CC=${{ matrix.compiler}} meson --errorlogs centos-${{ matrix.release }} || cat centos-7/meson-logs/meson-log.txt
 
     - name: Build SSCG
       run: |
@@ -252,7 +252,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson --errorlogs -Drun_slow_tests=false centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
+        CC=${{ matrix.compiler}} meson --errorlogs centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
 
     - name: Build SSCG
       run: |
