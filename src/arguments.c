@@ -66,7 +66,8 @@ set_default_options (struct sscg_options *opts)
 
   opts->dhparams_mode = SSCG_CERT_DEFAULT_MODE;
 
-  opts->lifetime = 3650;
+  opts->lifetime = 398;
+
   opts->dhparams_prime_len = 2048;
   opts->dhparams_generator = 2;
 
