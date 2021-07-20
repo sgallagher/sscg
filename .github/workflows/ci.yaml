@@ -8,10 +8,12 @@ jobs:
   ubuntu:
     name: Ubuntu
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
+#         https://bugs.launchpad.net/ubuntu/+source/openssl/+bug/1936975
+#         - ubuntu-18.04
           - ubuntu-20.04
         compiler:
           - gcc
