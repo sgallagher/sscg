@@ -68,7 +68,8 @@ set_default_options (struct sscg_options *opts)
 
   opts->lifetime = 398;
 
-  opts->dhparams_prime_len = 2048;
+  opts->dhparams_file = talloc_strdup (opts, "dhparams.pem");
+  opts->dhparams_group = talloc_strdup (opts, "ffdhe4096");
   opts->dhparams_generator = 2;
 
   /* Select the default key strength based on the system security level
@@ -595,8 +596,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       POPT_ARG_STRING,
       &options->dhparams_file,
       0,
-      _("A file to contain a set of generated Diffie-Hellman parameters. "
-        "If unspecified, no such file will be created."),
+      _("A file to contain a set of Diffie-Hellman parameters. "
+        "(Default: \"./dhparams.pem\")"),
       NULL
     },
 
@@ -608,7 +609,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       0,
       _("Output well-known DH parameters. See "
         "https://www.openssl.org/docs/manmaster/man7/EVP_KEYMGMT-DH.html "
-        "for details on the available groups."),
+        "for details on the available groups. (Default: \"ffdhe4096\")"),
       NULL
     },
 
@@ -618,7 +619,9 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
       &options->dhparams_prime_len,
       0,
-      _ ("The length of the prime number to generate for dhparams, in bits."),
+      _ ("The length of the prime number to generate for dhparams, in bits. "
+         "If set to non-zero, the parameters will be generated rather than "
+         "using a well-known group."),
       NULL
     },
 

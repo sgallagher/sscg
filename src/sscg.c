@@ -282,24 +282,25 @@ main (int argc, const char **argv)
 
   /* Create DH parameters file */
   bp = GET_BIO (SSCG_FILE_TYPE_DHPARAMS);
-  if (bp)
+  if (options->dhparams_prime_len > 0)
     {
-      /* Open the file before generating the parameters. This avoids wasting
-       * the time to generate them if the destination is not writable.
-       */
-
       ret = create_dhparams (options->verbosity,
                              options->dhparams_prime_len,
                              options->dhparams_generator,
                              &dhparams);
       CHECK_OK (ret);
-
-      /* Export the DH parameters to the file */
-      sret = PEM_write_bio_Parameters (bp, dhparams);
-      CHECK_SSL (sret, PEM_write_bio_Parameters ());
-      ANNOUNCE_WRITE (SSCG_FILE_TYPE_DHPARAMS);
-      EVP_PKEY_free (dhparams);
     }
+  else
+    {
+      ret = get_params_by_named_group (options->dhparams_group, &dhparams);
+      CHECK_OK (ret);
+    }
+
+  /* Export the DH parameters to the file */
+  sret = PEM_write_bio_Parameters (bp, dhparams);
+  CHECK_SSL (sret, PEM_write_bio_Parameters ());
+  ANNOUNCE_WRITE (SSCG_FILE_TYPE_DHPARAMS);
+  EVP_PKEY_free (dhparams);
 
 
   /* Set the final file permissions */
