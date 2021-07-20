@@ -48,11 +48,11 @@ sscg_generate_serial (TALLOC_CTX *mem_ctx, struct sscg_bignum **serial)
        could be printed by BN_get_word() later. We omit the last bit
        in order to ensure that we can't randomly get 0xffffffffL, which
        is reserved by BN_get_word() to mean "too large to represent". */
-  bnret = BN_pseudo_rand (bn->bn,
-                          (sizeof (unsigned long) * CHAR_BIT) - 1,
-                          BN_RAND_TOP_ANY,
-                          BN_RAND_BOTTOM_ANY);
-  CHECK_SSL (bnret, BN_pseudo_rand);
+  bnret = BN_rand (bn->bn,
+                   (sizeof (unsigned long) * CHAR_BIT) - 1,
+                   BN_RAND_TOP_ANY,
+                   BN_RAND_BOTTOM_ANY);
+  CHECK_SSL (bnret, BN_rand);
 
   ret = EOK;
 
