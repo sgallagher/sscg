@@ -36,6 +36,13 @@ create_dhparams (enum sscg_verbosity verbosity,
                  int generator,
                  EVP_PKEY **dhparams);
 
+bool
+is_valid_named_group (const char *group_name);
+
+char *
+valid_dh_group_names (TALLOC_CTX *mem_ctx);
+
+
 int
 get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams);
 

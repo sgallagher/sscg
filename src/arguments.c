@@ -27,6 +27,7 @@
 
 
 #include "include/sscg.h"
+#include "include/dhparams.h"
 
 #include "config.h"
 
@@ -129,6 +130,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   int ret, sret, opt;
   poptContext pc;
   char *minimum_key_strength_help = NULL;
+  char *named_groups_help = NULL;
 
   char *country = NULL;
   char *state = NULL;
@@ -155,6 +157,12 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 
   minimum_key_strength_help =
     talloc_asprintf (tmp_ctx, "%d or larger", options->minimum_key_strength);
+
+  named_groups_help =
+    talloc_asprintf (tmp_ctx,
+                     "Output well-known DH parameters. The available named "
+                     "groups are: %s. (Default: \"ffdhe4096\")",
+                     valid_dh_group_names (tmp_ctx));
 
   options->verbosity = SSCG_DEFAULT;
   // clang-format off
@@ -607,9 +615,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       POPT_ARG_STRING,
       &options->dhparams_group,
       0,
-      _("Output well-known DH parameters. See "
-        "https://www.openssl.org/docs/manmaster/man7/EVP_KEYMGMT-DH.html "
-        "for details on the available groups. (Default: \"ffdhe4096\")"),
+      _(named_groups_help),
       NULL
     },
 
@@ -650,7 +656,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
                    poptBadOption (pc, 0),
                    poptStrerror (opt));
           poptPrintUsage (pc, stderr, 0);
-          return 1;
+          ret = EINVAL;
+          goto done;
         }
     }
 
@@ -810,6 +817,15 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
    * For now, we'll only list SHA[256|384|512] in the help */
   options->hash_fn = EVP_get_digestbyname (options->hash_alg);
 
+  if (!is_valid_named_group (options->dhparams_group))
+    {
+      fprintf (stderr, "Unknown Diffie Hellman finite field group.\n");
+      fprintf (
+        stderr, "Valid groups are: %s.\n", valid_dh_group_names (tmp_ctx));
+      ret = EINVAL;
+      goto done;
+    }
+
   if (!options->hash_fn)
     {
       fprintf (stderr, "Unsupported hashing algorithm.");
@@ -825,9 +841,11 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 
   *config = talloc_steal (mem_ctx, options);
 
+  ret = EOK;
+
 done:
   talloc_free (tmp_ctx);
-  return EOK;
+  return ret;
 }
 
 
