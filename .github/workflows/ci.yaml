@@ -77,9 +77,9 @@ jobs:
     strategy:
       matrix:
         release:
-          - 32
           - 33
           - 34
+          - 35
         compiler:
           - gcc
           - clang
