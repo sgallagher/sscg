@@ -28,7 +28,7 @@
 
 // clang-format off
 
-#if OPENSSL_VERSION_NUMBER
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 const char *dh_fips_groups[] = {
   "ffdhe2048",
   "ffdhe3072",
@@ -65,6 +65,44 @@ const char *dh_nonfips_groups[] = {
 };
 #endif //OPENSSL_VERSION_NUMBER
 // clang-format on
+
+
+char *
+valid_dh_group_names (TALLOC_CTX *mem_ctx)
+{
+  size_t i;
+  char *names = NULL;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+
+  i = 0;
+  while (dh_fips_groups[i])
+    {
+      names = talloc_asprintf_append (names, "%s, ", dh_fips_groups[i]);
+      if (!names) goto done;
+
+      i++;
+    }
+
+  i = 0;
+  while (dh_nonfips_groups[i])
+    {
+      names = talloc_asprintf_append (names, "%s, ", dh_nonfips_groups[i]);
+      if (!names) goto done;
+
+      i++;
+    }
+
+  /* Truncate the last ", " */
+  names = talloc_strndup (names, names, strlen (names) - 2);
+  if (!names) goto done;
+
+  talloc_steal (mem_ctx, names);
+
+done:
+  talloc_free (tmp_ctx);
+  return names;
+}
+
 
 static int
 evp_cb (EVP_PKEY_CTX *ctx);
@@ -179,7 +217,7 @@ evp_cb (EVP_PKEY_CTX *ctx)
 }
 
 
-static bool
+bool
 is_valid_named_group (const char *group_name)
 {
   size_t i = 0;
@@ -217,10 +255,13 @@ get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
   OSSL_PARAM ossl_params[2];
   EVP_PKEY *params = NULL;
   char *name = NULL;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
 
   if (!is_valid_named_group (group_name))
     {
       fprintf (stderr, "Unknown Diffie Hellman finite field group.\n");
+      fprintf (
+        stderr, "Valid groups are: %s.\n", valid_dh_group_names (tmp_ctx));
       ret = EINVAL;
       goto done;
     }
@@ -259,7 +300,7 @@ get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
 done:
   EVP_PKEY_free (params);
   EVP_PKEY_CTX_free (pctx);
-  talloc_free (name);
+  talloc_free (tmp_ctx);
   return ret;
 }
 
@@ -297,10 +338,13 @@ get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
   int ret, sslret;
   DH *dh = NULL;
   EVP_PKEY *pkey = NULL;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
 
   if (!is_valid_named_group (group_name))
     {
       fprintf (stderr, "Unknown Diffie Hellman finite field group.\n");
+      fprintf (
+        stderr, "Valid groups are: %s.\n", valid_dh_group_names (tmp_ctx));
       ret = EINVAL;
       goto done;
     }
@@ -308,7 +352,8 @@ get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
   dh = DH_new_by_nid (get_group_nid (group_name));
   if (!dh)
     {
-      fprintf (stderr, "Could not retrieve DH group %s\n", group_name);
+      fprintf (
+        stderr, "Unknown Diffie Hellman finite field group %s.\n", group_name);
       ret = EINVAL;
       goto done;
     }
@@ -328,6 +373,7 @@ get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
 done:
   DH_free (dh);
   EVP_PKEY_free (pkey);
+  talloc_free (tmp_ctx);
   return ret;
 }
 
