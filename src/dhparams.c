@@ -78,7 +78,8 @@ valid_dh_group_names (TALLOC_CTX *mem_ctx)
   while (dh_fips_groups[i])
     {
       names = talloc_asprintf_append (names, "%s, ", dh_fips_groups[i]);
-      if (!names) goto done;
+      if (!names)
+        goto done;
 
       i++;
     }
@@ -87,14 +88,16 @@ valid_dh_group_names (TALLOC_CTX *mem_ctx)
   while (dh_nonfips_groups[i])
     {
       names = talloc_asprintf_append (names, "%s, ", dh_nonfips_groups[i]);
-      if (!names) goto done;
+      if (!names)
+        goto done;
 
       i++;
     }
 
   /* Truncate the last ", " */
   names = talloc_strndup (names, names, strlen (names) - 2);
-  if (!names) goto done;
+  if (!names)
+    goto done;
 
   talloc_steal (mem_ctx, names);
 

@@ -41,13 +41,17 @@ test_group_name_list (void)
     }
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
-  if (strcmp(names, "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192") != 0)
+  if (strcmp (names,
+              "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192") != 0)
     {
       ret = EINVAL;
       goto done;
     }
 #else
-    if (strcmp(names, "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192, modp_2048, modp_3072, modp_4096, modp_6144, modp_8192, modp_1536, dh_1024_160, dh_2048_224, dh_2048_256") != 0)
+  if (strcmp (names,
+              "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192, "
+              "modp_2048, modp_3072, modp_4096, modp_6144, modp_8192, "
+              "modp_1536, dh_1024_160, dh_2048_224, dh_2048_256") != 0)
     {
       ret = EINVAL;
       goto done;
@@ -79,16 +83,16 @@ test_valid_named_groups (void)
 
   while (dh_fips_groups[i])
     {
-      printf("Testing %s\n", dh_fips_groups[i]);
+      printf ("Testing %s\n", dh_fips_groups[i]);
       ret = get_params_by_named_group (dh_fips_groups[i], &dhparams);
-      if (ret != EOK) {
-        fprintf (stderr,
-                 "Could not retrieve named DH parameters.");
-        goto done;
-      }
+      if (ret != EOK)
+        {
+          fprintf (stderr, "Could not retrieve named DH parameters.");
+          goto done;
+        }
 
-      pctx = EVP_PKEY_CTX_new(dhparams, NULL);
-      if (!EVP_PKEY_param_check(pctx))
+      pctx = EVP_PKEY_CTX_new (dhparams, NULL);
+      if (!EVP_PKEY_param_check (pctx))
         {
           ERR_print_errors_fp (stderr);
           ret = EIO;
@@ -129,26 +133,26 @@ test_invalid_named_groups (void)
 
   tmp_ctx = talloc_new (NULL);
 
-  printf("Testing empty string\n");
+  printf ("Testing empty string\n");
   ret = get_params_by_named_group ("", &dhparams);
-  if (ret != EINVAL) {
-    fprintf (stderr,
-             "Received [%s] return code.", strerror(ret));
-    ret = EINVAL;
-    goto done;
-  }
+  if (ret != EINVAL)
+    {
+      fprintf (stderr, "Received [%s] return code.", strerror (ret));
+      ret = EINVAL;
+      goto done;
+    }
 
 
-  printf("Testing long, unterminated string\n");
+  printf ("Testing long, unterminated string\n");
   name = talloc_array (tmp_ctx, char, 10 * 1024 * 1024 + 1);
   memset (name, 'a', 10 * 1024 * 1024);
   ret = get_params_by_named_group (name, &dhparams);
-  if (ret != EINVAL) {
-    fprintf (stderr,
-             "Received [%s] return code.", strerror(ret));
-    ret = EINVAL;
-    goto done;
-  }
+  if (ret != EINVAL)
+    {
+      fprintf (stderr, "Received [%s] return code.", strerror (ret));
+      ret = EINVAL;
+      goto done;
+    }
   talloc_zfree (name);
 
 
@@ -169,13 +173,16 @@ main (int argc, char **argv)
   int ret = EOK;
 
   ret = test_valid_named_groups ();
-  if (ret != EOK) goto done;
+  if (ret != EOK)
+    goto done;
 
   ret = test_invalid_named_groups ();
-  if (ret != EOK) goto done;
+  if (ret != EOK)
+    goto done;
 
   ret = test_group_name_list ();
-  if (ret != EOK) goto done;
+  if (ret != EOK)
+    goto done;
 
   ret = EOK;
 

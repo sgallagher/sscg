@@ -70,7 +70,7 @@ main (int argc, char **argv)
     }
 
   pctx = EVP_PKEY_CTX_new (params, NULL);
-  if (!EVP_PKEY_param_check(pctx))
+  if (!EVP_PKEY_param_check (pctx))
     {
       ERR_print_errors_fp (stderr);
       ret = EIO;

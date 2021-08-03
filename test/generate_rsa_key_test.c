@@ -47,8 +47,7 @@ main (int argc, char **argv)
       if (ret != EOK)
         {
           printf ("FAILED.\n");
-          fprintf (
-            stderr, "Error generating key: [%s].\n", strerror (ret));
+          fprintf (stderr, "Error generating key: [%s].\n", strerror (ret));
           goto done;
         }
       printf ("SUCCESS.\n");
