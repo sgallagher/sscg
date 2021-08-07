@@ -96,7 +96,6 @@
           /* Get information about error from OpenSSL */                      \
           unsigned long _ssl_error = ERR_get_error ();                        \
           if ((ERR_GET_LIB (_ssl_error) == ERR_LIB_UI) &&                     \
-              (ERR_GET_FUNC (_ssl_error) == UI_F_UI_SET_RESULT_EX) &&         \
               ((ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_LARGE) ||      \
                (ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_SMALL)))       \
             {                                                                 \
