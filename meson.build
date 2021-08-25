@@ -218,7 +218,8 @@ named_dhparams_test = executable(
     dependencies: [ crypto ],
     install : false,
 )
-test('named_dhparams_test', named_dhparams_test, timeout : 60)
+# takes *very* long on some architectures like Debian armel
+test('named_dhparams_test', named_dhparams_test, timeout : 2700)
 
 
 cdata = configuration_data()
