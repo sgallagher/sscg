@@ -92,6 +92,7 @@ jobs:
 
     container:
       image: fedora:${{ matrix.release }}
+      options: --security-opt seccomp=unconfined
 
     steps:
     - name: Identify the system
@@ -238,6 +239,7 @@ jobs:
 
     container:
       image: quay.io/centos/centos:stream9-development
+      options: --security-opt seccomp=unconfined
 
     steps:
     - name: Identify the system
