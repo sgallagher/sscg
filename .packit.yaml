@@ -1,24 +1,19 @@
----
+# See the documentation for more information:
+# https://packit.dev/docs/configuration/
+
 specfile_path: packaging/fedora/sscg.spec
 
-patch_generation_ignore_paths:
-  - "packaging/"
-  - ".ci/"
-  - ".github/"
-  - ".subprojects/"
+sync_changelog: true
 
-upstream_tag_template: "sscg-{version}"
+upstream_package_name: sscg
+upstream_tag_template: sscg-{version}
+
+downstream_package_name: sscg
+
 
 notifications:
   pull_request:
     successful_build: false
-
-synced_files:
-  - .packit.yaml
-  - src: packaging/fedora/*
-    dest: .
-
-sync_changelog: true
 
 
 jobs:
@@ -29,8 +24,6 @@ jobs:
     - fedora-all
     - centos-stream-8
     - epel-8
-
-
 - job: tests
   trigger: pull_request
   metadata:
@@ -38,10 +31,9 @@ jobs:
     - fedora-all
     - centos-stream-8
     - epel-8
-
 - job: propose_downstream
   trigger: release
   metadata:
     dist_git_branches:
     - fedora-all
-    - epel-8
+
