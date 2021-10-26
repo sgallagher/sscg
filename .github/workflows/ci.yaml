@@ -164,14 +164,10 @@ jobs:
       fail-fast: false
       matrix:
         release:
-          - 7
           - 8
         compiler:
           - gcc
           - clang
-        exclude:
-          - release: 7
-            compiler: clang
 
     container:
       image: centos:${{ matrix.release }}
@@ -196,15 +192,9 @@ jobs:
         yum -y install epel-release
 
     - name: Enable PowerTools
-      if: matrix.release == '8'
       run: |
         yum -y install dnf-plugins-core
         yum config-manager --set-enabled powertools
-
-    - name: Install OpenSSL 1.1 Development Libraries
-      if: matrix.release == '7'
-      run: |
-        yum -y install openssl11-devel
 
     - name: Install build dependencies
       run: |
@@ -212,7 +202,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson --errorlogs centos-${{ matrix.release }} || cat centos-7/meson-logs/meson-log.txt
+        CC=${{ matrix.compiler}} meson --errorlogs centos-${{ matrix.release }} || ( cat centos-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
 
     - name: Build SSCG
       run: |
