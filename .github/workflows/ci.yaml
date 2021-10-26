@@ -232,13 +232,14 @@ jobs:
       fail-fast: false
       matrix:
         release:
+          - 8
           - 9
         compiler:
           - gcc
           - clang
 
     container:
-      image: quay.io/centos/centos:stream9-development
+      image: quay.io/centos/centos:stream${{ matrix.release }}
       options: --security-opt seccomp=unconfined
 
     steps:
@@ -249,15 +250,19 @@ jobs:
     - name: Checkout SSCG code
       uses: actions/checkout@v2
 
-    - name: Enable CRB
+    - name: Enable DNF tools
       run: |
         yum -y install dnf-plugins-core
+
+    - name: Enable CRB
+      if: matrix.release > 8
+      run: |
         yum config-manager --set-enabled crb
 
-    - name: Add OpenSSL 3.0 Beta Repo
-      working-directory: /etc/yum.repos.d
+    - name: Enable PowerTools
+      if: matrix.release == 8
       run: |
-        curl -O https://sgallagh.fedorapeople.org/repo/openssl3b/openssl3b.repo
+        yum config-manager --set-enabled powertools
 
     - name: Install build dependencies
       run: |
