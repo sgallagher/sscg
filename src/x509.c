@@ -418,7 +418,7 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
 
   /* set time */
   X509_gmtime_adj (X509_get_notBefore (cert), 0);
-  X509_gmtime_adj (X509_get_notAfter (cert), days * 24 * 3650);
+  X509_gmtime_adj (X509_get_notAfter (cert), days * 24 * 60 * 60);
 
   /* set subject */
   subject = X509_NAME_dup (X509_REQ_get_subject_name (csr));
