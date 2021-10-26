@@ -76,16 +76,26 @@ jobs:
         openssl x509 -in service.pem -text
         openssl x509 -in ca.crt -text
 
+  get_fedora_releases:
+    name: Get Fedora Releases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query Fedora
+        id: releases
+        uses: sgallagher/get-fedora-releases-action@v1
+    outputs:
+      stable: ${{ steps.releases.outputs.stable }}
+      development: ${{ steps.releases.outputs.development }}
+      active: ${{ steps.releases.outputs.active }}
+
   fedora:
     name: Fedora x86_64
     runs-on: ubuntu-latest
+    needs: get_fedora_releases
     strategy:
       fail-fast: false
       matrix:
-        release:
-          - 33
-          - 34
-          - 35
+        release: ${{ fromJson(needs.get_fedora_releases.outputs.active) }}
         compiler:
           - gcc
           - clang
