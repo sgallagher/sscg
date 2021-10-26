@@ -52,14 +52,7 @@ talloc = dependency('talloc')
 popt = dependency(
     'popt',
     version : '>=1.14',
-    required : false)
-
-if popt.found()
-    popt_incdirs = include_directories('.')
-else
-    popt = subproject('popt').get_variable('libpopt_a')
-    popt_incdirs = include_directories('subprojects/popt')
-endif
+    required : true)
 
 has_evp_rsa_gen = cc.has_header_symbol(
     'openssl/rsa.h',
@@ -119,7 +112,7 @@ sscg = executable(
         ssl,
         talloc,
     ],
-    include_directories : popt_incdirs,
+    include_directories : include_directories('.'),
     install : true,
 )
 
