@@ -1,0 +1,6 @@
+/.ci export-ignore
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/.packit.yaml export-ignore
+/release.sh export-ignore
