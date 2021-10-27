@@ -1,0 +1,48 @@
+---
+downstream_package_name: sscg
+specfile_path: packaging/fedora/sscg.spec
+
+patch_generation_ignore_paths:
+  - "packaging/"
+  - ".ci/"
+  - ".github/"
+  - ".subprojects/"
+
+upstream_tag_template: "sscg-{version}"
+
+notifications:
+  pull_request:
+    successful_build: false
+
+synced_files:
+  - .packit.yaml
+  - src: packaging/fedora/*
+    dest: .
+
+sync_changelog: true
+
+
+jobs:
+- job: copr_build
+  trigger: pull_request
+  metadata:
+    targets:
+    - fedora-all
+    - centos-stream-8
+    - epel-8
+
+
+- job: tests
+  trigger: pull_request
+  metadata:
+    targets:
+    - fedora-all
+    - centos-stream-8
+    - epel-8
+
+- job: propose_downstream
+  trigger: release
+  metadata:
+    dist_git_branches:
+    - fedora-all
+    - epel-8
