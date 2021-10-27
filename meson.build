@@ -1,5 +1,5 @@
 project('sscg', 'c',
-        version : '3.0.0',
+        version : '3.0.1',
         default_options : [
           'buildtype=debugoptimized',
           'c_std=gnu99',
