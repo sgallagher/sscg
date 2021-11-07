@@ -133,7 +133,7 @@ create_ca_test = executable(
         dependencies: [ crypto ],
     install:false,
 )
-test('create_ca_test', create_ca_test)
+test('create_ca_test', create_ca_test, timeout: 120)
 
 create_csr_test = executable(
     'create_csr_test',
@@ -151,7 +151,7 @@ generate_rsa_key_test = executable(
         dependencies: [ crypto ],
     install:false,
 )
-test('generate_rsa_key_test', generate_rsa_key_test)
+test('generate_rsa_key_test', generate_rsa_key_test, timeout: 120)
 
 generate_serial_test = executable(
     'generate_serial_test',
@@ -177,7 +177,7 @@ test('init_bignum_test', init_bignum_test)
 # excluded from the test suite by default.
 
 prime_lengths = [ 512, 1024 ]
-dhparam_timeout = 120
+dhparam_timeout = 240
 
 if get_option('run_slow_tests')
     prime_lengths = prime_lengths + [ 2048, 4096 ]
