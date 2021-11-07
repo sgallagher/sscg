@@ -1,2 +1,2 @@
 version=4
-https://github.com/sgallagher/sscg/releases/ .*/sscg-([\d\.]+)\.tar\.xz
+https://github.com/sgallagher/sscg/releases/ .*/sscg-([\d\.]+)\.tar\.[gx]z
