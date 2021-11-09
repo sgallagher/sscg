@@ -21,7 +21,6 @@ Package: sscg
 Architecture: any
 Depends: ${shlibs:Depends},
  ${misc:Depends}
-Recommends: python3, powertop
 Description: simple SSL certificate generator
  sscg is a utility to aid in the creation of more secure "self-signed"
  certificates. The certificates created by this tool are generated in a
