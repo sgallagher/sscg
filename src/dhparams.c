@@ -233,11 +233,11 @@ is_valid_named_group (const char *group_name)
       i++;
     }
 
-  /* Check non-FIPS groups */
+    /* Check non-FIPS groups */
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
   if (!FIPS_mode ())
 #else
-  if (!EVP_default_properties_is_fips_enabled(NULL))
+  if (!EVP_default_properties_is_fips_enabled (NULL))
 #endif
     {
       i = 0;
