@@ -135,6 +135,7 @@ git tag -v ${tagname} > /dev/null 2>&1 && ( echo "Tag '${tagname}' is already in
 git tag -sm "Releasing SSCG ${_arg_version}" ${tagname} ${_arg_commitish}
 
 # Push the tag to Github
+git push origin main
 git push origin tag ${tagname}
 
 # Create the release
