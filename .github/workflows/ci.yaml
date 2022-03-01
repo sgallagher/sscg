@@ -166,63 +166,6 @@ jobs:
             meson test -t 10 --print-errorlogs -C fedora-${{ matrix.arch }}
 
 
-  centos:
-    name: CentOS
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        release:
-          - 8
-        compiler:
-          - gcc
-          - clang
-
-    container:
-      image: centos:${{ matrix.release }}
-
-    steps:
-    - name: Identify the system
-      run: |
-        cat /etc/os-release
-
-    - name: Checkout SSCG code
-      uses: actions/checkout@v2
-
-    - name: Checkout popt subproject
-      if: matrix.release == '7'
-      uses: actions/checkout@v2
-      with:
-        repository: sgallagher/POPT
-        path: subprojects/popt
-
-    - name: Enable EPEL
-      run: |
-        yum -y install epel-release
-
-    - name: Enable PowerTools
-      run: |
-        yum -y install dnf-plugins-core
-        yum config-manager --set-enabled powertools
-
-    - name: Install build dependencies
-      run: |
-        yum install -y git-core glibc-devel openssl-devel meson pkgconf libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
-
-    - name: Configure build directory
-      run: |
-        CC=${{ matrix.compiler}} meson --errorlogs centos-${{ matrix.release }} || ( cat centos-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
-
-    - name: Build SSCG
-      run: |
-        ninja -C centos-${{ matrix.release }}
-
-    - name: Run in-tree tests
-      run: |
-        meson test -t 5 --print-errorlogs -C centos-${{ matrix.release }}
-
-
   centos-stream:
     name: CentOS Stream
     runs-on: ubuntu-latest
