@@ -266,6 +266,12 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
   struct sscg_stream *stream = NULL;
   char *normalized_path = NULL;
 
+  if (filetype < 0 || filetype > SSCG_NUM_FILE_TYPES)
+    {
+      SSCG_ERROR ("Unknown filetype for stream");
+      return EINVAL;
+    }
+
   /* If we haven't been passed a path, just return; it's probably an optional
    * output file
    */
