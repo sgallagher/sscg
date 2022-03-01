@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - upstreamed  # For testing changes to this file
 
 jobs:
   coverity:
@@ -11,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: centos:8
+      image: quay.io/centos/centos:stream8
 
     steps:
     - name: Install git
