@@ -101,6 +101,12 @@ sscg_io_utils_get_stream_by_type (struct sscg_stream **streams,
 {
   struct sscg_stream *stream = NULL;
 
+  if (filetype < 0 || filetype > SSCG_NUM_FILE_TYPES)
+    {
+      SSCG_LOG (SSCG_DEFAULT, "Unknown filetype for stream");
+      return NULL;
+    }
+
   /* First see if this path already exists in the list */
   for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
     {
