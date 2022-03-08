@@ -289,7 +289,13 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
     }
 
   ex = X509V3_EXT_conf_nid (NULL, NULL, NID_subject_alt_name, alt_name);
-  CHECK_MEM (ex);
+  if (!ex)
+    {
+      ret = EINVAL;
+      fprintf (stderr, "Invalid subjectAlternativeName: %s\n", alt_name);
+      goto done;
+    }
+
   sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
   /* Set the public key for the certificate */
