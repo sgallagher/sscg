@@ -101,7 +101,7 @@ jobs:
           - clang
 
     container:
-      image: fedora:${{ matrix.release }}
+      image: quay.io/fedora/fedora:${{ matrix.release }}
       options: --security-opt seccomp=unconfined
 
     steps:
