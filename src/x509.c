@@ -133,6 +133,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   char *alt_name = NULL;
   char *tmp = NULL;
   char *san = NULL;
+  char *slash = NULL;
   TALLOC_CTX *tmp_ctx;
   X509_EXTENSION *ex = NULL;
   struct sscg_x509_req *csr;
@@ -267,6 +268,12 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
           else
             {
               san = talloc_strdup (tmp_ctx, certinfo->subject_alt_names[i]);
+              /* SAN IP addresses cannot include the subnet mask */
+              if ((slash = strchr (san, '/')))
+                {
+                  /* Truncate at the slash */
+                  *slash = '\0';
+                }
             }
           CHECK_MEM (san);
 
