@@ -23,7 +23,6 @@ jobs:
     targets:
     - fedora-all
     - centos-stream-8
-    - epel-8
 - job: tests
   trigger: pull_request
   metadata:
