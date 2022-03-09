@@ -1,0 +1,21 @@
+upstream_project_url: git@github.com:sgallagher/sscg.git
+upstream_ref: sscg-3.0.2
+downstream_package_name: sscg
+specfile_path: .distro/sscg.spec
+patch_generation_ignore_paths:
+- .distro
+- .github
+- .packit.yaml
+- packaging
+- release.sh
+patch_generation_patch_id_digits: 1
+sync_changelog: true
+synced_files:
+- src: .distro/
+  dest: .
+  delete: true
+  filters:
+  - protect .git*
+  - protect sources
+  - exclude source-git.yaml
+  - exclude .gitignore
