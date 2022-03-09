@@ -1,0 +1,29 @@
+---
+name: help-usage
+desc: "Tests the basic functionality of 'sscg --help' to confirm it generates a usage message."
+maintainer: sgallagh
+
+input:
+    args:
+        - koji_build
+        - arch
+
+environment:
+    rpm:
+        - make
+
+actions:
+    - name: download the build
+      koji:
+          action: download
+          koji_build: ${koji_build}
+          arch: $arch
+          target_dir: ${workdir}/rpms
+
+    - name: install the build
+      shell:
+          - dnf install -y ${workdir}/rpms/*.rpm
+
+    - name: run test
+      shell:
+          - make run
