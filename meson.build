@@ -142,7 +142,7 @@ create_csr_test = executable(
         dependencies: [ crypto ],
     install:false,
 )
-test('create_csr_test', create_csr_test)
+test('create_csr_test', create_csr_test, timeout: 120)
 
 generate_rsa_key_test = executable(
     'generate_rsa_key_test',
