@@ -14,7 +14,7 @@ Uploaders: Martin Pitt <mpitt@debian.org>
 Homepage: https://github.com/sgallagher/sscg/
 Vcs-Git: https://salsa.debian.org/debian/sscg.git
 Vcs-Browser: https://salsa.debian.org/debian/sscg
-Standards-Version: 4.6.0
+Standards-Version: 4.6.1
 Rules-Requires-Root: no
 
 Package: sscg
