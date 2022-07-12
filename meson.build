@@ -215,6 +215,50 @@ named_dhparams_test = executable(
 test('named_dhparams_test', named_dhparams_test, timeout : 2700)
 
 
+test_env = environment()
+test_env.set('LC_ALL', 'C')
+test_env.set ('MESON_SOURCE_ROOT', meson.current_source_dir())
+test_env.set ('MESON_BUILD_ROOT', meson.current_build_dir())
+
+test_cert_validity = find_program(
+    'test/test_cert_validity.sh',
+    required: true,
+)
+
+hash_algs = [
+    'sha256',
+    'sha384',
+    'sha512',
+]
+
+cipher_algs = [
+    'des-ede3-cbc',
+    'aes-256-cbc',
+]
+
+key_strengths = [
+    '512',
+    '1024',
+    '2048',
+    '4096',
+    '7680',
+    '8192',
+    '15360',
+]
+
+foreach hash_alg : hash_algs
+    foreach cipher_alg : cipher_algs
+        foreach key_strength : key_strengths
+            test(
+                'test_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
+                test_cert_validity,
+                env: test_env,
+            )
+        endforeach
+    endforeach
+endforeach
+
+
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
 cdata.set('HAVE_SSL_EVP_RSA_GEN', has_evp_rsa_gen)

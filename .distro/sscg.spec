@@ -18,6 +18,7 @@ URL:            https://%{provider_prefix}
 Source0:        https://%{provider_prefix}/archive/refs/tags/%{repo}-%{version}.tar.gz
 BuildRequires:  gcc
 BuildRequires:  libtalloc-devel
+BuildRequires:  openssl
 BuildRequires:  openssl-devel
 BuildRequires:  popt-devel
 BuildRequires:  libpath_utils-devel
