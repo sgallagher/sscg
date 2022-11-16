@@ -150,7 +150,8 @@ pushd "$TMPDIR"
 "${MESON_BUILD_ROOT}"/sscg --hash-alg "$_arg_hash_alg" \
                          --cipher-alg "$_arg_cipher_alg" \
 						 --key-strength "$_arg_key_strength" \
-						 --cert-key-password mypassword
+						 --cert-key-password mypassword \
+						 --dhparams-file "dhparams.pem"
 
 # Verify that the expected files were created
 test -e dhparams.pem
