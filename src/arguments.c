@@ -69,7 +69,6 @@ set_default_options (struct sscg_options *opts)
 
   opts->lifetime = 398;
 
-  opts->dhparams_file = talloc_strdup (opts, "dhparams.pem");
   opts->dhparams_group = talloc_strdup (opts, "ffdhe4096");
   opts->dhparams_generator = 2;
 

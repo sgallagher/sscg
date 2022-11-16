@@ -556,6 +556,18 @@ sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
     {
       SSCG_LOG (SSCG_DEBUG, "Opening %s\n", stream->path);
       stream->bio = BIO_new_file (stream->path, create_mode);
+      if (!stream->bio)
+        {
+          fprintf (stderr,
+                   "Could not write to %s. Check directory permissions.\n",
+                   stream->path);
+
+          /* The dhparams file is special, it will be handled later */
+          if (i != SSCG_FILE_TYPE_DHPARAMS)
+            {
+              continue;
+            }
+        }
       CHECK_BIO (stream->bio, stream->path);
     }
 

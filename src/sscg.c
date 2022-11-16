@@ -93,6 +93,7 @@ main (int argc, const char **argv)
   int ret, sret;
   struct sscg_options *options;
   bool build_client_cert = false;
+  char *dhparams_file = NULL;
 
   struct sscg_x509_cert *cacert;
   struct sscg_evp_pkey *cakey;
@@ -182,9 +183,19 @@ main (int argc, const char **argv)
                                        options->crl_mode);
   CHECK_OK (ret);
 
+  if (options->dhparams_file)
+    {
+      dhparams_file = talloc_strdup (main_ctx, options->dhparams_file);
+    }
+  else
+    {
+      dhparams_file = talloc_strdup (main_ctx, "./dhparams.pem");
+    }
+  CHECK_MEM (dhparams_file);
+
   ret = sscg_io_utils_add_output_file (options->streams,
                                        SSCG_FILE_TYPE_DHPARAMS,
-                                       options->dhparams_file,
+                                       dhparams_file,
                                        options->dhparams_mode);
   CHECK_OK (ret);
 
@@ -281,27 +292,35 @@ main (int argc, const char **argv)
 
 
   /* Create DH parameters file */
-  bp = GET_BIO (SSCG_FILE_TYPE_DHPARAMS);
-  if (options->dhparams_prime_len > 0)
+  if ((bp = GET_BIO (SSCG_FILE_TYPE_DHPARAMS)))
     {
-      ret = create_dhparams (options->verbosity,
-                             options->dhparams_prime_len,
-                             options->dhparams_generator,
-                             &dhparams);
-      CHECK_OK (ret);
+      if (options->dhparams_prime_len > 0)
+        {
+          ret = create_dhparams (options->verbosity,
+                                 options->dhparams_prime_len,
+                                 options->dhparams_generator,
+                                 &dhparams);
+          CHECK_OK (ret);
+        }
+      else
+        {
+          ret = get_params_by_named_group (options->dhparams_group, &dhparams);
+          CHECK_OK (ret);
+        }
+
+      /* Export the DH parameters to the file */
+      sret = PEM_write_bio_Parameters (bp, dhparams);
+      CHECK_SSL (sret, PEM_write_bio_Parameters ());
+      ANNOUNCE_WRITE (SSCG_FILE_TYPE_DHPARAMS);
+      EVP_PKEY_free (dhparams);
     }
-  else
+  else if (options->dhparams_file)
     {
-      ret = get_params_by_named_group (options->dhparams_group, &dhparams);
-      CHECK_OK (ret);
+      /* A filename was explicitly passed, but it couldn't be created */
+      ret = EPERM;
+      fprintf (stderr, "Could not write to %s: ", options->dhparams_file);
+      goto done;
     }
-
-  /* Export the DH parameters to the file */
-  sret = PEM_write_bio_Parameters (bp, dhparams);
-  CHECK_SSL (sret, PEM_write_bio_Parameters ());
-  ANNOUNCE_WRITE (SSCG_FILE_TYPE_DHPARAMS);
-  EVP_PKEY_free (dhparams);
-
 
   /* Set the final file permissions */
   sscg_io_utils_finalize_output_files (options->streams);
