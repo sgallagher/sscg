@@ -20,7 +20,7 @@ jobs:
         yum -y install git-core
 
     - name: Checkout Code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Enable EPEL
       run: |

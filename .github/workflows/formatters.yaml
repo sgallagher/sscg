@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install formatters
         run: |
@@ -20,11 +20,11 @@ jobs:
           black --target-version py36 --verbose --line-length 79 .
 
       - name: Commit changes
-        uses: EndBug/add-and-commit@v6
+        uses: EndBug/add-and-commit@v9
         with:
           author_name: sscg CI
           author_email: github-actions@github.com
           message: 'Code auto-formatting'
           add: -u
-          signoff: true
+          commit: --signoff
           push: true
