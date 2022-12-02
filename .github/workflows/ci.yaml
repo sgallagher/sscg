@@ -20,6 +20,7 @@ jobs:
 #         https://bugs.launchpad.net/ubuntu/+source/openssl/+bug/1936975
 #         - ubuntu-18.04
           - ubuntu-20.04
+          - ubuntu-22.04
         compiler:
           - gcc
           - clang
