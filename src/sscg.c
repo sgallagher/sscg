@@ -183,22 +183,24 @@ main (int argc, const char **argv)
                                        options->crl_mode);
   CHECK_OK (ret);
 
-  if (options->dhparams_file)
+  if (!options->skip_dhparams)
     {
-      dhparams_file = talloc_strdup (main_ctx, options->dhparams_file);
-    }
-  else
-    {
-      dhparams_file = talloc_strdup (main_ctx, "./dhparams.pem");
-    }
-  CHECK_MEM (dhparams_file);
+      if (options->dhparams_file)
+        {
+          dhparams_file = talloc_strdup (main_ctx, options->dhparams_file);
+        }
+      else
+        {
+          dhparams_file = talloc_strdup (main_ctx, "./dhparams.pem");
+        }
+      CHECK_MEM (dhparams_file);
 
-  ret = sscg_io_utils_add_output_file (options->streams,
-                                       SSCG_FILE_TYPE_DHPARAMS,
-                                       dhparams_file,
-                                       options->dhparams_mode);
-  CHECK_OK (ret);
-
+      ret = sscg_io_utils_add_output_file (options->streams,
+                                          SSCG_FILE_TYPE_DHPARAMS,
+                                          dhparams_file,
+                                          options->dhparams_mode);
+      CHECK_OK (ret);
+    }
   /* Validate and open the file paths */
   ret = sscg_io_utils_open_output_files (options->streams, options->overwrite);
   CHECK_OK (ret);

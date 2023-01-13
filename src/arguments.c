@@ -609,6 +609,16 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     },
 
     {
+      "no-dhparams-file",
+      '\0',
+      POPT_ARG_NONE,
+      &options->skip_dhparams,
+      0,
+      _ ("Do not create the dhparams file"),
+      NULL
+    },
+
+    {
       "dhparams-named-group",
       '\0',
       POPT_ARG_STRING,

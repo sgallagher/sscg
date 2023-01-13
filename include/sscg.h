@@ -246,6 +246,7 @@ struct sscg_options
   int ca_key_pass_prompt;
   int cert_key_pass_prompt;
   int client_key_pass_prompt;
+  int skip_dhparams;
 
   /* Output Files */
   struct sscg_stream **streams;
