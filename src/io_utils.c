@@ -436,14 +436,6 @@ io_utils_validate (struct sscg_stream **streams)
             }
         }
 
-      /* The dhparams file may only contain dhparams */
-      if ((stream->filetypes & (1 << SSCG_FILE_TYPE_DHPARAMS)) &&
-          (stream->filetypes ^ (1 << SSCG_FILE_TYPE_DHPARAMS)))
-        {
-          ret = IO_UTILS_DHPARAMS_NON_EXCLUSIVE;
-          goto done;
-        }
-
       /* The CRL file may only contain certificate revocations */
       if ((stream->filetypes & (1 << SSCG_FILE_TYPE_CRL)) &&
           (stream->filetypes ^ (1 << SSCG_FILE_TYPE_CRL)))
