@@ -196,9 +196,9 @@ main (int argc, const char **argv)
       CHECK_MEM (dhparams_file);
 
       ret = sscg_io_utils_add_output_file (options->streams,
-                                          SSCG_FILE_TYPE_DHPARAMS,
-                                          dhparams_file,
-                                          options->dhparams_mode);
+                                           SSCG_FILE_TYPE_DHPARAMS,
+                                           dhparams_file,
+                                           options->dhparams_mode);
       CHECK_OK (ret);
     }
   /* Validate and open the file paths */
