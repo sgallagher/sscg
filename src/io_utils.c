@@ -550,12 +550,8 @@ sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
       stream->bio = BIO_new_file (stream->path, create_mode);
       if (!stream->bio)
         {
-          fprintf (stderr,
-                   "Could not write to %s. Check directory permissions.\n",
-                   stream->path);
-
           /* The dhparams file is special, it will be handled later */
-          if (i != SSCG_FILE_TYPE_DHPARAMS)
+          if (stream->filetypes == 1 << SSCG_FILE_TYPE_DHPARAMS)
             {
               continue;
             }
@@ -615,6 +611,13 @@ sscg_io_utils_finalize_output_files (struct sscg_stream **streams)
 
   for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
     {
+      if (!stream->bio)
+        {
+          /* This filetype exists but was not opened successfully
+           * (It's probably dhparams)
+           */
+          continue;
+        }
       /* Set the final permissions mode */
       SSCG_LOG (SSCG_DEBUG,
                 "Setting %s file permissions to %o\n",
