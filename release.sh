@@ -139,7 +139,7 @@ git push origin main
 git push origin tag ${tagname}
 
 # Create the release
-gh release create --notes "" --title "SSCG ${_arg_version}" ${tagname}
+gh release create --generate-notes ${tagname}
 
 
 # ^^^  TERMINATE YOUR CODE BEFORE THE BOTTOM ARGBASH MARKER  ^^^
