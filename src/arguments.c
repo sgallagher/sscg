@@ -773,10 +773,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     }
   CHECK_MEM (options->hostname);
 
-  if (strnlen (options->hostname, MAX_FQDN_LEN + 1) > MAX_FQDN_LEN)
+  if (strnlen (options->hostname, MAXHOSTNAMELEN + 1) > MAXHOSTNAMELEN)
     {
       fprintf (
-        stderr, "Hostnames may not exceed %d characters\n", MAX_FQDN_LEN);
+        stderr, "Hostnames may not exceed %d characters\n", MAXHOSTNAMELEN);
       ret = EINVAL;
       goto done;
     }
