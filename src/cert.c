@@ -31,6 +31,7 @@
 */
 
 
+#include <string.h>
 #include "include/sscg.h"
 #include "include/cert.h"
 #include "include/x509.h"
@@ -52,6 +53,7 @@ create_cert (TALLOC_CTX *mem_ctx,
   struct sscg_x509_req *csr;
   struct sscg_evp_pkey *pkey;
   struct sscg_x509_cert *cert;
+  char *dot;
   X509_EXTENSION *ex = NULL;
   EXTENDED_KEY_USAGE *extended;
   TALLOC_CTX *tmp_ctx = NULL;
@@ -87,6 +89,9 @@ create_cert (TALLOC_CTX *mem_ctx,
 
   certinfo->cn = talloc_strdup (certinfo, options->hostname);
   CHECK_MEM (certinfo->cn);
+  /* Truncate the CN at the first dot */
+  if ((dot = strchr (certinfo->cn, '.')))
+    *dot = '\0';
 
   if (options->subject_alt_names)
     {
