@@ -56,6 +56,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   char *name_constraint;
   char *san;
   char *tmp;
+  char *dot;
 
   tmp_ctx = talloc_new (NULL);
   CHECK_MEM (tmp_ctx);
@@ -89,6 +90,26 @@ create_private_CA (TALLOC_CTX *mem_ctx,
 
   ca_certinfo->cn = talloc_strdup (ca_certinfo, options->hostname);
   CHECK_MEM (ca_certinfo->cn);
+  /* Truncate the CN at the first dot */
+  if ((dot = strchr (ca_certinfo->cn, '.')))
+    *dot = '\0';
+
+  if (options->subject_alt_names)
+    {
+      for (i = 0; options->subject_alt_names[i]; i++)
+        {
+          ca_certinfo->subject_alt_names = talloc_realloc (
+            ca_certinfo, ca_certinfo->subject_alt_names, char *, i + 2);
+          CHECK_MEM (ca_certinfo->subject_alt_names);
+
+          ca_certinfo->subject_alt_names[i] = talloc_strdup (
+            ca_certinfo->subject_alt_names, options->subject_alt_names[i]);
+          CHECK_MEM (ca_certinfo->subject_alt_names[i]);
+
+          /* Add a NULL terminator to the end */
+          ca_certinfo->subject_alt_names[i + 1] = NULL;
+        }
+    }
 
   /* Make this a CA certificate */
 
@@ -106,10 +127,9 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   CHECK_MEM (ex);
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
 
-  /* Restrict signing to the hostname and subjectAltNames of the
-       service certificate */
+  /* Restrict signing to the CN and subjectAltNames of the service certificate */
   name_constraint =
-    talloc_asprintf (tmp_ctx, "permitted;DNS:%s", options->hostname);
+    talloc_asprintf (tmp_ctx, "permitted;DNS:%s", ca_certinfo->cn);
   CHECK_MEM (name_constraint);
 
   if (options->subject_alt_names)

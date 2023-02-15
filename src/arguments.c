@@ -786,10 +786,19 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     }
   CHECK_MEM (options->hostname);
 
-  if (strnlen (options->hostname, MAXHOSTNAMELEN + 1) > MAXHOSTNAMELEN)
+  if (strnlen (options->hostname, MAX_FQDN_LEN + 1) > MAX_FQDN_LEN)
     {
-      fprintf (
-        stderr, "Hostnames may not exceed %d characters\n", MAXHOSTNAMELEN);
+      fprintf (stderr, "FQDNs may not exceed %d characters\n", MAX_FQDN_LEN);
+      ret = EINVAL;
+      goto done;
+    }
+
+  if ((strchr (options->hostname, '.') - options->hostname) > MAX_HOST_LEN + 4)
+    {
+      fprintf (stderr,
+               "Hostnames may not exceed %d characters in Subject "
+               "Alternative Names\n",
+               MAX_HOST_LEN);
       ret = EINVAL;
       goto done;
     }
@@ -798,24 +807,34 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
        options struct. It's not the most efficient approach, but
        it's only done one time, so there is no sense in optimizing
        it. */
+  size_t i = 0;
   if (alternative_names)
     {
-      size_t i = 0;
       while (alternative_names[i] != NULL)
         {
           options->subject_alt_names = talloc_realloc (
-            options, options->subject_alt_names, char *, i + 2);
+            options, options->subject_alt_names, char *, i + 1);
           CHECK_MEM (options->subject_alt_names);
 
           options->subject_alt_names[i] =
             talloc_strdup (options->subject_alt_names, alternative_names[i]);
           CHECK_MEM (options->subject_alt_names[i]);
-
-          /* Add a NULL terminator to the end */
-          options->subject_alt_names[i + 1] = NULL;
           i++;
         }
     }
+
+  /*
+    The hostname must always be listed in SubjectAlternativeNames as well.
+    Note that the realloc also adds an extra entry for the NULL terminator
+  */
+  options->subject_alt_names =
+    talloc_realloc (options, options->subject_alt_names, char *, i + 2);
+  CHECK_MEM (options->subject_alt_names);
+  options->subject_alt_names[i] =
+    talloc_strdup (options->subject_alt_names, options->hostname);
+  CHECK_MEM (options->subject_alt_names[i]);
+  /* Add a NULL terminator to the end */
+  options->subject_alt_names[i + 1] = NULL;
 
   if (options->key_strength < options->minimum_key_strength)
     {
