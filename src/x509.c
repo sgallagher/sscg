@@ -277,12 +277,12 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
             }
           CHECK_MEM (san);
 
-          if (strnlen (san, MAXHOSTNAMELEN + 5) > MAXHOSTNAMELEN + 4)
+          if (strnlen (san, MAX_FQDN_LEN + 5) > MAX_FQDN_LEN + 4)
             {
               fprintf (stderr,
                        "Hostnames may not exceed %d characters in Subject "
                        "Alternative Names\n",
-                       MAXHOSTNAMELEN);
+                       MAX_FQDN_LEN);
               ret = EINVAL;
               goto done;
             }

@@ -300,6 +300,8 @@ enum sscg_cert_type
 #define SSCG_MIN_KEY_PASS_LEN 4
 #define SSCG_MAX_KEY_PASS_LEN 1023
 
+/* RFC 1035, section 2.3.4 (Size Limits) */
+#define MAX_FQDN_LEN 255
 
 int
 sscg_handle_arguments (TALLOC_CTX *mem_ctx,
