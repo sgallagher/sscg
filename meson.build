@@ -29,7 +29,7 @@
 # Copyright 2019-2023 by Stephen Gallagher <sgallagh@redhat.com>
 
 project('sscg', 'c',
-        version : '3.0.3',
+        version : '3.0.4',
         default_options : [
           'buildtype=debugoptimized',
           'c_std=gnu99',

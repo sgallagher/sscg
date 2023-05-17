@@ -1,38 +1,48 @@
 # See the documentation for more information:
 # https://packit.dev/docs/configuration/
 
-specfile_path: packaging/fedora/sscg.spec
+specfile_path: .distro/sscg.spec
+
+files_to_sync:
+  - .distro/sscg.spec
+  - .packit.yaml
+  - get_current_version.sh
 
 sync_changelog: true
 
 upstream_package_name: sscg
-upstream_tag_template: sscg-{version}
-archive_root_dir_template: "{upstream_pkg_name}-{upstream_pkg_name}-{version}"
-
 downstream_package_name: sscg
+
+upstream_tag_template: sscg-{version}
+
+archive_root_dir_template: "{upstream_pkg_name}-{upstream_pkg_name}-{version}"
 
 notifications:
   pull_request:
     successful_build: true
 
+srpm_build_deps:
+  - meson
+  - jq
+
+actions:
+  get-current-version:
+    - ./get_current_version.sh
 
 jobs:
 - job: copr_build
   trigger: pull_request
-  metadata:
-    targets:
+  targets:
     - fedora-all
     - centos-stream-8
     - centos-stream-9
 - job: tests
   trigger: pull_request
-  metadata:
-    targets:
+  targets:
     - fedora-all
     - centos-stream-8
     - centos-stream-9
 - job: propose_downstream
   trigger: release
-  metadata:
-    dist_git_branches:
-    - fedora-all
+  dist_git_branches:
+  - fedora-all
