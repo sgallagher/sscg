@@ -8,6 +8,9 @@
 ## Why?
 x509 Certificates are complicated to get right. SSCG makes it easy to generate usable, _signed_ certificates quickly without needing to understand complex `openssl`, `certtool` or `certutil` commands.
 
+## License
+sscg is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version, along with an exception permitting the code to link against the OpenSSL library.
+
 ## Quick Usage - Certificates Signed by a Private CA
 ```
 /usr/bin/sscg
