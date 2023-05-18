@@ -4,9 +4,12 @@
 specfile_path: .distro/sscg.spec
 
 files_to_sync:
-  - .distro/sscg.spec
-  - .packit.yaml
-  - get_current_version.sh
+  - src: .distro/sscg.spec
+    dest: sscg.spec
+  - src: .packit.yaml
+    dest: .packit.yaml
+  - src: get_current_version.sh
+    dest: get_current_version.sh
 
 sync_changelog: true
 
