@@ -1,16 +1,12 @@
 upstream_project_url: git@github.com:sgallagher/sscg.git
-upstream_ref: sscg-3.0.2
+upstream_ref: sscg-3.0.4
 downstream_package_name: sscg
 specfile_path: .distro/sscg.spec
 patch_generation_ignore_paths:
 - .distro
-- .github
-- .packit.yaml
-- packaging
-- release.sh
 patch_generation_patch_id_digits: 1
 sync_changelog: true
-synced_files:
+files_to_sync:
 - src: .distro/
   dest: .
   delete: true
@@ -19,3 +15,6 @@ synced_files:
   - protect sources
   - exclude source-git.yaml
   - exclude .gitignore
+sources:
+- path: sscg-3.0.3.tar.gz
+  url: https://src.fedoraproject.org/repo/pkgs/rpms/sscg/sscg-3.0.3.tar.gz/sha512/5820a44deaabf67296bf218485a22a5b58fcf48c6c33e2617946d0edaded3554f1acb2fb170eb189cdf4f8a61bb29bcb0385dc54996f7d0acdc8f45048b8e081/sscg-3.0.3.tar.gz

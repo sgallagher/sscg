@@ -1,0 +1,7 @@
+summary: Public (Fedora) Tier1 beakerlib tests
+discover:
+    how: fmf
+    url: https://src.fedoraproject.org/tests/sscg.git
+    filter: 'tier: 1'
+execute:
+    how: tmt
