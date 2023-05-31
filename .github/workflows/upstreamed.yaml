@@ -22,6 +22,10 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
+    - name: Work around dubious ownership bug (https://github.com/actions/checkout/issues/1169)
+      run: |
+        git config --system --add safe.directory $GITHUB_WORKSPACE
+
     - name: Enable EPEL
       run: |
         yum -y install epel-release
