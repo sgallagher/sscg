@@ -2,6 +2,7 @@
 
 ifeq ($(CC),clang)
   export DEB_BUILD_MAINT_OPTIONS=hardening=+all optimize=-lto
+  export DEB_CFLAGS_MAINT_APPEND=-gdwarf-4
 else
   export DEB_BUILD_MAINT_OPTIONS=hardening=+all
 endif
