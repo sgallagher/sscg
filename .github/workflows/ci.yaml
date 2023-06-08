@@ -39,7 +39,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson ${{ matrix.os }}
+        CC=${{ matrix.compiler}} meson setup ${{ matrix.os }}
 
     - name: Build SSCG
       run: |
@@ -117,7 +117,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson fedora-${{ matrix.release }}
+        CC=${{ matrix.compiler}} meson setup fedora-${{ matrix.release }}
 
     - name: Build SSCG
       run: |
@@ -161,7 +161,7 @@ jobs:
             dnf install -y meson pkgconf openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
 
           run: |
-            CC=${{ matrix.compiler}} meson fedora-${{ matrix.arch }}
+            CC=${{ matrix.compiler}} meson setup fedora-${{ matrix.arch }}
             ninja -C fedora-${{ matrix.arch }}
             meson test -t 15 --print-errorlogs -C fedora-${{ matrix.arch }}
 
@@ -213,7 +213,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson --errorlogs centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
+        CC=${{ matrix.compiler}} meson setup --errorlogs centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
 
     - name: Build SSCG
       run: |
