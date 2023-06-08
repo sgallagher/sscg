@@ -1,6 +1,10 @@
 #!/usr/bin/make -f
 
-export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+ifeq ($(CC),clang)
+  export DEB_BUILD_MAINT_OPTIONS=hardening=+all optimize=-lto
+else
+  export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+endif
 
 %:
 	dh "$@"
