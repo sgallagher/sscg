@@ -163,7 +163,7 @@ jobs:
           run: |
             CC=${{ matrix.compiler}} meson fedora-${{ matrix.arch }}
             ninja -C fedora-${{ matrix.arch }}
-            meson test -t 10 --print-errorlogs -C fedora-${{ matrix.arch }}
+            meson test -t 15 --print-errorlogs -C fedora-${{ matrix.arch }}
 
 
   centos-stream:
