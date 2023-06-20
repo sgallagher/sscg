@@ -35,6 +35,7 @@
 # Created by argbash-init v2.10.0
 # ARG_OPTIONAL_SINGLE([commitish],[c],[The commit to be tagged for release.],[HEAD])
 # ARG_OPTIONAL_BOOLEAN([debug],[],[Print debugging output])
+# ARG_OPTIONAL_BOOLEAN([dry-run],[],[Make only local changes])
 # ARG_POSITIONAL_SINGLE([version],[The version of SSCG to release])
 # ARG_DEFAULTS_POS([])
 # ARG_HELP([Tags a new upstream release and submits])
@@ -67,15 +68,17 @@ _arg_version=
 # THE DEFAULTS INITIALIZATION - OPTIONALS
 _arg_commitish="HEAD"
 _arg_debug="off"
+_arg_dry_run="off"
 
 
 print_help()
 {
 	printf '%s\n' "Tags a new upstream release and submits"
-	printf 'Usage: %s [-c|--commitish <arg>] [--(no-)debug] [-h|--help] <version>\n' "$0"
+	printf 'Usage: %s [-c|--commitish <arg>] [--(no-)debug] [--(no-)dry-run] [-h|--help] <version>\n' "$0"
 	printf '\t%s\n' "<version>: The version of SSCG to release"
 	printf '\t%s\n' "-c, --commitish: The commit to be tagged for release. (default: 'HEAD')"
 	printf '\t%s\n' "--debug, --no-debug: Print debugging output (off by default)"
+	printf '\t%s\n' "--dry-run, --no-dry-run: Make only local changes (off by default)"
 	printf '\t%s\n' "-h, --help: Prints help"
 }
 
@@ -101,6 +104,10 @@ parse_commandline()
 			--no-debug|--debug)
 				_arg_debug="on"
 				test "${1:0:5}" = "--no-" && _arg_debug="off"
+				;;
+			--no-dry-run|--dry-run)
+				_arg_dry_run="on"
+				test "${1:0:5}" = "--no-" && _arg_dry_run="off"
 				;;
 			-h|--help)
 				print_help
@@ -173,12 +180,14 @@ git diff --quiet HEAD --exit-code || git commit -sam "Updating version to ${_arg
 # Tag the new release
 git tag -sm "Releasing SSCG ${_arg_version}" ${tagname} ${_arg_commitish}
 
-# Push the tag to Github
-git push origin main
-git push origin tag ${tagname}
+if [ "$_arg_dry_run" != "on" ]; then
+	# Push the tag to Github
+	git push origin main
+	git push origin tag ${tagname}
 
-# Create the release
-gh release create --generate-notes ${tagname}
+	# Create the release
+	gh release create --generate-notes ${tagname}
+fi
 
 
 # ^^^  TERMINATE YOUR CODE BEFORE THE BOTTOM ARGBASH MARKER  ^^^
