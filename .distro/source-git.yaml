@@ -1,5 +1,5 @@
 upstream_project_url: git@github.com:sgallagher/sscg.git
-upstream_ref: sscg-3.0.4
+upstream_ref: sscg-3.0.5
 downstream_package_name: sscg
 specfile_path: .distro/sscg.spec
 patch_generation_ignore_paths:
