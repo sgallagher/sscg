@@ -9,13 +9,13 @@
 %{!?meson_test: %global meson_test %{__meson} test -C %{_vpath_builddir} --num-processes %{_smp_build_ncpus} --print-errorlogs}
 
 Name:           sscg
-Version:        3.0.3
+Version:        3.0.5
 Release:        %autorelease
 Summary:        Simple SSL certificate generator
 
 License:        GPLv3+ with exceptions
 URL:            https://%{provider_prefix}
-Source0:        https://%{provider_prefix}/archive/refs/tags/%{repo}-%{version}.tar.gz
+Source0:        sscg-3.0.5.tar.gz
 BuildRequires:  gcc
 BuildRequires:  libtalloc-devel
 BuildRequires:  openssl
@@ -36,7 +36,7 @@ up a full PKI environment and without exposing the machine to a risk of
 false signatures from the service certificate.
 
 %prep
-%autosetup -p1 -n %{name}-%{name}-%{version}
+%autosetup -p1 -n sscg-3.0.5
 
 
 %build
