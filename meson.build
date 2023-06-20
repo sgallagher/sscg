@@ -28,16 +28,14 @@
 #
 # Copyright 2019-2023 by Stephen Gallagher <sgallagh@redhat.com>
 
-project('sscg', 'c',
-        version : '3.0.4',
-        default_options : [
-          'buildtype=debugoptimized',
-          'c_std=gnu99',
-          'warning_level=1',
-          'b_asneeded=true',
-        ],
-        license : 'GPL-3.0-or-later WITH OpenSSL-exception',
-        meson_version : '>=0.44.0')
+project(
+  'sscg',
+  'c',
+version : '3.0.4',
+default_options : ['buildtype=debugoptimized', 'c_std=gnu99', 'warning_level=1', 'b_asneeded=true'],
+license : 'GPL-3.0-or-later WITH OpenSSL-exception',
+meson_version : '>=0.44.0'
+)
 
 cc = meson.get_compiler('c')
 test_cflags = [
