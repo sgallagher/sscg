@@ -131,40 +131,43 @@ jobs:
 
 
   fedora_aarch64:
-    name: Fedora ${{ matrix.arch }}
+    name: Fedora ARM64
     runs-on: [self-hosted, linux, ARM64]
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - aarch64
+        release: ${{ fromJson(needs.get_fedora_releases.outputs.active) }}
         compiler:
           - gcc
           - clang
+
+    container:
+      image: quay.io/fedora/fedora:${{ matrix.release }}
+      options: --security-opt seccomp=unconfined
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Identify the system
+      run: |
+        cat /etc/os-release
 
-      - uses: uraimo/run-on-arch-action@v2
-        name: Perform upstream tests
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-        with:
-          arch: ${{ matrix.arch }}
-          distro: fedora_latest
+    - name: Install build dependencies
+      run: |
+        dnf install -y meson pkgconf openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
 
-          # Not required, but speeds up builds by storing container images in
-          # a GitHub package registry.
-          githubToken: ${{ github.token }}
+    - name: Configure build directory
+      run: |
+        CC=${{ matrix.compiler}} meson setup fedora-${{ matrix.release }}
 
-          install: |
-            dnf update -y --refresh
-            dnf install -y meson pkgconf openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+    - name: Build SSCG
+      run: |
+        ninja -C fedora-${{ matrix.release }}
 
-          run: |
-            CC=${{ matrix.compiler}} meson setup fedora-${{ matrix.arch }}
-            ninja -C fedora-${{ matrix.arch }}
-            meson test -t 15 --print-errorlogs -C fedora-${{ matrix.arch }}
-
+    - name: Run in-tree tests
+      run: |
+        meson test -t 5 --print-errorlogs -C fedora-${{ matrix.release }}
 
   centos-stream:
     name: CentOS Stream
