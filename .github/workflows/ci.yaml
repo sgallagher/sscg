@@ -136,7 +136,6 @@ jobs:
       matrix:
         arch:
           - aarch64
-          - ppc64le
         compiler:
           - gcc
           - clang
