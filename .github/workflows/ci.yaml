@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - ci_tests
   pull_request:
     branches:
       - main
+      - ci_tests
 
 jobs:
   ubuntu:
@@ -128,9 +130,9 @@ jobs:
         meson test -t 5 --print-errorlogs -C fedora-${{ matrix.release }}
 
 
-  fedora_multiarch:
-    name: Fedora non-x86_64
-    runs-on: ubuntu-latest
+  fedora_aarch64:
+    name: Fedora ${{ matrix.arch }}
+    runs-on: [self-hosted, linux, ARM64]
     strategy:
       fail-fast: false
       matrix:
