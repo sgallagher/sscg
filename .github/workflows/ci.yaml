@@ -133,6 +133,7 @@ jobs:
   fedora_aarch64:
     name: Fedora ARM64
     runs-on: [self-hosted, linux, ARM64]
+    needs: get_fedora_releases
     strategy:
       fail-fast: false
       matrix:
