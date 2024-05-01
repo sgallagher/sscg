@@ -31,6 +31,7 @@
 */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <openssl/evp.h>
@@ -84,13 +85,23 @@ char *
 valid_dh_group_names (TALLOC_CTX *mem_ctx)
 {
   size_t i;
-  char *names = NULL;
   TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+  char *names = NULL;
+  bool first = true;
 
   i = 0;
   while (dh_fips_groups[i])
     {
-      names = talloc_asprintf_append (names, "%s, ", dh_fips_groups[i]);
+      if (first)
+        {
+          names = talloc_strdup (tmp_ctx, dh_fips_groups[i]);
+          first = false;
+        }
+      else
+        {
+          names = talloc_asprintf_append (names, ", %s", dh_fips_groups[i]);
+        }
+
       if (!names)
         goto done;
 
@@ -100,17 +111,23 @@ valid_dh_group_names (TALLOC_CTX *mem_ctx)
   i = 0;
   while (dh_nonfips_groups[i])
     {
-      names = talloc_asprintf_append (names, "%s, ", dh_nonfips_groups[i]);
+      if (first)
+        {
+          /* This should never be reached, since dh_fips_groups should always
+           * have at least one entry, but for safety we will include it.
+          */
+          names = talloc_strdup (tmp_ctx, dh_nonfips_groups[i]);
+          first = false;
+        }
+      else
+        {
+          names = talloc_asprintf_append (names, ", %s", dh_nonfips_groups[i]);
+        }
       if (!names)
         goto done;
 
       i++;
     }
-
-  /* Truncate the last ", " */
-  names = talloc_strndup (names, names, strlen (names) - 2);
-  if (!names)
-    goto done;
 
   talloc_steal (mem_ctx, names);
 

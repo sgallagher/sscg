@@ -47,6 +47,7 @@ test_group_name_list (void)
   int ret;
   TALLOC_CTX *tmp_ctx = talloc_new (NULL);
   char *names = valid_dh_group_names (tmp_ctx);
+  char *expected = NULL;
   if (!names)
     {
       ret = EINVAL;
@@ -54,22 +55,22 @@ test_group_name_list (void)
     }
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
-  if (strcmp (names,
-              "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192") != 0)
-    {
-      ret = EINVAL;
-      goto done;
-    }
+  expected = talloc_strdup (
+    tmp_ctx, "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192");
 #else
-  if (strcmp (names,
-              "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192, "
-              "modp_2048, modp_3072, modp_4096, modp_6144, modp_8192, "
-              "modp_1536, dh_1024_160, dh_2048_224, dh_2048_256") != 0)
+  expected =
+    talloc_strdup (tmp_ctx,
+                   "ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192, "
+                   "modp_2048, modp_3072, modp_4096, modp_6144, modp_8192, "
+                   "modp_1536, dh_1024_160, dh_2048_224, dh_2048_256");
+#endif
+  if (strcmp (names, expected) != 0)
     {
+      fprintf (stderr, "Expected: [%s]\n", expected);
+      fprintf (stderr, "Recieved: [%s]\n", names);
       ret = EINVAL;
       goto done;
     }
-#endif
 
 
   ret = EOK;
