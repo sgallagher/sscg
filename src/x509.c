@@ -168,8 +168,8 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
 
   talloc_set_destructor ((TALLOC_CTX *)csr, _sscg_csr_destructor);
 
-  /* We will generate only x509v3 certificates */
-  sslret = X509_REQ_set_version (csr->x509_req, X509_VERSION_1);
+  /* All CSRs are v1 */
+  sslret = X509_REQ_set_version (csr->x509_req, 0);
   CHECK_SSL (sslret, X509_REQ_set_version);
 
   subject = X509_REQ_get_subject_name (csr->x509_req);
