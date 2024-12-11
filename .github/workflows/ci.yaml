@@ -20,6 +20,7 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
+          - ubuntu-24.04
         compiler:
           - gcc
           - clang
@@ -32,7 +33,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y meson pkgconf openssl libssl-dev libpath-utils-dev libtalloc-dev help2man libpopt-dev ${{ matrix.compiler }}
-        sudo apt install -y --no-install-recommends debhelper devscripts lintian
+        sudo apt install -y --no-install-recommends build-essential debhelper devscripts lintian
 
     - name: Configure build directory
       run: |
