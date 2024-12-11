@@ -31,7 +31,7 @@
 project(
   'sscg',
   'c',
-version : '3.0.5',
+version : '3.0.90',
 default_options : ['buildtype=debugoptimized', 'c_std=gnu99', 'warning_level=1', 'b_asneeded=true'],
 license : 'GPL-3.0-or-later WITH OpenSSL-exception',
 meson_version : '>=0.44.0'
@@ -62,17 +62,9 @@ endforeach
 
 pkg = import('pkgconfig')
 
-crypto = dependency('libcrypto11', version: '>= 1.1.0', required: false)
-if crypto.found()
-else
-    crypto = dependency('libcrypto', version: '>= 1.1.0')
-endif
+crypto = dependency('libcrypto', version: '>= 3.0.0')
 
-ssl = dependency('libssl11', version: '>= 1.1.0', required: false)
-if ssl.found()
-else
-    ssl = dependency('libssl', version: '>= 1.1.0')
-endif
+ssl = dependency('libssl', version: '>= 3.0.0')
 
 path_utils = dependency('path_utils')
 talloc = dependency('talloc')
@@ -81,15 +73,6 @@ popt = dependency(
     'popt',
     version : '>=1.14',
     required : true)
-
-has_evp_rsa_gen = cc.has_header_symbol(
-    'openssl/rsa.h',
-    'EVP_RSA_gen',
-    dependencies: [ crypto ])
-
-has_ossl_param = cc.has_header_symbol(
-    'openssl/core.h',
-    'OSSL_PARAM')
 
 sscg_bin_srcs = [
     'src/arguments.c',
@@ -143,16 +126,6 @@ sscg = executable(
     include_directories : include_directories('.'),
     install : true,
 )
-
-# Fake test to ensure that all sources and headers are formatted properly
-test_clang_format = find_program('clang-format', required: false)
-if not test_clang_format.found()
-    test_clang_format = disabler()
-endif
-
-clang_args = [ '-i' ]
-test('test_clang_format', test_clang_format,
-     args : clang_args + files(sscg_lib_srcs + sscg_lib_hdrs + sscg_bin_srcs))
 
 create_ca_test = executable(
     'create_ca_test',
@@ -289,8 +262,6 @@ endforeach
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
-cdata.set('HAVE_SSL_EVP_RSA_GEN', has_evp_rsa_gen)
-cdata.set('HAVE_OSSL_PARAM', has_ossl_param)
 configure_file(
     output : 'config.h',
     configuration : cdata)

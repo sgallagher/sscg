@@ -19,7 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-20.04
           - ubuntu-22.04
         compiler:
           - gcc
@@ -34,10 +33,6 @@ jobs:
         sudo apt update
         sudo apt install -y meson pkgconf openssl libssl-dev libpath-utils-dev libtalloc-dev help2man libpopt-dev ${{ matrix.compiler }}
         sudo apt install -y --no-install-recommends debhelper devscripts lintian
-        # 18.04's debhelper is too old, we want to use compat level 12
-        if grep -q 18.04 /etc/os-release; then
-            sudo apt install -y -t bionic-backports debhelper
-        fi
 
     - name: Configure build directory
       run: |
