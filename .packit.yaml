@@ -1,64 +1,44 @@
 # See the documentation for more information:
 # https://packit.dev/docs/configuration/
 
-specfile_path: .distro/sscg.spec
+specfile_path: sscg.spec
 
+# add or remove files that should be synced
 files_to_sync:
-  - src: .distro/sscg.spec
-    dest: sscg.spec
-  - src: .packit.yaml
-    dest: .packit.yaml
-  - src: get_current_version.sh
-    dest: get_current_version.sh
+    - sscg.spec
+    - .packit.yaml
 
-sync_changelog: true
-
+# name in upstream package repository or registry (e.g. in PyPI)
 upstream_package_name: sscg
+# downstream (Fedora) RPM package name
 downstream_package_name: sscg
-
+# Tag format for versions
 upstream_tag_template: sscg-{version}
 
-archive_root_dir_template: "{upstream_pkg_name}-{upstream_pkg_name}-{version}"
-
-notifications:
-  pull_request:
-    successful_build: true
-
-srpm_build_deps:
-  - meson
-  - jq
-
 actions:
+  post-upstream-clone:
+    # rawhide specfile will be the source of truth: we don't need to have the specfile upstream
+    - curl -Lvso sscg.spec https://src.fedoraproject.org/rpms/sscg/raw/main/f/sscg.spec
   get-current-version:
-    - ./get_current_version.sh
+    - cat sscg.version
 
 jobs:
 - job: copr_build
   trigger: pull_request
   targets:
     - fedora-all
-    - centos-stream-8
+    - fedora-all-aarch64
+    - centos-stream-10
     - centos-stream-9
 
 - job: tests
   trigger: pull_request
   targets:
     - fedora-all
-    - centos-stream-8
+    - centos-stream-10
     - centos-stream-9
 
-- job: propose_downstream
+- job: pull_from_upstream
   trigger: release
   dist_git_branches:
-    - fedora-all
-
-- job: koji_build
-  trigger: commit
-  dist_git_branches:
-    - fedora-all
-
-- job: bodhi_update
-  trigger: commit
-  dist_git_branches:
-    - fedora-branched
-
+    - rawhide

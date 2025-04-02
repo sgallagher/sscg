@@ -152,7 +152,7 @@ jobs:
       run: |
         cat /etc/os-release
 
-    - name: Checkout SSCG code
+    - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Enable DNF tools

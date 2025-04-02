@@ -173,8 +173,8 @@ git checkout main || ( echo "Unable to switch to main branch" && exit 2 )
 git fetch --tags
 git tag -v ${tagname} > /dev/null 2>&1 && ( echo "Tag '${tagname}' is already in use!" && exit 1 )
 
-# Update the version in meson.build
-meson rewrite kwargs set project / version ${_arg_version}
+# Update the version in sscg.version
+echo -n ${_arg_version} > sscg.version
 git diff --quiet HEAD --exit-code || git commit -sam "Updating version to ${_arg_version}"
 
 # Tag the new release

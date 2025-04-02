@@ -1,3 +1,4 @@
+/sscg.spec
 *.py[oc]
 *.egg-info
 *.pydevproject
@@ -67,3 +68,4 @@ m4/xsize.m4
 /s390*
 *.rpm
 *.tar.gz
+prepare_sources_result*/
