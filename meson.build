@@ -34,7 +34,7 @@ project(
 version : '3.0.6',
   default_options : ['buildtype=debugoptimized', 'c_std=gnu99', 'warning_level=1', 'b_asneeded=true'],
   license : 'GPL-3.0-or-later WITH OpenSSL-exception',
-  meson_version : '>=0.44.0'
+  meson_version : '>=0.46.0'
 )
 
 cc = meson.get_compiler('c')
@@ -281,6 +281,7 @@ foreach hash_alg : hash_algs
                 'test_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
                 test_cert_validity,
                 env: test_env,
+                depends: sscg,
             )
         endforeach
     endforeach
