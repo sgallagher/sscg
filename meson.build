@@ -26,15 +26,15 @@
 # version.  If you delete this exception statement from all source
 # files in the program, then also delete it here.
 #
-# Copyright 2019-2023 by Stephen Gallagher <sgallagh@redhat.com>
+# Copyright 2019-2025 by Stephen Gallagher <sgallagh@redhat.com>
 
 project(
   'sscg',
   'c',
-version : '3.0.6',
+version : files('sscg.version'),
   default_options : ['buildtype=debugoptimized', 'c_std=gnu99', 'warning_level=1', 'b_asneeded=true'],
   license : 'GPL-3.0-or-later WITH OpenSSL-exception',
-  meson_version : '>=0.46.0'
+  meson_version : '>=0.57.0',
 )
 
 cc = meson.get_compiler('c')
