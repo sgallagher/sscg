@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: quay.io/centos/centos:stream8
+      image: quay.io/centos/centos:stream9
 
     steps:
     - name: Install git
@@ -30,14 +30,14 @@ jobs:
       run: |
         yum -y install epel-release
 
-    - name: Enable PowerTools
+    - name: Enable CRB
       run: |
         yum -y install dnf-plugins-core
-        yum config-manager --set-enabled powertools
+        yum config-manager --set-enabled crb
 
     - name: Install build dependencies
       run: |
-        yum install -y clang help2man meson gcc ninja-build wget curl openssl popt-devel sudo pkgconfig redhat-rpm-config ruby rubygems "rubygem(json)" libtalloc-devel libpath_utils-devel openssl-devel
+        yum install -y clang help2man meson gcc ninja-build wget openssl popt-devel sudo pkgconfig redhat-rpm-config ruby rubygems "rubygem(json)" libtalloc-devel libpath_utils-devel openssl-devel
 
     - name: Set Up Coverity Scanner
       run: |
