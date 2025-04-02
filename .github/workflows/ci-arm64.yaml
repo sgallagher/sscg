@@ -1,4 +1,4 @@
-name: Continuous Integration (x86_64)
+name: Continuous Integration (aarch64)
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 jobs:
   ubuntu:
     name: Ubuntu
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-arm
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -22,7 +22,6 @@ jobs:
           - ubuntu-24.04
         compiler:
           - gcc
-          - clang
 
     steps:
     - name: Checkout code
@@ -90,14 +89,13 @@ jobs:
 
   fedora:
     name: Fedora
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm
     needs: get_fedora_releases
     strategy:
       fail-fast: false
       matrix:
         release: ${{ fromJson(needs.get_fedora_releases.outputs.active) }}
         compiler:
-          - gcc
           - clang
 
     container:
@@ -131,7 +129,7 @@ jobs:
 
   centos-stream:
     name: CentOS Stream
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm
     continue-on-error: false
 
     strategy:
@@ -142,7 +140,6 @@ jobs:
           - 10
         compiler:
           - gcc
-          - clang
 
     container:
       image: quay.io/centos/centos:stream${{ matrix.release }}
