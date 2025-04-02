@@ -11,7 +11,7 @@ on:
 jobs:
   ubuntu:
     name: Ubuntu
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}${{ matrix.runner-arch }}
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -19,18 +19,22 @@ jobs:
         os:
           - ubuntu-20.04
           - ubuntu-22.04
+          - ubuntu-24.04
+        runner-arch:
+          - ""
+          - "-arm"
         compiler:
           - gcc
           - clang
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install build dependencies
       run: |
         sudo apt update
-        sudo apt install -y meson pkgconf openssl libssl-dev libpath-utils-dev libtalloc-dev help2man libpopt-dev ${{ matrix.compiler }}
+        sudo apt install -y build-essential meson pkgconf openssl libssl-dev libpath-utils-dev libtalloc-dev help2man libpopt-dev ${{ matrix.compiler }}
         sudo apt install -y --no-install-recommends debhelper devscripts lintian
         # 18.04's debhelper is too old, we want to use compat level 12
         if grep -q 18.04 /etc/os-release; then
@@ -89,11 +93,14 @@ jobs:
 
   fedora:
     name: Fedora x86_64
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest${{ matrix.runner-arch }}
     needs: get_fedora_releases
     strategy:
       fail-fast: false
       matrix:
+        runner-arch:
+          - ""
+          - "-arm"
         release: ${{ fromJson(needs.get_fedora_releases.outputs.active) }}
         compiler:
           - gcc
@@ -109,7 +116,7 @@ jobs:
         cat /etc/os-release
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install build dependencies
       run: |
@@ -128,54 +135,20 @@ jobs:
         meson test -t 5 --print-errorlogs -C fedora-${{ matrix.release }}
 
 
-  fedora_multiarch:
-    name: Fedora non-x86_64
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch:
-          - aarch64
-          - ppc64le
-        compiler:
-          - gcc
-          - clang
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - uses: uraimo/run-on-arch-action@v2
-        name: Perform upstream tests
-
-        with:
-          arch: ${{ matrix.arch }}
-          distro: fedora_latest
-
-          # Not required, but speeds up builds by storing container images in
-          # a GitHub package registry.
-          githubToken: ${{ github.token }}
-
-          install: |
-            dnf update -y --refresh
-            dnf install -y meson pkgconf openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
-
-          run: |
-            CC=${{ matrix.compiler}} meson setup fedora-${{ matrix.arch }}
-            ninja -C fedora-${{ matrix.arch }}
-            meson test -t 15 --print-errorlogs -C fedora-${{ matrix.arch }}
-
-
   centos-stream:
     name: CentOS Stream
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest${{ matrix.runner-arch }}
     continue-on-error: false
 
     strategy:
       fail-fast: false
       matrix:
         release:
-          - 8
           - 9
+          - 10
+        runner-arch:
+          - ""
+          - "-arm"
         compiler:
           - gcc
           - clang
@@ -190,21 +163,15 @@ jobs:
         cat /etc/os-release
 
     - name: Checkout SSCG code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Enable DNF tools
       run: |
         yum -y install dnf-plugins-core
 
     - name: Enable CRB
-      if: matrix.release > 8
       run: |
         yum config-manager --set-enabled crb
-
-    - name: Enable PowerTools
-      if: matrix.release == 8
-      run: |
-        yum config-manager --set-enabled powertools
 
     - name: Install build dependencies
       run: |
