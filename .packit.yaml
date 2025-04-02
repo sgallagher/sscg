@@ -30,19 +30,21 @@ jobs:
     - fedora-all-aarch64
     - fedora-all-ppc64le
     - fedora-all-s390x
-    - centos-stream-10
-    - centos-stream-10-aarch64
-    - centos-stream-10-ppc64le
-    - centos-stream-10-s390x
-    - centos-stream-9
-    - centos-stream-9-aarch64
-    - centos-stream-9-ppc64le
-    - centos-stream-9-s390x
+    - epel-10
+    - epel-10-aarch64
+    - epel-10-ppc64le
+    - epel-10-s390x
+    - epel-9
+    - epel-9-aarch64
+    - epel-9-ppc64le
+    - epel-9-s390x
 
 - job: tests
   trigger: pull_request
   targets:
     - fedora-all
+    - epel-10
+    - epel-9
 
 - job: pull_from_upstream
   trigger: release
