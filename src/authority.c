@@ -123,7 +123,8 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
 
   /* Mark it as a CA */
-  ex = X509V3_EXT_conf_nid (NULL, NULL, NID_basic_constraints, "CA:TRUE");
+  ex = X509V3_EXT_conf_nid (
+    NULL, NULL, NID_basic_constraints, "critical,CA:TRUE");
   CHECK_MEM (ex);
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
 
