@@ -204,7 +204,7 @@ key_strength=$(openssl pkey -text -noout -in service-key.pem -passin pass:mypass
 test "$key_strength" -eq "$_arg_key_strength"
 
 # Validate the certificates
-openssl verify -CAfile ca.crt service.pem
+openssl verify -x509_strict -CAfile ca.crt service.pem
 
 popd # $TMPDIR
 
