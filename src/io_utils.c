@@ -35,6 +35,7 @@
 #include <path_utils.h>
 #include <string.h>
 #include <talloc.h>
+#include <sys/stat.h>
 
 #include "include/io_utils.h"
 #include "include/key.h"

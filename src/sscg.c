@@ -41,6 +41,7 @@
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include "config.h"
 #include "include/sscg.h"
