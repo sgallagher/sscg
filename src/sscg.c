@@ -36,7 +36,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <talloc.h>
-#include <path_utils.h>
 #include <unistd.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
