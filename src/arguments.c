@@ -30,7 +30,6 @@
     Copyright 2021-2023 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
-#include <path_utils.h>
 #include <popt.h>
 #include <stdlib.h>
 #include <stdio.h>
