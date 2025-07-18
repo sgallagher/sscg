@@ -91,3 +91,107 @@ Help options:
 ```
 
 For developers, you can run with the environment variable `SSCG_TALLOC_REPORT=true` to get a memory leak report.
+
+## Internationalization (i18n) and Translations
+
+SSCG supports internationalization and can display messages in multiple languages.
+
+### For Users
+
+To use SSCG in your preferred language, set the `LANG` environment variable:
+
+```bash
+LANG=es_ES.UTF-8 sscg --help    # Spanish
+LANG=fr_FR.UTF-8 sscg --help    # French
+LANG=de_DE.UTF-8 sscg --help    # German
+```
+
+If a translation is not available for your language, SSCG will fall back to English.
+
+### For Translators
+
+To create or update translations:
+
+1. **Install required tools:**
+   ```bash
+   # Fedora/RHEL/CentOS
+   dnf install gettext-devel meson ninja-build
+
+   # Debian/Ubuntu
+   apt-get install gettext meson ninja-build
+   ```
+
+2. **Set up the build environment:**
+   ```bash
+   meson setup build
+   cd build
+   ```
+
+3. **Generate/update the translation template:**
+   ```bash
+   ninja sscg-pot
+   ```
+
+4. **Create a new translation (replace `LANG` with your language code):**
+   ```bash
+   msginit -l LANG -i po/sscg.pot -o po/LANG.po
+   ```
+
+5. **Update an existing translation:**
+   ```bash
+   msgmerge -U po/LANG.po po/sscg.pot
+   ```
+
+6. **Edit the translation file:**
+   ```bash
+   # Use your preferred editor or a specialized tool like poedit
+   vim po/LANG.po
+   ```
+
+7. **Test your translation:**
+   ```bash
+   ninja
+   LANG=LANG.UTF-8 ./sscg --help
+   ```
+
+8. **Submit your translation:** Create a pull request with your `.po` file.
+
+### For Developers
+
+When adding new user-facing strings to the code:
+
+1. **Mark strings for translation** by wrapping them with `_()`:
+   ```c
+   fprintf(stderr, _("Error: Could not open file\n"));
+   ```
+
+2. **Update the translation template** after adding new strings:
+   ```bash
+   ninja sscg-pot
+   ```
+
+3. **Update existing translations:**
+   ```bash
+   ninja sscg-update-po
+   ```
+
+4. **Test with different locales** to ensure proper functionality.
+
+**Important:** Do not internationalize:
+- Debug messages (use `fprintf(stderr, "DEBUG: ...")` without `_()`)
+- Technical error codes or OpenSSL error strings
+- Test files and test output
+
+### Supported Languages
+
+Current translations are maintained in the `po/` directory. To see available languages:
+```bash
+ls po/*.po
+```
+
+### Translation Status
+
+To check the completion status of translations:
+```bash
+msgfmt --statistics po/LANG.po
+```

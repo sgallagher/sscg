@@ -1,0 +1,6 @@
+# List of source files containing translatable strings
+src/arguments.c
+src/authority.c
+src/io_utils.c
+src/sscg.c
+src/x509.c 

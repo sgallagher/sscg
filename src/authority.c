@@ -31,6 +31,12 @@
 */
 
 #include <string.h>
+
+#include "config.h"
+#ifdef HAVE_GETTEXT
+#include <libintl.h>
+#endif
+
 #include "include/sscg.h"
 #include "include/authority.h"
 #include "include/x509.h"
@@ -161,7 +167,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   if (!ex)
     {
       ret = EINVAL;
-      fprintf (stderr, "Invalid name constraint: %s\n", name_constraint);
+      fprintf (stderr, _ ("Invalid name constraint: %s\n"), name_constraint);
       goto done;
     }
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
@@ -174,7 +180,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   /* Generate an RSA keypair for this CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, "Generating RSA key for private CA.\n");
+      fprintf (stdout, _ ("Generating RSA key for private CA.\n"));
     }
   /* TODO: support DSA keys as well */
   ret = sscg_generate_rsa_key (tmp_ctx, bits, &pkey);
@@ -183,7 +189,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   /* Create a certificate signing request for the private CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, "Generating CSR for private CA.\n");
+      fprintf (stdout, _ ("Generating CSR for private CA.\n"));
     }
   ret = sscg_x509v3_csr_new (tmp_ctx, ca_certinfo, pkey, &csr);
   CHECK_OK (ret);
@@ -201,8 +207,8 @@ create_private_CA (TALLOC_CTX *mem_ctx,
     {
       /* Get information about error from OpenSSL */
       fprintf (stderr,
-               "Error occurred in "
-               "X509V3_EXT_conf_nid(SubjectKeyIdentifier): [%s].\n",
+               _ ("Error occurred in "
+                  "X509V3_EXT_conf_nid(SubjectKeyIdentifier): [%s].\n"),
                ERR_error_string (ERR_get_error (), NULL));
       ret = EIO;
       goto done;
@@ -224,7 +230,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   /* Self-sign the private CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, "Signing CSR for private CA.\n");
+      fprintf (stdout, _ ("Signing CSR for private CA.\n"));
     }
   ret = sscg_sign_x509_csr (tmp_ctx,
                             csr,

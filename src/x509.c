@@ -35,6 +35,12 @@
 
 #include <sys/param.h>
 #include <string.h>
+
+#include "config.h"
+#ifdef HAVE_GETTEXT
+#include <libintl.h>
+#endif
+
 #include "include/sscg.h"
 #include "include/key.h"
 #include "include/x509.h"
@@ -294,8 +300,8 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
           if (strnlen (san, MAX_FQDN_LEN + 5) > MAX_FQDN_LEN + 4)
             {
               fprintf (stderr,
-                       "FQDNs may not exceed %d characters in Subject "
-                       "Alternative Names\n",
+                       _ ("FQDNs may not exceed %d characters in Subject "
+                          "Alternative Names\n"),
                        MAX_FQDN_LEN);
               ret = EINVAL;
               goto done;
@@ -313,7 +319,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   if (!ex)
     {
       ret = EINVAL;
-      fprintf (stderr, "Invalid subjectAlternativeName: %s\n", alt_name);
+      fprintf (stderr, _ ("Invalid subjectAlternativeName: %s\n"), alt_name);
       goto done;
     }
 
@@ -348,7 +354,7 @@ sscg_x509v3_csr_finalize (struct sscg_cert_info *certinfo,
     {
       /* Get information about error from OpenSSL */
       fprintf (stderr,
-               "Error occurred in X509_REQ_sign: [%s].\n",
+               _ ("Error occurred in X509_REQ_sign: [%s].\n"),
                ERR_error_string (ERR_get_error (), NULL));
       ret = EIO;
       goto done;
@@ -480,8 +486,8 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
         {
           /* Get information about error from OpenSSL */
           fprintf (stderr,
-                   "Error occurred in "
-                   "X509V3_EXT_conf_nid(AuthorityKeyIdentifier): [%s].\n",
+                   _ ("Error occurred in "
+                      "X509V3_EXT_conf_nid(AuthorityKeyIdentifier): [%s].\n"),
                    ERR_error_string (ERR_get_error (), NULL));
           ret = EIO;
           goto done;
@@ -498,7 +504,7 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
     {
       /* Get information about error from OpenSSL */
       fprintf (stderr,
-               "Error occurred in X509_sign: [%s].\n",
+               _ ("Error occurred in X509_sign: [%s].\n"),
                ERR_error_string (ERR_get_error (), NULL));
       ret = EIO;
       goto done;
