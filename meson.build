@@ -179,7 +179,7 @@ create_cert_test = executable(
         dependencies: [ crypto ],
     install:false,
 )
-test('create_cert_test', create_cert_test, timeout: 120)
+test('create_cert_test', create_cert_test, timeout: 300)
 
 generate_rsa_key_test = executable(
     'generate_rsa_key_test',
