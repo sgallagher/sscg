@@ -86,7 +86,7 @@ main (int argc, char **argv)
   certinfo->cn = talloc_strdup (certinfo, "server.example.com");
   CHECK_MEM (certinfo->cn);
 
-  /* TODO: include subject alt names */
+  /* Subject alternative names are covered in create_ca_test.c */
 
   /* Generate an RSA keypair */
   bits = 4096;
@@ -100,8 +100,6 @@ main (int argc, char **argv)
 
   ret = sscg_x509v3_csr_finalize (certinfo, pkey, csr);
   CHECK_OK (ret);
-
-  /* TODO: compare subject values */
 
   ret = EOK;
 done:
