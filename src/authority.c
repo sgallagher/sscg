@@ -182,7 +182,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
     {
       fprintf (stdout, _ ("Generating RSA key for private CA.\n"));
     }
-  /* TODO: support DSA keys as well */
+
   ret = sscg_generate_rsa_key (tmp_ctx, bits, &pkey);
   CHECK_OK (ret);
 
