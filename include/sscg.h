@@ -46,9 +46,6 @@
 #include <talloc.h>
 #include <stdint.h>
 
-
-/* TODO: implement internationalization */
-
 #ifndef _
 #ifdef HAVE_GETTEXT
 #define _(STRING) gettext (STRING)
