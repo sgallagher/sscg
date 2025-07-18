@@ -42,6 +42,9 @@
 #include "include/dhparams.h"
 
 #include "config.h"
+#ifdef HAVE_GETTEXT
+#include <libintl.h>
+#endif
 
 #define _GNU_SOURCE
 
@@ -113,10 +116,11 @@ set_default_options (struct sscg_options *opts)
 
     default:
       /* Unknown security level. Default to the highest we know about */
-      fprintf (stderr,
-               "Unknown system security level %d. Defaulting to highest-known "
-               "level.\n",
-               security_level);
+      fprintf (
+        stderr,
+        _ ("Unknown system security level %d. Defaulting to highest-known "
+           "level.\n"),
+        security_level);
       /* Fall through */
 
     case 5:
@@ -166,13 +170,13 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   if (ret != EOK)
     goto done;
 
-  minimum_key_strength_help =
-    talloc_asprintf (tmp_ctx, "%d or larger", options->minimum_key_strength);
+  minimum_key_strength_help = talloc_asprintf (
+    tmp_ctx, _ ("%d or larger"), options->minimum_key_strength);
 
   named_groups_help =
     talloc_asprintf (tmp_ctx,
-                     "Output well-known DH parameters. The available named "
-                     "groups are: %s. (Default: \"ffdhe4096\")",
+                     _ ("Output well-known DH parameters. The available named "
+                        "groups are: %s. (Default: \"ffdhe4096\")"),
                      valid_dh_group_names (tmp_ctx));
 
   options->verbosity = SSCG_DEFAULT;
@@ -186,7 +190,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       POPT_ARG_VAL,
       &options->verbosity,
       SSCG_QUIET,
-       ("Display no output unless there is an error."),
+      _ ("Display no output unless there is an error."),
       NULL
     },
 
@@ -673,7 +677,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
         {
         default:
           fprintf (stderr,
-                   "\nInvalid option %s: %s\n\n",
+                   _ ("\nInvalid option %s: %s\n\n"),
                    poptBadOption (pc, 0),
                    poptStrerror (opt));
           poptPrintUsage (pc, stderr, 0);
@@ -697,7 +701,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     {
       if (strlen (country) != 2)
         {
-          fprintf (stderr, "Country codes must be exactly two letters.\n");
+          fprintf (stderr, _ ("Country codes must be exactly two letters.\n"));
           ret = EINVAL;
           goto done;
         }
@@ -787,7 +791,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 
   if (strnlen (options->hostname, MAX_FQDN_LEN + 1) > MAX_FQDN_LEN)
     {
-      fprintf (stderr, "FQDNs may not exceed %d characters\n", MAX_FQDN_LEN);
+      fprintf (
+        stderr, _ ("FQDNs may not exceed %d characters\n"), MAX_FQDN_LEN);
       ret = EINVAL;
       goto done;
     }
@@ -795,8 +800,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   if ((strchr (options->hostname, '.') - options->hostname) > MAX_HOST_LEN + 4)
     {
       fprintf (stderr,
-               "Hostnames may not exceed %d characters in Subject "
-               "Alternative Names\n",
+               _ ("Hostnames may not exceed %d characters in Subject "
+                  "Alternative Names\n"),
                MAX_HOST_LEN);
       ret = EINVAL;
       goto done;
@@ -838,7 +843,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   if (options->key_strength < options->minimum_key_strength)
     {
       fprintf (stderr,
-               "Key strength must be at least %d bits.\n",
+               _ ("Key strength must be at least %d bits.\n"),
                options->minimum_key_strength);
       ret = EINVAL;
       goto done;
@@ -848,7 +853,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   options->cipher = EVP_get_cipherbyname (options->cipher_alg);
   if (!options->cipher)
     {
-      fprintf (stderr, "Invalid cipher specified: %s\n", options->cipher_alg);
+      fprintf (
+        stderr, _ ("Invalid cipher specified: %s\n"), options->cipher_alg);
       ret = EINVAL;
       goto done;
     }
@@ -859,16 +865,16 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 
   if (!is_valid_named_group (options->dhparams_group))
     {
-      fprintf (stderr, "Unknown Diffie Hellman finite field group.\n");
+      fprintf (stderr, _ ("Unknown Diffie Hellman finite field group.\n"));
       fprintf (
-        stderr, "Valid groups are: %s.\n", valid_dh_group_names (tmp_ctx));
+        stderr, _ ("Valid groups are: %s.\n"), valid_dh_group_names (tmp_ctx));
       ret = EINVAL;
       goto done;
     }
 
   if (!options->hash_fn)
     {
-      fprintf (stderr, "Unsupported hashing algorithm.");
+      fprintf (stderr, _ ("Unsupported hashing algorithm."));
       ret = EINVAL;
       goto done;
     }
@@ -893,23 +899,23 @@ void
 print_options (struct sscg_options *opts)
 {
   size_t i = 0;
-  fprintf (stdout, "==== Options ====\n");
-  fprintf (stdout, "Certificate lifetime: %d\n", opts->lifetime);
-  fprintf (stdout, "Country: \"%s\"\n", opts->country);
-  fprintf (stdout, "State or Principality: \"%s\"\n", opts->state);
-  fprintf (stdout, "Locality: \"%s\"\n", opts->locality);
-  fprintf (stdout, "Organization: \"%s\"\n", opts->org);
-  fprintf (stdout, "Organizational Unit: \"%s\"\n", opts->org_unit);
-  fprintf (stdout, "Email Address: \"%s\"\n", opts->email);
-  fprintf (stdout, "Hostname: \"%s\"\n", opts->hostname);
+  fprintf (stdout, _ ("==== Options ====\n"));
+  fprintf (stdout, _ ("Certificate lifetime: %d\n"), opts->lifetime);
+  fprintf (stdout, _ ("Country: \"%s\"\n"), opts->country);
+  fprintf (stdout, _ ("State or Principality: \"%s\"\n"), opts->state);
+  fprintf (stdout, _ ("Locality: \"%s\"\n"), opts->locality);
+  fprintf (stdout, _ ("Organization: \"%s\"\n"), opts->org);
+  fprintf (stdout, _ ("Organizational Unit: \"%s\"\n"), opts->org_unit);
+  fprintf (stdout, _ ("Email Address: \"%s\"\n"), opts->email);
+  fprintf (stdout, _ ("Hostname: \"%s\"\n"), opts->hostname);
   if (opts->subject_alt_names)
     {
       for (i = 0; opts->subject_alt_names[i]; i++)
         {
           fprintf (stdout,
-                   "Subject Alternative Name: \"%s\"\n",
+                   _ ("Subject Alternative Name: \"%s\"\n"),
                    opts->subject_alt_names[i]);
         }
     }
-  fprintf (stdout, "=================\n");
+  fprintf (stdout, _ ("=================\n"));
 }

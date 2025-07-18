@@ -37,6 +37,11 @@
 #include <talloc.h>
 #include <sys/stat.h>
 
+#include "config.h"
+#ifdef HAVE_GETTEXT
+#include <libintl.h>
+#endif
+
 #include "include/io_utils.h"
 #include "include/key.h"
 #include "include/sscg.h"
@@ -232,7 +237,7 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
   pwdbio = BIO_new_file (path, "r");
   if (pwdbio == NULL)
     {
-      fprintf (stderr, "Can't open file %s\n", path);
+      fprintf (stderr, _ ("Can't open file %s\n"), path);
       return NULL;
     }
 
@@ -250,7 +255,7 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
 
   if (i < 0)
     {
-      fprintf (stderr, "Error reading password from BIO\n");
+      fprintf (stderr, _ ("Error reading password from BIO\n"));
       return NULL;
     }
 
@@ -380,7 +385,7 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
       stream->passphrase = sscg_read_pw_file (stream, passfile);
       if (!stream->passphrase)
         {
-          fprintf (stderr, "Failed to read passphrase from %s", passfile);
+          fprintf (stderr, _ ("Failed to read passphrase from %s"), passfile);
           ret = EIO;
           goto done;
         }

@@ -1,0 +1,469 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the sscg package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sscg\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-18 15:33-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/arguments.c:121
+#, c-format
+msgid "Unknown system security level %d. Defaulting to highest-known level.\n"
+msgstr ""
+
+#: src/arguments.c:174
+#, c-format
+msgid "%d or larger"
+msgstr ""
+
+#: src/arguments.c:178
+#, c-format
+msgid ""
+"Output well-known DH parameters. The available named groups are: %s. "
+"(Default: \"ffdhe4096\")"
+msgstr ""
+
+#: src/arguments.c:193
+msgid "Display no output unless there is an error."
+msgstr ""
+
+#: src/arguments.c:203
+msgid "Display progress messages."
+msgstr ""
+
+#: src/arguments.c:213
+msgid ""
+"Enable logging of debug messages. Implies verbose. Warning! This will print "
+"private key information to the screen!"
+msgstr ""
+
+#: src/arguments.c:224
+msgid "Display the version number and exit."
+msgstr ""
+
+#: src/arguments.c:234
+msgid "Overwrite any pre-existing files in the requested locations"
+msgstr ""
+
+#: src/arguments.c:244
+msgid "Certificate lifetime (days)."
+msgstr ""
+
+#: src/arguments.c:245
+msgid "1-3650"
+msgstr ""
+
+#: src/arguments.c:254
+msgid "Certificate DN: Country (C). (default: \"US\")"
+msgstr ""
+
+#: src/arguments.c:255
+msgid "US, CZ, etc."
+msgstr ""
+
+#: src/arguments.c:264
+msgid "Certificate DN: State or Province (ST)."
+msgstr ""
+
+#: src/arguments.c:265
+msgid "Massachusetts, British Columbia, etc."
+msgstr ""
+
+#: src/arguments.c:274
+msgid "Certificate DN: Locality (L)."
+msgstr ""
+
+#: src/arguments.c:275
+msgid "Westford, Paris, etc."
+msgstr ""
+
+#: src/arguments.c:284
+msgid "Certificate DN: Organization (O). (default: \"Unspecified\")"
+msgstr ""
+
+#: src/arguments.c:285
+msgid "My Company"
+msgstr ""
+
+#: src/arguments.c:294
+msgid "Certificate DN: Organizational Unit (OU)."
+msgstr ""
+
+#: src/arguments.c:295
+msgid "Engineering, etc."
+msgstr ""
+
+#: src/arguments.c:304
+msgid "Certificate DN: Email Address (Email)."
+msgstr ""
+
+#: src/arguments.c:305
+msgid "myname@example.com"
+msgstr ""
+
+#: src/arguments.c:314
+msgid ""
+"The valid hostname of the certificate. Must be an FQDN. (default: current "
+"system FQDN)"
+msgstr ""
+
+#: src/arguments.c:316
+msgid "server.example.com"
+msgstr ""
+
+#: src/arguments.c:325
+msgid ""
+"Optional additional valid hostnames for the certificate. In addition to "
+"hostnames, this option also accepts explicit values supported by RFC 5280 "
+"such as IP:xxx.xxx.xxx.xxx/yyy.yyy.yyy.yyy May be specified multiple times."
+msgstr ""
+
+#: src/arguments.c:330
+msgid "alt.example.com"
+msgstr ""
+
+#: src/arguments.c:339
+msgid "Unused. Retained for compatibility with earlier versions of sscg."
+msgstr ""
+
+#: src/arguments.c:349
+msgid "Strength of the certificate private keys in bits."
+msgstr ""
+
+#: src/arguments.c:357
+msgid "Hashing algorithm to use for signing."
+msgstr ""
+
+#: src/arguments.c:358
+msgid "{sha256,sha384,sha512}"
+msgstr ""
+
+#: src/arguments.c:367
+msgid "Cipher to use for encrypting key files."
+msgstr ""
+
+#: src/arguments.c:368
+msgid "{des-ede3-cbc,aes-256-cbc}"
+msgstr ""
+
+#: src/arguments.c:377
+msgid ""
+"Path where the public CA certificate will be stored. (default: \"./ca.crt\")"
+msgstr ""
+
+#: src/arguments.c:388
+msgid "File mode of the created CA certificate."
+msgstr ""
+
+#: src/arguments.c:398
+msgid ""
+"Path where the CA's private key will be stored. If unspecified, the key will "
+"be destroyed rather than written to the disk."
+msgstr ""
+
+#: src/arguments.c:409
+msgid "File mode of the created CA key."
+msgstr ""
+
+#: src/arguments.c:419
+msgid ""
+"Provide a password for the CA key file. Note that this will be visible in "
+"the process table for all users, so it should be used for testing purposes "
+"only. Use --ca-keypassfile or --ca-key-password-prompt for secure password "
+"entry."
+msgstr ""
+
+#: src/arguments.c:432
+msgid "A file containing the password to encrypt the CA key file."
+msgstr ""
+
+#: src/arguments.c:442
+msgid "Prompt to enter a password for the CA key file."
+msgstr ""
+
+#: src/arguments.c:452
+msgid ""
+"Path where an (empty) Certificate Revocation List file will be created, for "
+"applications that expect such a file to exist. If unspecified, no such file "
+"will be created."
+msgstr ""
+
+#: src/arguments.c:464
+msgid "File mode of the created Certificate Revocation List."
+msgstr ""
+
+#: src/arguments.c:474
+msgid ""
+"Path where the public service certificate will be stored. (default \"./"
+"service.pem\")"
+msgstr ""
+
+#: src/arguments.c:485 src/arguments.c:558
+msgid "File mode of the created certificate."
+msgstr ""
+
+#: src/arguments.c:495
+msgid ""
+"Path where the service's private key will be stored. (default \"service-"
+"key.pem\")"
+msgstr ""
+
+#: src/arguments.c:506 src/arguments.c:579
+msgid "File mode of the created certificate key."
+msgstr ""
+
+#: src/arguments.c:516
+msgid ""
+"Provide a password for the service key file. Note that this will be visible "
+"in the process table for all users, so this flag should be used for testing "
+"purposes only. Use --cert-keypassfile or --cert-key-password-prompt for "
+"secure password entry."
+msgstr ""
+
+#: src/arguments.c:529
+msgid "A file containing the password to encrypt the service key file."
+msgstr ""
+
+#: src/arguments.c:539
+msgid "Prompt to enter a password for the service key file."
+msgstr ""
+
+#: src/arguments.c:549
+msgid "Path where a client authentication certificate will be stored."
+msgstr ""
+
+#: src/arguments.c:568
+msgid ""
+"Path where the client's private key will be stored. (default is the client-"
+"file)"
+msgstr ""
+
+#: src/arguments.c:589
+msgid ""
+"Provide a password for the client key file. Note that this will be visible "
+"in the process table for all users, so this flag should be used for testing "
+"purposes only. Use --client-keypassfile or --client-key-password-prompt for "
+"secure password entry."
+msgstr ""
+
+#: src/arguments.c:602
+msgid "A file containing the password to encrypt the client key file."
+msgstr ""
+
+#: src/arguments.c:612
+msgid "Prompt to enter a password for the client key file."
+msgstr ""
+
+#: src/arguments.c:622
+msgid ""
+"A file to contain a set of Diffie-Hellman parameters. (Default: \"./"
+"dhparams.pem\")"
+msgstr ""
+
+#: src/arguments.c:633
+msgid "Do not create the dhparams file"
+msgstr ""
+
+#: src/arguments.c:653
+msgid ""
+"The length of the prime number to generate for dhparams, in bits. If set to "
+"non-zero, the parameters will be generated rather than using a well-known "
+"group."
+msgstr ""
+
+#: src/arguments.c:665
+msgid "The generator value for dhparams."
+msgstr ""
+
+#: src/arguments.c:666
+msgid "{2,3,5}"
+msgstr ""
+
+#: src/arguments.c:680
+#, c-format
+msgid ""
+"\n"
+"Invalid option %s: %s\n"
+"\n"
+msgstr ""
+
+#: src/arguments.c:704
+#, c-format
+msgid "Country codes must be exactly two letters.\n"
+msgstr ""
+
+#: src/arguments.c:795
+#, c-format
+msgid "FQDNs may not exceed %d characters\n"
+msgstr ""
+
+#: src/arguments.c:803
+#, c-format
+msgid "Hostnames may not exceed %d characters in Subject Alternative Names\n"
+msgstr ""
+
+#: src/arguments.c:846
+#, c-format
+msgid "Key strength must be at least %d bits.\n"
+msgstr ""
+
+#: src/arguments.c:857
+#, c-format
+msgid "Invalid cipher specified: %s\n"
+msgstr ""
+
+#: src/arguments.c:868
+#, c-format
+msgid "Unknown Diffie Hellman finite field group.\n"
+msgstr ""
+
+#: src/arguments.c:870
+#, c-format
+msgid "Valid groups are: %s.\n"
+msgstr ""
+
+#: src/arguments.c:877
+#, c-format
+msgid "Unsupported hashing algorithm."
+msgstr ""
+
+#: src/arguments.c:902
+#, c-format
+msgid "==== Options ====\n"
+msgstr ""
+
+#: src/arguments.c:903
+#, c-format
+msgid "Certificate lifetime: %d\n"
+msgstr ""
+
+#: src/arguments.c:904
+#, c-format
+msgid "Country: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:905
+#, c-format
+msgid "State or Principality: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:906
+#, c-format
+msgid "Locality: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:907
+#, c-format
+msgid "Organization: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:908
+#, c-format
+msgid "Organizational Unit: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:909
+#, c-format
+msgid "Email Address: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:910
+#, c-format
+msgid "Hostname: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:916
+#, c-format
+msgid "Subject Alternative Name: \"%s\"\n"
+msgstr ""
+
+#: src/arguments.c:920
+#, c-format
+msgid "=================\n"
+msgstr ""
+
+#: src/authority.c:170
+#, c-format
+msgid "Invalid name constraint: %s\n"
+msgstr ""
+
+#: src/authority.c:183
+#, c-format
+msgid "Generating RSA key for private CA.\n"
+msgstr ""
+
+#: src/authority.c:192
+#, c-format
+msgid "Generating CSR for private CA.\n"
+msgstr ""
+
+#: src/authority.c:210
+#, c-format
+msgid "Error occurred in X509V3_EXT_conf_nid(SubjectKeyIdentifier): [%s].\n"
+msgstr ""
+
+#: src/authority.c:233
+#, c-format
+msgid "Signing CSR for private CA.\n"
+msgstr ""
+
+#: src/io_utils.c:240
+#, c-format
+msgid "Can't open file %s\n"
+msgstr ""
+
+#: src/io_utils.c:258
+#, c-format
+msgid "Error reading password from BIO\n"
+msgstr ""
+
+#: src/io_utils.c:388
+#, c-format
+msgid "Failed to read passphrase from %s"
+msgstr ""
+
+#: src/sscg.c:145
+#, c-format
+msgid "Could not allocate memory."
+msgstr ""
+
+#: src/sscg.c:347
+#, c-format
+msgid "Could not write to %s: "
+msgstr ""
+
+#: src/x509.c:303
+#, c-format
+msgid "FQDNs may not exceed %d characters in Subject Alternative Names\n"
+msgstr ""
+
+#: src/x509.c:322
+#, c-format
+msgid "Invalid subjectAlternativeName: %s\n"
+msgstr ""
+
+#: src/x509.c:357
+#, c-format
+msgid "Error occurred in X509_REQ_sign: [%s].\n"
+msgstr ""
+
+#: src/x509.c:489
+#, c-format
+msgid "Error occurred in X509V3_EXT_conf_nid(AuthorityKeyIdentifier): [%s].\n"
+msgstr ""
+
+#: src/x509.c:507
+#, c-format
+msgid "Error occurred in X509_sign: [%s].\n"
+msgstr ""

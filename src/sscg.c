@@ -32,6 +32,7 @@
 
 #define _GNU_SOURCE
 #include <assert.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +44,9 @@
 #include <sys/stat.h>
 
 #include "config.h"
+#ifdef HAVE_GETTEXT
+#include <libintl.h>
+#endif
 #include "include/sscg.h"
 #include "include/authority.h"
 #include "include/cert.h"
@@ -125,13 +129,20 @@ main (int argc, const char **argv)
        user. */
   umask (0577);
 
+#ifdef HAVE_GETTEXT
+  /* Initialize internationalization */
+  setlocale (LC_ALL, "");
+  bindtextdomain (PACKAGE_NAME, LOCALEDIR);
+  textdomain (PACKAGE_NAME);
+#endif
+
   if (getenv ("SSCG_TALLOC_REPORT"))
     talloc_enable_null_tracking ();
 
   TALLOC_CTX *main_ctx = talloc_new (NULL);
   if (!main_ctx)
     {
-      fprintf (stderr, "Could not allocate memory.");
+      fprintf (stderr, _ ("Could not allocate memory."));
       return ENOMEM;
     }
 
@@ -333,7 +344,7 @@ main (int argc, const char **argv)
     {
       /* A filename was explicitly passed, but it couldn't be created */
       ret = EPERM;
-      fprintf (stderr, "Could not write to %s: ", options->dhparams_file);
+      fprintf (stderr, _ ("Could not write to %s: "), options->dhparams_file);
       goto done;
     }
 

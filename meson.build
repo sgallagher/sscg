@@ -34,7 +34,7 @@ project(
 version : files('sscg.version'),
   default_options : ['buildtype=debugoptimized', 'c_std=gnu99', 'warning_level=1', 'b_asneeded=true'],
   license : 'GPL-3.0-or-later WITH OpenSSL-exception',
-  meson_version : '>=0.57.0',
+  meson_version : '>=0.59.0',
 )
 
 cc = meson.get_compiler('c')
@@ -60,7 +60,12 @@ foreach cflag: test_cflags
   endif
 endforeach
 
+# Import required modules
 pkg = import('pkgconfig')
+i18n = import('i18n')
+
+# Dependencies
+gettext = dependency('intl', required: false)
 
 crypto = dependency('libcrypto11', version: '>= 1.1.0', required: false)
 if crypto.found()
@@ -135,6 +140,7 @@ sscg = executable(
     link_with : sscg_lib,
     dependencies : [
         crypto,
+        gettext,
         path_utils,
         popt,
         ssl,
@@ -299,8 +305,11 @@ endforeach
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
+cdata.set_quoted('PACKAGE_NAME', meson.project_name())
+cdata.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('datadir'), 'locale'))
 cdata.set('HAVE_SSL_EVP_RSA_GEN', has_evp_rsa_gen)
 cdata.set('HAVE_OSSL_PARAM', has_ossl_param)
+cdata.set('HAVE_GETTEXT', gettext.found())
 configure_file(
     output : 'config.h',
     configuration : cdata)
@@ -325,3 +334,8 @@ manpage = custom_target('manpage',
         get_option('mandir'),
         'man8'),
 )
+
+# Internationalization support
+if gettext.found()
+    subdir('po')
+endif
