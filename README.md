@@ -90,7 +90,218 @@ Help options:
       --usage                                           Display brief usage message
 ```
 
-For developers, you can run with the environment variable `SSCG_TALLOC_REPORT=true` to get a memory leak report.
+
+## Development Setup and Contribution Guide
+
+### Building from Source
+
+#### Dependencies
+
+**Build dependencies:**
+```bash
+# Fedora/RHEL/CentOS
+dnf install meson ninja-build gcc pkgconf-pkg-config
+dnf install openssl-devel talloc-devel popt-devel path_utils-devel
+dnf install gettext-devel help2man clang-format
+
+# Debian/Ubuntu
+apt-get install meson ninja-build gcc pkg-config
+apt-get install libssl-dev libtalloc-dev libpopt-dev libpath-utils-dev
+apt-get install gettext help2man clang-format
+```
+
+**Runtime dependencies:**
+- OpenSSL 1.1.0+ (libssl, libcrypto)
+- talloc
+- popt
+- path_utils
+
+#### Build Process
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/sgallagher/sscg.git
+   cd sscg
+   ```
+
+2. **Configure the build:**
+   ```bash
+   meson setup build
+   ```
+
+3. **Build the project:**
+   ```bash
+   ninja -C build
+   ```
+
+4. **Run tests:**
+   ```bash
+   ninja -C build test
+   ```
+
+5. **Install (optional):**
+   ```bash
+   ninja -C build install
+   ```
+
+#### Development Build Options
+
+**Debug build with additional checks:**
+```bash
+meson setup build --buildtype=debug
+ninja -C build
+```
+
+**Release build:**
+```bash
+meson setup build --buildtype=release
+ninja -C build
+```
+
+**Run slow tests (including DH parameter generation):**
+```bash
+meson setup build -Drun_slow_tests=true
+ninja -C build test
+```
+
+### Development Workflow
+
+#### Code Style and Formatting
+
+SSCG uses `clang-format` for consistent code formatting:
+
+**Auto-format code:**
+   ```bash
+   clang-format -i src/*.c include/*.h test/*.c
+   ```
+
+#### Running Tests
+
+**Basic test suite:**
+```bash
+ninja -C build test
+```
+
+**Individual tests:**
+```bash
+# Run specific test
+./build/create_cert_test
+./build/create_ca_test
+./build/init_bignum_test
+```
+
+**Memory leak detection:**
+```bash
+SSCG_TALLOC_REPORT=true ./build/sscg
+```
+
+#### Code Architecture
+
+**Key components:**
+- `src/sscg.c` - Main application entry point
+- `src/arguments.c` - Command-line argument parsing
+- `src/authority.c` - Certificate Authority management
+- `src/cert.c` - Certificate creation and signing
+- `src/x509.c` - X.509 certificate operations
+- `src/key.c` - Key generation and management
+- `src/io_utils.c` - File I/O operations
+- `src/dhparams.c` - Diffie-Hellman parameter generation
+
+**Memory management:**
+- All dynamic memory uses [talloc](https://talloc.samba.org/talloc/doc/html/index.html)
+- Use `TALLOC_CTX` for hierarchical cleanup
+- Follow talloc parent-child relationships
+- Never use `malloc()`/`free()` directly
+
+**Error handling:**
+- Use `CHECK_OK()` macro for error propagation
+- Return appropriate errno values
+- Clean up resources on error paths
+- Provide meaningful error messages to users
+
+### Contributing
+
+#### Before Submitting
+
+1. **Code quality checks:**
+   ```bash
+   ninja -C build test
+   ```
+
+2. **Test on multiple platforms** if possible (Fedora, Ubuntu, etc.)
+
+3. **Update translations** if you added user-facing strings:
+   ```bash
+   ninja -C build sscg-pot
+   ninja -C build sscg-update-po
+   ```
+
+#### Submitting Changes
+
+1. **Create descriptive commit messages:**
+   ```
+   Add support for ECDSA key generation
+   
+   - Implement ECDSA key creation in key.c
+   - Add curve selection via --key-curve option
+   - Update tests for ECDSA functionality
+   - Update documentation
+   ```
+
+2. **Submit pull request** with:
+   - Clear description of changes
+   - Rationale for the change
+   - Test results
+   - Any breaking changes noted
+
+#### Bug Reports
+
+When reporting bugs, include:
+- SSCG version (`sscg --version`)
+- Operating system and version
+- OpenSSL version
+- Complete command line used
+- Expected vs. actual behavior
+- Any error messages
+
+#### Security Issues
+
+For security-related issues, please contact the [maintainer](mailto:sgallagh@redhat.com) directly rather than filing a public issue.
+
+### Debugging
+
+#### Common Development Tools
+
+**GDB debugging:**
+```bash
+gdb --args ./build/sscg --debug
+```
+
+**Valgrind for memory checking:**
+```bash
+valgrind --leak-check=full --show-leak-kinds=all ./build/sscg
+```
+
+#### Troubleshooting Build Issues
+
+**Meson configuration issues:**
+```bash
+# Clean and reconfigure
+rm -rf build
+meson setup build
+```
+
+**Missing dependencies:**
+```bash
+# Check what's missing
+meson setup build 2>&1 | grep -i "not found\|missing"
+```
+
+**Test failures:**
+```bash
+# Run tests with verbose output
+meson test -C build -v
+```
 
 ## Internationalization (i18n) and Translations
 
