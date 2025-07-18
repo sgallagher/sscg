@@ -859,9 +859,16 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       goto done;
     }
 
-  /* TODO: restrict this to approved hashes.
-   * For now, we'll only list SHA[256|384|512] in the help */
   options->hash_fn = EVP_get_digestbyname (options->hash_alg);
+  if (!options->hash_fn ||
+      EVP_MD_is_a (options->hash_fn, options->hash_alg) != 1)
+    {
+      /* This check ensures that the passed hash algorithm is both a real
+       * algorithm and that it is permitted by the current system policy. */
+      fprintf (stderr, _ ("Unsupported hashing algorithm."));
+      ret = EINVAL;
+      goto done;
+    }
 
   if (!is_valid_named_group (options->dhparams_group))
     {

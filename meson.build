@@ -274,19 +274,27 @@ hash_algs = [
     'sha512',
 ]
 
+bad_algs = [
+    'md2',
+    'nonexistent',
+]
+
 cipher_algs = [
     'des-ede3-cbc',
     'aes-256-cbc',
 ]
 
 key_strengths = [
-    '512',
-    '1024',
     '2048',
     '4096',
     '7680',
     '8192',
     '15360',
+]
+
+bad_strengths = [
+    '512',
+    '1024',
 ]
 
 foreach hash_alg : hash_algs
@@ -295,8 +303,55 @@ foreach hash_alg : hash_algs
             test(
                 'test_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
                 test_cert_validity,
+                args: [
+                    '--hash-alg', hash_alg,
+                    '--cipher-alg', cipher_alg,
+                    '--key-strength', key_strength,
+                ],
                 env: test_env,
                 depends: sscg,
+                timeout: 300,
+            )
+        endforeach
+    endforeach
+endforeach
+
+
+foreach hash_alg : bad_algs
+    foreach cipher_alg : cipher_algs
+        foreach key_strength : key_strengths
+            test(
+                'test_cert_invalidity_bad_alg_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
+                test_cert_validity,
+                args: [
+                    '--hash-alg', hash_alg,
+                    '--cipher-alg', cipher_alg,
+                    '--key-strength', key_strength,
+                ],
+                env: test_env,
+                depends: sscg,
+                timeout: 300,
+                should_fail: true,
+            )
+        endforeach
+    endforeach
+endforeach
+
+foreach hash_alg : hash_algs
+    foreach cipher_alg : cipher_algs
+        foreach key_strength : bad_strengths
+            test(
+                'test_cert_invalidity_bad_strength_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
+                test_cert_validity,
+                args: [
+                    '--hash-alg', hash_alg,
+                    '--cipher-alg', cipher_alg,
+                    '--key-strength', key_strength,
+                ],
+                env: test_env,
+                depends: sscg,
+                timeout: 300,
+                should_fail: true,
             )
         endforeach
     endforeach

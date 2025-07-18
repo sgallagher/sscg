@@ -150,7 +150,7 @@ create_cert (TALLOC_CTX *mem_ctx,
     {
       fprintf (stdout, "Generating RSA key for certificate.\n");
     }
-  /* TODO: support DSA keys as well */
+
   ret = sscg_generate_rsa_key (tmp_ctx, options->key_strength, &pkey);
   CHECK_OK (ret);
 
