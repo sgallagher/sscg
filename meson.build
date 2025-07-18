@@ -172,6 +172,15 @@ create_csr_test = executable(
 )
 test('create_csr_test', create_csr_test, timeout: 120)
 
+create_cert_test = executable(
+    'create_cert_test',
+    'test/create_cert_test.c',
+    link_with : sscg_lib,
+        dependencies: [ crypto ],
+    install:false,
+)
+test('create_cert_test', create_cert_test, timeout: 120)
+
 generate_rsa_key_test = executable(
     'generate_rsa_key_test',
     'test/generate_rsa_key_test.c',
