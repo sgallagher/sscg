@@ -756,7 +756,6 @@ main (int argc, char **argv)
   printf ("Edge case validation: %s\n", edge_ret == EOK ? "PASS" : "FAIL");
   printf ("Netmask handling: %s\n", netmask_ret == EOK ? "PASS" : "FAIL");
 
-  ret = EOK;
 done:
   if (ret != EOK)
     {
