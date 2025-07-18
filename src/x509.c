@@ -282,7 +282,8 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
             {
               san = talloc_strdup (tmp_ctx, certinfo->subject_alt_names[i]);
               /* SAN IP addresses cannot include the subnet mask */
-              if ((slash = strchr (san, '/')))
+              /* Only strip slashes from IP addresses, not from URIs or other types */
+              if (strncmp (san, "IP:", 3) == 0 && (slash = strchr (san, '/')))
                 {
                   /* Truncate at the slash */
                   *slash = '\0';
