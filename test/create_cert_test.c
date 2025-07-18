@@ -102,6 +102,71 @@ setup_test_options (TALLOC_CTX *mem_ctx, struct sscg_options **_options)
   return EOK;
 }
 
+/* Test data structures for comprehensive testing */
+struct hash_test_case
+{
+  const char *name;
+  const EVP_MD *(*hash_func) (void);
+};
+
+struct key_strength_test_case
+{
+  const char *name;
+  int bits;
+};
+
+/* Hash functions to test - only including modern, supported algorithms */
+static struct hash_test_case hash_test_cases[] = {
+  { "SHA-256", EVP_sha256 }, /* Most common, widely supported */
+  { "SHA-384", EVP_sha384 }, /* High security */
+  { "SHA-512", EVP_sha512 }, /* Highest security */
+  { NULL, NULL } /* Terminator */
+};
+
+/* Key strengths to test */
+static struct key_strength_test_case key_strength_test_cases[] = {
+  { "512-bit", 512 }, /* Weak, but requested for testing */
+  { "1024-bit", 1024 }, /* Deprecated but still used */
+  { "2048-bit", 2048 }, /* Current standard */
+  { "4096-bit", 4096 }, /* High security */
+  { NULL, 0 } /* Terminator */
+};
+
+static int
+create_cert_with_params (TALLOC_CTX *mem_ctx,
+                         const char *hash_name,
+                         const EVP_MD *hash_func,
+                         int key_strength,
+                         struct sscg_x509_cert *ca_cert,
+                         struct sscg_evp_pkey *ca_key,
+                         enum sscg_cert_type cert_type,
+                         struct sscg_x509_cert **_cert,
+                         struct sscg_evp_pkey **_key)
+{
+  int ret;
+  struct sscg_options *options;
+
+  /* Set up test options for this specific test */
+  ret = setup_test_options (mem_ctx, &options);
+  if (ret != EOK)
+    {
+      return ret;
+    }
+
+  /* Override with test-specific parameters */
+  options->hash_fn = hash_func;
+  options->key_strength = key_strength;
+
+  /* Allow weak keys for testing purposes */
+  options->minimum_key_strength = 512;
+
+  /* Create certificate with specified parameters */
+  ret =
+    create_cert (mem_ctx, options, ca_cert, ca_key, cert_type, _cert, _key);
+
+  return ret;
+}
+
 static int
 verify_certificate_basic_properties (struct sscg_x509_cert *cert,
                                      struct sscg_evp_pkey *key,
@@ -354,6 +419,165 @@ main (int argc, char **argv)
   talloc_free (isolated_ctx);
   printf ("SUCCESS.\n");
 
+  /* Test 11: Comprehensive hash function testing */
+  printf ("\n=== Comprehensive Hash Function Testing ===\n");
+
+  for (int h = 0; hash_test_cases[h].name != NULL; h++)
+    {
+      printf ("Testing %s hash function. ", hash_test_cases[h].name);
+
+      struct sscg_x509_cert *hash_test_cert = NULL;
+      struct sscg_evp_pkey *hash_test_key = NULL;
+
+      ret = create_cert_with_params (
+        tmp_ctx,
+        hash_test_cases[h].name,
+        hash_test_cases[h].hash_func (),
+        2048, /* Use standard key size for hash tests */
+        ca_cert,
+        ca_key,
+        SSCG_CERT_TYPE_SERVER,
+        &hash_test_cert,
+        &hash_test_key);
+      if (ret != EOK)
+        {
+          printf ("FAILED.\n");
+          goto done;
+        }
+
+      ret = verify_certificate_basic_properties (
+        hash_test_cert, hash_test_key, ca_cert);
+      if (ret != EOK)
+        {
+          printf ("FAILED.\n");
+          goto done;
+        }
+
+      printf ("SUCCESS.\n");
+    }
+
+  /* Test 12: Comprehensive key strength testing */
+  printf ("\n=== Comprehensive Key Strength Testing ===\n");
+
+  for (int k = 0; key_strength_test_cases[k].name != NULL; k++)
+    {
+      printf ("Testing %s key strength. ", key_strength_test_cases[k].name);
+
+      struct sscg_x509_cert *key_test_cert = NULL;
+      struct sscg_evp_pkey *key_test_key = NULL;
+
+      ret = create_cert_with_params (tmp_ctx,
+                                     "SHA-256",
+                                     EVP_sha256 (),
+                                     key_strength_test_cases[k].bits,
+                                     ca_cert,
+                                     ca_key,
+                                     SSCG_CERT_TYPE_SERVER,
+                                     &key_test_cert,
+                                     &key_test_key);
+      if (ret != EOK)
+        {
+          printf ("FAILED.\n");
+          goto done;
+        }
+
+      ret = verify_certificate_basic_properties (
+        key_test_cert, key_test_key, ca_cert);
+      if (ret != EOK)
+        {
+          printf ("FAILED.\n");
+          goto done;
+        }
+
+      printf ("SUCCESS.\n");
+    }
+
+  /* Test 13: Matrix testing - critical combinations */
+  printf ("\n=== Matrix Testing - Critical Combinations ===\n");
+
+  /* Test a representative subset to avoid excessive test time */
+  struct
+  {
+    const char *hash_name;
+    const EVP_MD *(*hash_func) (void);
+    const char *key_name;
+    int key_bits;
+  } matrix_tests[] = { { "SHA-256", EVP_sha256, "1024-bit", 1024 },
+                       { "SHA-256", EVP_sha256, "4096-bit", 4096 },
+                       { "SHA-384", EVP_sha384, "2048-bit", 2048 },
+                       { "SHA-512", EVP_sha512, "2048-bit", 2048 },
+                       { "SHA-512", EVP_sha512, "4096-bit", 4096 },
+                       { NULL, NULL, NULL, 0 } };
+
+  for (int m = 0; matrix_tests[m].hash_name != NULL; m++)
+    {
+      printf ("Testing %s with %s. ",
+              matrix_tests[m].hash_name,
+              matrix_tests[m].key_name);
+
+      struct sscg_x509_cert *matrix_cert = NULL;
+      struct sscg_evp_pkey *matrix_key = NULL;
+
+      ret = create_cert_with_params (
+        tmp_ctx,
+        matrix_tests[m].hash_name,
+        matrix_tests[m].hash_func (),
+        matrix_tests[m].key_bits,
+        ca_cert,
+        ca_key,
+        SSCG_CERT_TYPE_CLIENT, /* Use client for variety */
+        &matrix_cert,
+        &matrix_key);
+      if (ret != EOK)
+        {
+          printf ("FAILED.\n");
+          goto done;
+        }
+
+      ret =
+        verify_certificate_basic_properties (matrix_cert, matrix_key, ca_cert);
+      if (ret != EOK)
+        {
+          printf ("FAILED.\n");
+          goto done;
+        }
+
+      printf ("SUCCESS.\n");
+    }
+
+  /* Test 14: Performance test with high-security parameters */
+  printf ("\n=== High-Security Parameters Test ===\n");
+  printf ("Testing SHA-512 with 4096-bit key (high-security). ");
+
+  struct sscg_x509_cert *high_sec_cert = NULL;
+  struct sscg_evp_pkey *high_sec_key = NULL;
+
+  ret = create_cert_with_params (tmp_ctx,
+                                 "SHA-512",
+                                 EVP_sha512 (),
+                                 4096,
+                                 ca_cert,
+                                 ca_key,
+                                 SSCG_CERT_TYPE_SERVER,
+                                 &high_sec_cert,
+                                 &high_sec_key);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+
+  ret =
+    verify_certificate_basic_properties (high_sec_cert, high_sec_key, ca_cert);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+
+  printf ("SUCCESS.\n");
+
+  printf ("\n=== Comprehensive Testing Complete ===\n");
   ret = EOK;
 
 done:
