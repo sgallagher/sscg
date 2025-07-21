@@ -285,32 +285,32 @@ cipher_algs = [
 ]
 
 key_strengths = [
-    '2048',
-    '4096',
-    '7680',
-    '8192',
-    '15360',
+    2048,
+    4096,
+    7680,
+    8192,
+    15360,
 ]
 
 bad_strengths = [
-    '512',
-    '1024',
+    512,
+    1024,
 ]
 
 foreach hash_alg : hash_algs
     foreach cipher_alg : cipher_algs
         foreach key_strength : key_strengths
             test(
-                'test_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
+                'test_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + key_strength.to_string(),
                 test_cert_validity,
                 args: [
                     '--hash-alg', hash_alg,
                     '--cipher-alg', cipher_alg,
-                    '--key-strength', key_strength,
+                    '--key-strength', key_strength.to_string(),
                 ],
                 env: test_env,
                 depends: sscg,
-                timeout: 300,
+                timeout: key_strength / 32,
             )
         endforeach
     endforeach
@@ -321,16 +321,16 @@ foreach hash_alg : bad_algs
     foreach cipher_alg : cipher_algs
         foreach key_strength : key_strengths
             test(
-                'test_cert_invalidity_bad_alg_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
+                'test_cert_invalidity_bad_alg_' + hash_alg + '_' + cipher_alg + '_' + key_strength.to_string(),
                 test_cert_validity,
                 args: [
                     '--hash-alg', hash_alg,
                     '--cipher-alg', cipher_alg,
-                    '--key-strength', key_strength,
+                    '--key-strength', key_strength.to_string(),
                 ],
                 env: test_env,
                 depends: sscg,
-                timeout: 300,
+                timeout: key_strength / 32,
                 should_fail: true,
             )
         endforeach
@@ -341,16 +341,16 @@ foreach hash_alg : hash_algs
     foreach cipher_alg : cipher_algs
         foreach key_strength : bad_strengths
             test(
-                'test_cert_invalidity_bad_strength_' + hash_alg + '_' + cipher_alg + '_' + key_strength,
+                'test_cert_invalidity_bad_strength_' + hash_alg + '_' + cipher_alg + '_' + key_strength.to_string(),
                 test_cert_validity,
                 args: [
                     '--hash-alg', hash_alg,
                     '--cipher-alg', cipher_alg,
-                    '--key-strength', key_strength,
+                    '--key-strength', key_strength.to_string(),
                 ],
                 env: test_env,
                 depends: sscg,
-                timeout: 300,
+                timeout: key_strength / 32,
                 should_fail: true,
             )
         endforeach
