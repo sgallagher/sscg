@@ -287,10 +287,10 @@ cipher_algs = [
 key_strengths = [
     2048,
     4096,
-    7680,
-    8192,
-    15360,
 ]
+if get_option('run_slow_tests')
+    key_strengths = key_strengths + [ 7680, 8192, 15360 ]
+endif
 
 bad_strengths = [
     512,

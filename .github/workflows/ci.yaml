@@ -169,7 +169,7 @@ jobs:
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson setup --errorlogs centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
+        CC=${{ matrix.compiler}} meson setup -Drun_slow_tests=true --errorlogs centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
 
     - name: Build SSCG
       run: |
