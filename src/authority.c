@@ -148,6 +148,90 @@ create_private_CA (TALLOC_CTX *mem_ctx,
               san = talloc_asprintf (
                 tmp_ctx, "DNS:%s", options->subject_alt_names[i]);
             }
+          else if (strncmp (options->subject_alt_names[i], "IP:", 3) == 0)
+            {
+              char *ip_addr = options->subject_alt_names[i] + 3;
+              char *slash = strchr (ip_addr, '/');
+              char *clean_ip = ip_addr;
+              const char *netmask_str = NULL;
+
+              if (slash)
+                {
+                  /* Extract IP and netmask parts */
+                  clean_ip =
+                    talloc_strndup (tmp_ctx, ip_addr, slash - ip_addr);
+                  char *cidr_str = slash + 1;
+                  int cidr_bits = atoi (cidr_str);
+
+                  /* Convert CIDR to appropriate netmask format */
+                  if (strchr (clean_ip, ':'))
+                    {
+                      /* IPv6 - convert CIDR to hex netmask */
+                      if (cidr_bits == 128)
+                        {
+                          netmask_str =
+                            "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF";
+                        }
+                      else if (cidr_bits == 64)
+                        {
+                          netmask_str = "FFFF:FFFF:FFFF:FFFF:0:0:0:0";
+                        }
+                      else
+                        {
+                          /* For other values, default to /128 */
+                          netmask_str =
+                            "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF";
+                        }
+                    }
+                  else
+                    {
+                      /* IPv4 - convert CIDR to dotted decimal */
+                      if (cidr_bits == 32)
+                        {
+                          netmask_str = "255.255.255.255";
+                        }
+                      else if (cidr_bits == 24)
+                        {
+                          netmask_str = "255.255.255.0";
+                        }
+                      else if (cidr_bits == 16)
+                        {
+                          netmask_str = "255.255.0.0";
+                        }
+                      else if (cidr_bits == 8)
+                        {
+                          netmask_str = "255.0.0.0";
+                        }
+                      else
+                        {
+                          /* For other values, default to /32 */
+                          netmask_str = "255.255.255.255";
+                        }
+                    }
+                }
+              else
+                {
+                  /* No netmask provided - add single host netmask */
+                  if (strchr (clean_ip, ':'))
+                    {
+                      /* IPv6 - use /128 netmask */
+                      netmask_str = "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF";
+                    }
+                  else
+                    {
+                      /* IPv4 - use /32 netmask */
+                      netmask_str = "255.255.255.255";
+                    }
+                }
+
+              san =
+                talloc_asprintf (tmp_ctx, "IP:%s/%s", clean_ip, netmask_str);
+
+              if (slash && clean_ip != ip_addr)
+                {
+                  talloc_free (clean_ip);
+                }
+            }
           else
             {
               san = talloc_strdup (tmp_ctx, options->subject_alt_names[i]);

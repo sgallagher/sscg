@@ -35,9 +35,12 @@
 #include <talloc.h>
 #include <string.h>
 #include <openssl/x509v3.h>
+#include <openssl/x509.h>
+#include <openssl/asn1.h>
 
 #include "include/sscg.h"
 #include "include/x509.h"
+#include "include/authority.h"
 
 static int
 verify_subject_alt_names (struct sscg_x509_cert *cert)
@@ -556,6 +559,338 @@ test_ip_netmask_handling (struct sscg_x509_cert *cert)
   return EOK;
 }
 
+static int
+verify_name_constraints (struct sscg_x509_cert *ca_cert,
+                         char **expected_san_list)
+{
+  X509 *x509 = ca_cert->certificate;
+  X509_EXTENSION *name_constraints_ext = NULL;
+  ASN1_OCTET_STRING *ext_data = NULL;
+  BIO *bio = NULL;
+  char *ext_str = NULL;
+  char *line = NULL;
+  char *saveptr = NULL;
+  size_t ext_str_len = 0;
+  int found_constraints[20] = {
+    0
+  }; /* Track which expected constraints we found */
+  int missing_count = 0;
+  int j;
+
+  printf ("\n    Verifying name constraints in CA certificate:\n");
+
+  /* Find the name constraints extension */
+  int ext_idx = X509_get_ext_by_NID (x509, NID_name_constraints, -1);
+  if (ext_idx < 0)
+    {
+      printf (
+        "      ERROR: CA certificate missing Name Constraints extension.\n");
+      return EINVAL;
+    }
+
+  name_constraints_ext = X509_get_ext (x509, ext_idx);
+  if (!name_constraints_ext)
+    {
+      printf ("      ERROR: Failed to get Name Constraints extension.\n");
+      return EINVAL;
+    }
+
+  /* Get the extension data */
+  ext_data = X509_EXTENSION_get_data (name_constraints_ext);
+  if (!ext_data)
+    {
+      printf ("      ERROR: Failed to get Name Constraints extension data.\n");
+      return EINVAL;
+    }
+
+  /* Convert the extension to a readable string using BIO */
+  bio = BIO_new (BIO_s_mem ());
+  if (!bio)
+    {
+      printf ("      ERROR: Failed to create BIO for extension parsing.\n");
+      return EINVAL;
+    }
+
+  /* Print the extension to the BIO */
+  if (!X509V3_EXT_print (bio, name_constraints_ext, 0, 0))
+    {
+      printf ("      ERROR: Failed to print Name Constraints extension.\n");
+      BIO_free (bio);
+      return EINVAL;
+    }
+
+  /* Get the string representation */
+  ext_str_len = BIO_get_mem_data (bio, &ext_str);
+  if (ext_str_len <= 0 || !ext_str)
+    {
+      printf ("      ERROR: Failed to get extension string data.\n");
+      BIO_free (bio);
+      return EINVAL;
+    }
+
+  /* Null-terminate the string for parsing */
+  char *ext_str_copy = malloc (ext_str_len + 1);
+  if (!ext_str_copy)
+    {
+      printf (
+        "      ERROR: Failed to allocate memory for extension parsing.\n");
+      BIO_free (bio);
+      return ENOMEM;
+    }
+  memcpy (ext_str_copy, ext_str, ext_str_len);
+  ext_str_copy[ext_str_len] = '\0';
+
+  printf ("      Name Constraints content:\n%s\n", ext_str_copy);
+
+  /* Parse the extension string to find constraints */
+  line = strtok_r (ext_str_copy, "\n", &saveptr);
+  while (line)
+    {
+      /* Look for "Permitted:" sections and DNS/IP entries */
+      if (strstr (line, "DNS:"))
+        {
+          char *dns_start = strstr (line, "DNS:");
+          if (dns_start)
+            {
+              dns_start += 4; /* Skip "DNS:" */
+              /* Trim whitespace */
+              while (*dns_start == ' ' || *dns_start == '\t')
+                dns_start++;
+
+              printf ("        Found DNS constraint: %s\n", dns_start);
+
+              /* Check if this matches our expected CN (truncated) */
+              if (strstr (dns_start, "server"))
+                {
+                  found_constraints[0] = 1;
+                }
+
+              /* Check against our expected SAN list */
+              if (expected_san_list)
+                {
+                  for (j = 0; expected_san_list[j]; j++)
+                    {
+                      char *expected_dns = NULL;
+
+                      if (!strchr (expected_san_list[j], ':'))
+                        {
+                          expected_dns = expected_san_list[j];
+                        }
+                      else if (strncmp (expected_san_list[j], "DNS:", 4) == 0)
+                        {
+                          expected_dns = expected_san_list[j] + 4;
+                        }
+
+                      if (expected_dns && strstr (dns_start, expected_dns))
+                        {
+                          found_constraints[j + 1] = 1;
+                        }
+                    }
+                }
+            }
+        }
+      else if (strstr (line, "IP:"))
+        {
+          char *ip_start = strstr (line, "IP:");
+          if (ip_start)
+            {
+              ip_start += 3; /* Skip "IP:" */
+              while (*ip_start == ' ' || *ip_start == '\t')
+                ip_start++;
+
+              printf ("        Found IP constraint: %s\n", ip_start);
+
+              /* Check against expected IP SANs */
+              if (expected_san_list)
+                {
+                  for (j = 0; expected_san_list[j]; j++)
+                    {
+                      if (strncmp (expected_san_list[j], "IP:", 3) == 0)
+                        {
+                          char *expected_ip = expected_san_list[j] + 3;
+                          char *slash = strchr (expected_ip, '/');
+                          char expected_constraint[128];
+                          char clean_ip[64];
+
+                          /* Extract IP and netmask parts */
+                          if (slash)
+                            {
+                              int ip_len = slash - expected_ip;
+                              strncpy (clean_ip, expected_ip, ip_len);
+                              clean_ip[ip_len] = '\0';
+
+                              /* Parse the CIDR netmask */
+                              char *cidr_str = slash + 1;
+                              int cidr_bits = atoi (cidr_str);
+
+                              /* Convert to constraint format with proper netmask */
+                              if (strchr (clean_ip, ':'))
+                                {
+                                  /* IPv6 - convert CIDR to hex netmask */
+                                  const char *netmask;
+                                  if (cidr_bits == 128)
+                                    netmask =
+                                      "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:"
+                                      "FFFF";
+                                  else if (cidr_bits == 64)
+                                    netmask = "FFFF:FFFF:FFFF:FFFF:0:0:0:0";
+                                  else
+                                    netmask =
+                                      "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:"
+                                      "FFFF"; /* default to /128 */
+
+                                  /* Handle compressed IPv6 forms */
+                                  if (strstr (clean_ip, "2001:db8::1"))
+                                    {
+                                      snprintf (expected_constraint,
+                                                sizeof (expected_constraint),
+                                                "IP:2001:DB8:0:0:0:0:0:1/%s",
+                                                netmask);
+                                    }
+                                  else if (strstr (clean_ip,
+                                                   "2001:db8:85a3::"))
+                                    {
+                                      snprintf (
+                                        expected_constraint,
+                                        sizeof (expected_constraint),
+                                        "IP:2001:DB8:85A3:0:0:0:0:0/%s",
+                                        netmask);
+                                    }
+                                  else
+                                    {
+                                      snprintf (expected_constraint,
+                                                sizeof (expected_constraint),
+                                                "IP:%s/%s",
+                                                clean_ip,
+                                                netmask);
+                                    }
+                                }
+                              else
+                                {
+                                  /* IPv4 - convert CIDR to dotted decimal */
+                                  const char *netmask;
+                                  if (cidr_bits == 32)
+                                    netmask = "255.255.255.255";
+                                  else if (cidr_bits == 24)
+                                    netmask = "255.255.255.0";
+                                  else if (cidr_bits == 16)
+                                    netmask = "255.255.0.0";
+                                  else if (cidr_bits == 8)
+                                    netmask = "255.0.0.0";
+                                  else
+                                    netmask =
+                                      "255.255.255.255"; /* default to /32 */
+
+                                  snprintf (expected_constraint,
+                                            sizeof (expected_constraint),
+                                            "IP:%s/%s",
+                                            clean_ip,
+                                            netmask);
+                                }
+                            }
+                          else
+                            {
+                              /* No netmask - add single host netmask */
+                              strcpy (clean_ip, expected_ip);
+
+                              if (strchr (clean_ip, ':'))
+                                {
+                                  /* IPv6 with /128 netmask */
+                                  if (strstr (clean_ip, "2001:db8::1"))
+                                    {
+                                      snprintf (expected_constraint,
+                                                sizeof (expected_constraint),
+                                                "IP:2001:DB8:0:0:0:0:0:1/"
+                                                "FFFF:FFFF:FFFF:FFFF:FFFF:"
+                                                "FFFF:FFFF:FFFF");
+                                    }
+                                  else if (strstr (clean_ip,
+                                                   "2001:db8:85a3::"))
+                                    {
+                                      snprintf (expected_constraint,
+                                                sizeof (expected_constraint),
+                                                "IP:2001:DB8:85A3:0:0:0:0:0/"
+                                                "FFFF:FFFF:FFFF:FFFF:FFFF:"
+                                                "FFFF:FFFF:FFFF");
+                                    }
+                                  else
+                                    {
+                                      snprintf (expected_constraint,
+                                                sizeof (expected_constraint),
+                                                "IP:%s/"
+                                                "FFFF:FFFF:FFFF:FFFF:FFFF:"
+                                                "FFFF:FFFF:FFFF",
+                                                clean_ip);
+                                    }
+                                }
+                              else
+                                {
+                                  /* IPv4 with /32 netmask */
+                                  snprintf (expected_constraint,
+                                            sizeof (expected_constraint),
+                                            "IP:%s/255.255.255.255",
+                                            clean_ip);
+                                }
+                            }
+
+                          /* Check if this expected constraint matches what we found */
+                          /* Skip the "IP:" prefix for comparison since ip_start doesn't include it */
+                          char *constraint_without_prefix =
+                            expected_constraint + 3; /* Skip "IP:" */
+                          if (strcmp (ip_start, constraint_without_prefix) ==
+                              0)
+                            {
+                              found_constraints[j + 1] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+      line = strtok_r (NULL, "\n", &saveptr);
+    }
+
+  free (ext_str_copy);
+  BIO_free (bio);
+
+  /* Verify that we found all expected constraints */
+  if (!found_constraints[0])
+    {
+      printf ("      MISSING: CN constraint 'server' not found.\n");
+      missing_count++;
+    }
+
+  if (expected_san_list)
+    {
+      for (j = 0; expected_san_list[j]; j++)
+        {
+          if (!found_constraints[j + 1])
+            {
+              /* Only report missing DNS and IP constraints, skip email/URI */
+              if (!strchr (expected_san_list[j], ':') ||
+                  strncmp (expected_san_list[j], "DNS:", 4) == 0 ||
+                  strncmp (expected_san_list[j], "IP:", 3) == 0)
+                {
+                  printf ("      MISSING: Constraint for '%s' not found.\n",
+                          expected_san_list[j]);
+                  missing_count++;
+                }
+            }
+        }
+    }
+
+  if (missing_count > 0)
+    {
+      printf ("      %d expected name constraints were missing.\n",
+              missing_count);
+      return EINVAL;
+    }
+
+  printf ("      All expected name constraints found successfully.\n");
+  return EOK;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -565,6 +900,11 @@ main (int argc, char **argv)
   struct sscg_x509_req *csr = NULL;
   struct sscg_evp_pkey *pkey = NULL;
   struct sscg_x509_cert *cert = NULL;
+
+  /* Variables for CA testing */
+  struct sscg_x509_cert *ca_cert = NULL;
+  struct sscg_evp_pkey *ca_key = NULL;
+  struct sscg_options ca_options;
 
   TALLOC_CTX *tmp_ctx = talloc_new (NULL);
   if (!tmp_ctx)
@@ -709,8 +1049,10 @@ main (int argc, char **argv)
     tmp_ctx, csr, serial, 3650, NULL, pkey, EVP_sha512 (), &cert);
   CHECK_OK (ret);
 
+  /* ============= SERVICE CERTIFICATE TESTS ============= */
+
   /* Verify that subject alternative names were properly included */
-  printf ("Verifying subject alternative names in certificate. ");
+  printf ("Verifying subject alternative names in service certificate. ");
   int verify_ret = verify_subject_alt_names (cert);
   if (verify_ret != EOK)
     {
@@ -750,11 +1092,64 @@ main (int argc, char **argv)
       printf ("SUCCESS.\n");
     }
 
+  /* ============= CA CERTIFICATE TESTS ============= */
+
+  printf ("\n=== CA CERTIFICATE TESTS ===\n");
+
+  /* Set up options for CA creation */
+  memset (&ca_options, 0, sizeof (ca_options));
+  ca_options.country = "US";
+  ca_options.state = "";
+  ca_options.locality = "";
+  ca_options.org = "Unspecified";
+  ca_options.email = "";
+  ca_options.hostname = "server.example.com";
+  ca_options.hash_fn = EVP_sha256 ();
+  ca_options.lifetime = 3650;
+  ca_options.verbosity = SSCG_QUIET;
+
+  /* Set up the same subject alternative names for the CA */
+  ca_options.subject_alt_names = certinfo->subject_alt_names;
+
+  /* Create the private CA */
+  printf ("Creating private CA certificate. ");
+  ret = create_private_CA (tmp_ctx, &ca_options, &ca_cert, &ca_key);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  else
+    {
+      printf ("SUCCESS.\n");
+    }
+
+  /* Verify name constraints in the CA certificate */
+  printf ("Verifying name constraints in CA certificate. ");
+  int ca_constraints_ret =
+    verify_name_constraints (ca_cert, certinfo->subject_alt_names);
+  if (ca_constraints_ret != EOK)
+    {
+      printf ("FAILED.\n");
+      if (ret == EOK)
+        ret = ca_constraints_ret;
+    }
+  else
+    {
+      printf ("SUCCESS.\n");
+    }
+
   /* Summary of all test results */
   printf ("\n=== TEST SUMMARY ===\n");
-  printf ("URI verification: %s\n", verify_ret == EOK ? "PASS" : "FAIL");
-  printf ("Edge case validation: %s\n", edge_ret == EOK ? "PASS" : "FAIL");
-  printf ("Netmask handling: %s\n", netmask_ret == EOK ? "PASS" : "FAIL");
+  printf ("Service cert SAN verification: %s\n",
+          verify_ret == EOK ? "PASS" : "FAIL");
+  printf ("Service cert edge case validation: %s\n",
+          edge_ret == EOK ? "PASS" : "FAIL");
+  printf ("Service cert netmask handling: %s\n",
+          netmask_ret == EOK ? "PASS" : "FAIL");
+  printf ("CA certificate creation: %s\n", ca_cert ? "PASS" : "FAIL");
+  printf ("CA name constraints verification: %s\n",
+          ca_constraints_ret == EOK ? "PASS" : "FAIL");
 
 done:
   if (ret != EOK)

@@ -325,7 +325,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       _ ("Optional additional valid hostnames for the certificate. "
          "In addition to hostnames, this option also accepts explicit values "
          "supported by RFC 5280 such as "
-         "IP:xxx.xxx.xxx.xxx/yyy.yyy.yyy.yyy "
+         "IP:xxx.xxx.xxx.xxx "
          "May be specified multiple times."),
       _ ("alt.example.com")
     },
