@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later WITH cryptsetup-OpenSSL-exception
 
 
 # This file is part of sscg.

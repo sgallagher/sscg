@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later WITH cryptsetup-OpenSSL-exception
 # This file is part of sscg.
 #
 # sscg is free software: you can redistribute it and/or modify
