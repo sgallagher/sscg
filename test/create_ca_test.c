@@ -1125,6 +1125,13 @@ main (int argc, char **argv)
     {
       printf ("SUCCESS.\n");
     }
+  /* If create_private_CA returns EOK, ca_cert must be non-NULL */
+  if (ca_cert == NULL)
+    {
+      printf ("FAILED: ca_cert is NULL.\n");
+      ret = EINVAL;
+      goto done;
+    }
 
   /* Verify name constraints in the CA certificate */
   printf ("Verifying name constraints in CA certificate. ");
