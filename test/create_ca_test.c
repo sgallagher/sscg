@@ -1055,44 +1055,33 @@ main (int argc, char **argv)
 
   /* Verify that subject alternative names were properly included */
   printf ("Verifying subject alternative names in service certificate. ");
-  int verify_ret = verify_subject_alt_names (cert);
-  if (verify_ret != EOK)
+  ret = verify_subject_alt_names (cert);
+  if (ret != EOK)
     {
       printf ("FAILED.\n");
-      ret = verify_ret; /* Store first failure but continue testing */
+      goto done;
     }
-  else
-    {
-      printf ("SUCCESS.\n");
-    }
+  printf ("SUCCESS.\n");
 
   /* Test additional SAN verification scenarios */
   printf ("Testing SAN edge cases and validation. ");
-  int edge_ret = test_san_edge_cases (cert);
-  if (edge_ret != EOK)
+  ret = test_san_edge_cases (cert);
+  if (ret != EOK)
     {
       printf ("FAILED.\n");
-      if (ret == EOK)
-        ret = edge_ret; /* Store first failure */
+      goto done;
     }
-  else
-    {
-      printf ("SUCCESS.\n");
-    }
+  printf ("SUCCESS.\n");
 
   /* Test IP address netmask handling */
   printf ("Testing IP address netmask stripping functionality. ");
-  int netmask_ret = test_ip_netmask_handling (cert);
-  if (netmask_ret != EOK)
+  ret = test_ip_netmask_handling (cert);
+  if (ret != EOK)
     {
       printf ("FAILED.\n");
-      if (ret == EOK)
-        ret = netmask_ret; /* Store first failure */
+      goto done;
     }
-  else
-    {
-      printf ("SUCCESS.\n");
-    }
+  printf ("SUCCESS.\n");
 
   /* ============= CA CERTIFICATE TESTS ============= */
 
@@ -1135,30 +1124,13 @@ main (int argc, char **argv)
 
   /* Verify name constraints in the CA certificate */
   printf ("Verifying name constraints in CA certificate. ");
-  int ca_constraints_ret =
-    verify_name_constraints (ca_cert, certinfo->subject_alt_names);
-  if (ca_constraints_ret != EOK)
+  ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
+  if (ret != EOK)
     {
       printf ("FAILED.\n");
-      if (ret == EOK)
-        ret = ca_constraints_ret;
+      goto done;
     }
-  else
-    {
-      printf ("SUCCESS.\n");
-    }
-
-  /* Summary of all test results */
-  printf ("\n=== TEST SUMMARY ===\n");
-  printf ("Service cert SAN verification: %s\n",
-          verify_ret == EOK ? "PASS" : "FAIL");
-  printf ("Service cert edge case validation: %s\n",
-          edge_ret == EOK ? "PASS" : "FAIL");
-  printf ("Service cert netmask handling: %s\n",
-          netmask_ret == EOK ? "PASS" : "FAIL");
-  printf ("CA certificate creation: %s\n", ca_cert ? "PASS" : "FAIL");
-  printf ("CA name constraints verification: %s\n",
-          ca_constraints_ret == EOK ? "PASS" : "FAIL");
+  printf ("SUCCESS.\n");
 
 done:
   if (ret != EOK)
