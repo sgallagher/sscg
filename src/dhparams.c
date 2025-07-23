@@ -27,7 +27,7 @@
     version.  If you delete this exception statement from all source
     files in the program, then also delete it here.
 
-    Copyright 2019-2023 by Stephen Gallagher <sgallagh@redhat.com>
+    Copyright 2019-2025 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
 #include <assert.h>
