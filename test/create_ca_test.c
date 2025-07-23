@@ -792,7 +792,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
                           else
                             {
                               /* No netmask - add single host netmask */
-                              strcpy (clean_ip, expected_ip);
+                              strncpy (clean_ip, expected_ip, 64);
+                              clean_ip[63] = '\0';
 
                               if (strchr (clean_ip, ':'))
                                 {
