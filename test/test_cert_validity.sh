@@ -29,7 +29,7 @@
 # version.  If you delete this exception statement from all source
 # files in the program, then also delete it here.
 #
-# Copyright 2022-2023 by Stephen Gallagher <sgallagh@redhat.com>
+# Copyright 2022-2025 by Stephen Gallagher <sgallagh@redhat.com>
 
 
 # ARG_OPTIONAL_SINGLE([hash-alg],[],[Certificate hashing algorithm],[sha256])
