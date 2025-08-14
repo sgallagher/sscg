@@ -113,19 +113,28 @@ jobs:
 
     - name: Install build dependencies
       run: |
-        dnf install -y meson pkgconf openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+        dnf install -y meson util-linux pkgconf openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+
+    - name: Create user
+      run: |
+        useradd -m -s /bin/bash -G wheel sscg
+        tail /etc/passwd
+
+    - name: Make checkout directory editable by the sscg user
+      run: |
+        chown -R sscg:wheel ${GITHUB_WORKSPACE}
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson setup fedora-${{ matrix.release }}
+        CC=${{ matrix.compiler}} su -c "meson setup fedora-${{ matrix.release }}" sscg
 
     - name: Build SSCG
       run: |
-        ninja -C fedora-${{ matrix.release }}
+        su -c "ninja -C fedora-${{ matrix.release }}" sscg
 
     - name: Run in-tree tests
       run: |
-        meson test -t 5 --print-errorlogs -C fedora-${{ matrix.release }}
+        su -c "meson test -t 5 --print-errorlogs -C fedora-${{ matrix.release }}" sscg
 
 
   centos-stream:
@@ -165,16 +174,25 @@ jobs:
 
     - name: Install build dependencies
       run: |
-        yum install -y meson pkgconf-pkg-config openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+        yum install -y meson util-linux pkgconf-pkg-config openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel ${{ matrix.compiler }}
+
+    - name: Create user
+      run: |
+        useradd -m -s /bin/bash -G wheel sscg
+        tail /etc/passwd
+
+    - name: Make checkout directory editable by the sscg user
+      run: |
+        chown -R sscg:wheel ${GITHUB_WORKSPACE}
 
     - name: Configure build directory
       run: |
-        CC=${{ matrix.compiler}} meson setup --errorlogs centos-stream-${{ matrix.release }} || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
+        CC=${{ matrix.compiler}} su -c "meson setup --errorlogs centos-stream-${{ matrix.release }}" sscg || ( cat centos-stream-${{ matrix.release }}/meson-logs/meson-log.txt && exit 1 )
 
     - name: Build SSCG
       run: |
-        ninja -C centos-stream-${{ matrix.release }}
+        su -c "ninja -C centos-stream-${{ matrix.release }}" sscg
 
     - name: Run in-tree tests
       run: |
-        meson test -t 5 --print-errorlogs -C centos-stream-${{ matrix.release }}
+        su -c "meson test -t 5 --print-errorlogs -C centos-stream-${{ matrix.release }}" sscg
