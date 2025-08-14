@@ -269,6 +269,11 @@ test_cert_validity = find_program(
     required: true,
 )
 
+test_dhparams_creation = find_program(
+    'test/test_dhparams_creation.sh',
+    required: true,
+)
+
 hash_algs = [
     'sha256',
     'sha384',
@@ -357,6 +362,15 @@ foreach hash_alg : hash_algs
         endforeach
     endforeach
 endforeach
+
+# Test DH parameters creation behavior
+test(
+    'test_dhparams_creation',
+    test_dhparams_creation,
+    env: test_env,
+    depends: sscg,
+    timeout: 120,
+)
 
 
 cdata = configuration_data()
