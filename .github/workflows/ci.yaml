@@ -190,3 +190,51 @@ jobs:
     - name: Run in-tree tests
       run: |
         su -c "meson test -t 5 --print-errorlogs -C centos-stream-${{ matrix.release }}" sscg
+
+
+  fedora-eln:
+    name: Fedora ELN x86_64
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - gcc
+          - clang
+
+    container:
+      image: quay.io/fedora/eln:latest
+      options: --security-opt seccomp=unconfined
+
+    steps:
+    - name: Identify the system
+      run: |
+        cat /etc/os-release
+
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Install build dependencies
+      run: |
+        dnf install -y meson util-linux pkgconf openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel shadow-utils ${{ matrix.compiler }}
+
+    - name: Create user
+      run: |
+        useradd -m -s /bin/bash -G wheel sscg
+        tail /etc/passwd
+
+    - name: Make checkout directory editable by the sscg user
+      run: |
+        chown -R sscg:wheel ${GITHUB_WORKSPACE}
+
+    - name: Configure build directory
+      run: |
+        CC=${{ matrix.compiler}} su -c "meson setup fedora-eln" sscg
+
+    - name: Build SSCG
+      run: |
+        su -c "ninja -C fedora-eln" sscg
+
+    - name: Run in-tree tests
+      run: |
+        su -c "meson test -t 5 --print-errorlogs -C fedora-eln" sscg
