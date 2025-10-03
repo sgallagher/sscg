@@ -33,7 +33,7 @@ project(
   'sscg',
   'c',
 version : files('sscg.version'),
-  default_options : ['buildtype=debugoptimized', 'c_std=gnu99', 'warning_level=1', 'b_asneeded=true'],
+  default_options : ['buildtype=debugoptimized', 'c_std=gnu17', 'warning_level=1', 'b_asneeded=true'],
   license : 'GPL-3.0-or-later WITH OpenSSL-exception',
   meson_version : '>=0.59.0',
 )
