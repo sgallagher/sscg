@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  sscg-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+    container_name: sscg-development
+    hostname: sscg-dev
+    
+    # Volume mounts
+    volumes:
+      - ../:/workspace:Z  # :Z for SELinux compatibility with Podman
+      - ~/.gitconfig:/home/developer/.gitconfig:ro,Z
+      - ~/.ssh:/home/developer/.ssh:ro,Z
+    
+    # Working directory
+    working_dir: /workspace
+    
+    # Environment variables
+    environment:
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    
+    # Keep container running
+    command: sleep infinity
+    
+    # Podman-specific settings
+    security_opt:
+      - label:disable
+    
+    # User namespace mapping (handled by Podman automatically with --userns=keep-id)
+    user: developer
+    
+    # Network mode
+    network_mode: host
+
+
+

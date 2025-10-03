@@ -1,0 +1,98 @@
+{
+    "name": "SSCG Development (Fedora 43) - Podman",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+    "workspaceFolder": "/workspace",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    
+    // Configure tool-specific properties
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // C/C++ development
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack",
+                "ms-vscode.cmake-tools",
+                
+                // Code formatting and linting
+                "xaver.clang-format",
+                "llvm-vs-code-extensions.vscode-clangd",
+                
+                // Git integration
+                "eamodio.gitlens",
+                
+                // General development
+                "ms-vscode.hexeditor",
+                "redhat.vscode-yaml",
+                "ms-python.python",
+                
+                // Meson build system
+                "asabil.meson",
+                
+                // Documentation
+                "yzhang.markdown-all-in-one"
+            ],
+            "settings": {
+                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+                "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+                "C_Cpp.default.cStandard": "gnu17",
+                "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+                "C_Cpp.default.includePath": [
+                    "${workspaceFolder}/include",
+                    "/usr/include",
+                    "/usr/include/openssl",
+                    "/usr/include/talloc",
+                    "/usr/include/popt"
+                ],
+                "C_Cpp.default.defines": [
+                    "G_LOG_USE_STRUCTURED"
+                ],
+                "clang-format.executable": "/usr/bin/clang-format",
+                "editor.formatOnSave": true,
+                "files.trimTrailingWhitespace": true,
+                "files.insertFinalNewline": true,
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    },
+    
+    // Use 'forwardPorts' to make a list of ports inside the container available locally
+    // "forwardPorts": [],
+    
+    // Use 'postCreateCommand' to run commands after the container is created
+    "postCreateCommand": "echo 'SSCG Development Environment Ready!' && echo 'Run: meson setup build && ninja -C build' to build the project",
+    
+    // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root
+    "remoteUser": "developer",
+    
+    // Set container environment variables
+    "containerEnv": {
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8"
+    },
+    
+    // Configure container features
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {
+            "ppa": true,
+            "version": "latest"
+        }
+    },
+    
+    // Mount the local git config and ssh keys for convenience
+    // Note: Podman handles bind mounts differently than Docker
+    "mounts": [
+        "source=${localEnv:HOME}/.gitconfig,target=/home/developer/.gitconfig,type=bind",
+        "source=${localEnv:HOME}/.ssh,target=/home/developer/.ssh,type=bind"
+    ],
+    
+    // Podman-specific configuration
+    "runArgs": [
+        "--userns=keep-id",
+        "--security-opt", "label=disable"
+    ]
+}
+
+
