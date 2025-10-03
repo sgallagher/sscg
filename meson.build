@@ -67,17 +67,9 @@ i18n = import('i18n')
 # Dependencies
 gettext = dependency('intl', required: false)
 
-crypto = dependency('libcrypto11', version: '>= 1.1.0', required: false)
-if crypto.found()
-else
-    crypto = dependency('libcrypto', version: '>= 1.1.0')
-endif
+crypto = dependency('libcrypto', version: '>= 3.0.0')
 
-ssl = dependency('libssl11', version: '>= 1.1.0', required: false)
-if ssl.found()
-else
-    ssl = dependency('libssl', version: '>= 1.1.0')
-endif
+ssl = dependency('libssl', version: '>= 3.0.0')
 
 path_utils = dependency('path_utils')
 talloc = dependency('talloc')
@@ -86,15 +78,6 @@ popt = dependency(
     'popt',
     version : '>=1.14',
     required : true)
-
-has_evp_rsa_gen = cc.has_header_symbol(
-    'openssl/rsa.h',
-    'EVP_RSA_gen',
-    dependencies: [ crypto ])
-
-has_ossl_param = cc.has_header_symbol(
-    'openssl/core.h',
-    'OSSL_PARAM')
 
 sscg_bin_srcs = [
     'src/arguments.c',
@@ -376,8 +359,6 @@ cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
 cdata.set_quoted('PACKAGE_NAME', meson.project_name())
 cdata.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('datadir'), 'locale'))
-cdata.set('HAVE_SSL_EVP_RSA_GEN', has_evp_rsa_gen)
-cdata.set('HAVE_OSSL_PARAM', has_ossl_param)
 cdata.set('HAVE_GETTEXT', gettext.found())
 configure_file(
     output : 'config.h',

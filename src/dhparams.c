@@ -42,21 +42,6 @@
 #include "include/dhparams.h"
 
 // clang-format off
-
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-const char *dh_fips_groups[] = {
-  "ffdhe2048",
-  "ffdhe3072",
-  "ffdhe4096",
-  "ffdhe6144",
-  "ffdhe8192",
-  NULL,
-};
-
-const char *dh_nonfips_groups[] = {
-  NULL
-};
-#else //OPENSSL_VERSION_NUMBER
 const char *dh_fips_groups[] = {
   "ffdhe2048",
   "ffdhe3072",
@@ -78,7 +63,6 @@ const char *dh_nonfips_groups[] = {
   "dh_2048_256",
   NULL
 };
-#endif //OPENSSL_VERSION_NUMBER
 // clang-format on
 
 
@@ -265,11 +249,7 @@ is_valid_named_group (const char *group_name)
     }
 
     /* Check non-FIPS groups */
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-  if (!FIPS_mode ())
-#else
   if (!EVP_default_properties_is_fips_enabled (NULL))
-#endif
     {
       i = 0;
       while (dh_nonfips_groups[i])
@@ -284,7 +264,6 @@ is_valid_named_group (const char *group_name)
 }
 
 
-#ifdef HAVE_OSSL_PARAM
 int
 get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
 {
@@ -341,78 +320,3 @@ done:
   talloc_free (tmp_ctx);
   return ret;
 }
-
-#else //HAVE_OSSL_PARAM
-
-static int
-get_group_nid (const char *group_name)
-{
-  if (strcmp ("ffdhe2048", group_name) == 0)
-    {
-      return NID_ffdhe2048;
-    }
-  else if (strcmp ("ffdhe3072", group_name) == 0)
-    {
-      return NID_ffdhe3072;
-    }
-  else if (strcmp ("ffdhe4096", group_name) == 0)
-    {
-      return NID_ffdhe4096;
-    }
-  else if (strcmp ("ffdhe6144", group_name) == 0)
-    {
-      return NID_ffdhe6144;
-    }
-  else if (strcmp ("ffdhe8192", group_name) == 0)
-    {
-      return NID_ffdhe8192;
-    }
-  return NID_undef;
-}
-
-int
-get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
-{
-  int ret, sslret;
-  DH *dh = NULL;
-  EVP_PKEY *pkey = NULL;
-  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
-
-  if (!is_valid_named_group (group_name))
-    {
-      fprintf (stderr, "Unknown Diffie Hellman finite field group.\n");
-      fprintf (
-        stderr, "Valid groups are: %s.\n", valid_dh_group_names (tmp_ctx));
-      ret = EINVAL;
-      goto done;
-    }
-
-  dh = DH_new_by_nid (get_group_nid (group_name));
-  if (!dh)
-    {
-      fprintf (
-        stderr, "Unknown Diffie Hellman finite field group %s.\n", group_name);
-      ret = EINVAL;
-      goto done;
-    }
-
-  pkey = EVP_PKEY_new ();
-  sslret = EVP_PKEY_assign_DH (pkey, dh);
-  CHECK_SSL (sslret, "EVP_PKEY_ASSIGN_DH");
-
-  /* The dhparams are owned by the pkey now */
-  dh = NULL;
-
-  *dhparams = pkey;
-  pkey = NULL;
-
-  ret = EOK;
-
-done:
-  DH_free (dh);
-  EVP_PKEY_free (pkey);
-  talloc_free (tmp_ctx);
-  return ret;
-}
-
-#endif //HAVE_OSSL_PARAM
