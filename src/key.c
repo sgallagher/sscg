@@ -57,40 +57,8 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
   EVP_PKEY *pkey = NULL;
   TALLOC_CTX *tmp_ctx = NULL;
 
-#ifdef HAVE_SSL_EVP_RSA_GEN
-
   pkey = EVP_RSA_gen (bits);
   CHECK_MEM (pkey);
-
-#else // HAVE_SSL_EVP_RSA_GEN
-  int sslret;
-  RSA *rsa = NULL;
-  struct sscg_bignum *e;
-
-  tmp_ctx = talloc_new (NULL);
-
-  /* Create memory for the actual key */
-  rsa = RSA_new ();
-  CHECK_MEM (rsa);
-
-  /* Use an exponent value of RSA F4 aka 0x10001 (65537) */
-  ret = sscg_init_bignum (tmp_ctx, RSA_F4, &e);
-  CHECK_OK (ret);
-
-  /* Generate a random RSA keypair */
-  sslret = RSA_generate_key_ex (rsa, bits, e->bn, NULL);
-  CHECK_SSL (sslret, RSA_generate_key_ex);
-
-  pkey = EVP_PKEY_new ();
-  CHECK_MEM (pkey);
-
-  sslret = EVP_PKEY_assign_RSA (pkey, rsa);
-  CHECK_SSL (sslret, EVP_PKEY_assign_RSA);
-
-  /* The memory for the RSA key is now maintained by the EVP_PKEY.
-       Mark this variable as NULL so we don't free() it below */
-  rsa = NULL;
-#endif // HAVE_SSL_EVP_RSA_GEN
 
   /* Create the talloc container to hold the memory */
   (*_key) = talloc_zero (mem_ctx, struct sscg_evp_pkey);
@@ -106,10 +74,6 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
   ret = EOK;
 
 done:
-#ifndef HAVE_SSL_EVP_RSA_GEN
-  RSA_free (rsa);
-#endif //HAVE_SSL_EVP_RSA_GEN
-
   talloc_free (tmp_ctx);
   return ret;
 }
