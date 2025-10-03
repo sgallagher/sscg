@@ -57,7 +57,46 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
   EVP_PKEY *pkey = NULL;
   TALLOC_CTX *tmp_ctx = NULL;
 
-  pkey = EVP_RSA_gen (bits);
+  pkey = EVP_PKEY_Q_keygen (NULL, NULL, "RSA", (size_t)(0 + (bits)));
+  CHECK_MEM (pkey);
+
+  /* Create the talloc container to hold the memory */
+  (*_key) = talloc_zero (mem_ctx, struct sscg_evp_pkey);
+  if (!(*_key))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
+
+  (*_key)->evp_pkey = pkey;
+  talloc_set_destructor ((TALLOC_CTX *)(*_key), _sscg_evp_pkey_destructor);
+
+  ret = EOK;
+
+done:
+  talloc_free (tmp_ctx);
+  return ret;
+}
+
+int
+sscg_generate_mldsa_key (TALLOC_CTX *mem_ctx,
+                         int nist_level,
+                         struct sscg_evp_pkey **_key)
+{
+  int ret;
+  const char *type = NULL;
+  EVP_PKEY *pkey = NULL;
+  TALLOC_CTX *tmp_ctx = NULL;
+
+  switch (nist_level)
+    {
+    case 2: type = "ML-DSA-44"; break;
+    case 3: type = "ML-DSA-65"; break;
+    case 5: type = "ML-DSA-87"; break;
+    default: ret = EINVAL; goto done;
+    }
+
+  pkey = EVP_PKEY_Q_keygen (NULL, NULL, type);
   CHECK_MEM (pkey);
 
   /* Create the talloc container to hold the memory */
