@@ -79,6 +79,10 @@ popt = dependency(
     version : '>=1.14',
     required : true)
 
+has_ml_dsa = cc.has_header_symbol(
+    'openssl/evp.h',
+    'EVP_PKEY_ML_DSA_44')
+
 sscg_bin_srcs = [
     'src/arguments.c',
     'src/sscg.c',
@@ -178,6 +182,17 @@ generate_rsa_key_test = executable(
     install:false,
 )
 test('generate_rsa_key_test', generate_rsa_key_test, timeout: 120)
+
+if has_ml_dsa
+generate_mldsa_key_test = executable(
+    'generate_mldsa_key_test',
+    'test/generate_mldsa_key_test.c',
+    link_with : sscg_lib,
+        dependencies: [ crypto ],
+    install:false,
+)
+test('generate_mldsa_key_test', generate_mldsa_key_test, timeout: 120)
+endif
 
 generate_serial_test = executable(
     'generate_serial_test',
@@ -360,6 +375,7 @@ cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
 cdata.set_quoted('PACKAGE_NAME', meson.project_name())
 cdata.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('datadir'), 'locale'))
 cdata.set('HAVE_GETTEXT', gettext.found())
+cdata.set('HAVE_ML_DSA', has_ml_dsa)
 configure_file(
     output : 'config.h',
     configuration : cdata)
