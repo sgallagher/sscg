@@ -62,7 +62,6 @@ foreach cflag: test_cflags
 endforeach
 
 # Import required modules
-pkg = import('pkgconfig')
 i18n = import('i18n')
 
 # Dependencies
