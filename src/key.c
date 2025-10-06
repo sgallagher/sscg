@@ -37,6 +37,7 @@
 #include "include/sscg.h"
 #include "include/key.h"
 
+
 static int
 _sscg_evp_pkey_destructor (TALLOC_CTX *mem_ctx)
 {
@@ -47,6 +48,7 @@ _sscg_evp_pkey_destructor (TALLOC_CTX *mem_ctx)
 
   return 0;
 }
+
 
 int
 sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
@@ -78,6 +80,39 @@ done:
   return ret;
 }
 
+
+int
+sscg_generate_ec_key (TALLOC_CTX *mem_ctx,
+                      const char *alg,
+                      struct sscg_evp_pkey **_key)
+{
+  int ret;
+  EVP_PKEY *pkey = NULL;
+  TALLOC_CTX *tmp_ctx = NULL;
+
+  pkey = EVP_PKEY_Q_keygen (NULL, NULL, "EC", alg);
+  CHECK_MEM (pkey);
+
+  /* Create the talloc container to hold the memory */
+  (*_key) = talloc_zero (mem_ctx, struct sscg_evp_pkey);
+  if (!(*_key))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
+
+  (*_key)->evp_pkey = pkey;
+  talloc_set_destructor ((TALLOC_CTX *)(*_key), _sscg_evp_pkey_destructor);
+
+  ret = EOK;
+
+done:
+  talloc_free (tmp_ctx);
+  return ret;
+}
+
+
+#ifdef HAVE_ML_DSA
 int
 sscg_generate_mldsa_key (TALLOC_CTX *mem_ctx,
                          int nist_level,
@@ -116,3 +151,5 @@ done:
   talloc_free (tmp_ctx);
   return ret;
 }
+#endif /* HAVE_ML_DSA */
+

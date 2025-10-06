@@ -194,6 +194,15 @@ generate_mldsa_key_test = executable(
 test('generate_mldsa_key_test', generate_mldsa_key_test, timeout: 120)
 endif
 
+generate_ec_key_test = executable(
+    'generate_ec_key_test',
+    'test/generate_ec_key_test.c',
+    link_with : sscg_lib,
+        dependencies: [ crypto ],
+    install:false,
+)
+test('generate_ec_key_test', generate_ec_key_test, timeout: 120)
+
 generate_serial_test = executable(
     'generate_serial_test',
     'test/generate_serial_test.c',
