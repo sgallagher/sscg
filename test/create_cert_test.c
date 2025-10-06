@@ -58,7 +58,7 @@ setup_test_options (TALLOC_CTX *mem_ctx, struct sscg_options **_options)
   options->lifetime = 365; /* 1 year */
   options->verbosity = SSCG_QUIET; /* Keep tests quiet */
   options->hash_fn = EVP_sha256 ();
-  options->key_strength = 2048; /* Reasonable default */
+  options->rsa_key_strength = 2048; /* Reasonable default */
 
   /* Set up test-specific values */
   options->country = talloc_strdup (options, "US");
@@ -156,10 +156,10 @@ create_cert_with_params (TALLOC_CTX *mem_ctx,
 
   /* Override with test-specific parameters */
   options->hash_fn = hash_func;
-  options->key_strength = key_strength;
+  options->rsa_key_strength = key_strength;
 
   /* Allow weak keys for testing purposes */
-  options->minimum_key_strength = 512;
+  options->minimum_rsa_key_strength = 512;
 
   /* Create certificate with specified parameters */
   ret =

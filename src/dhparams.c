@@ -248,7 +248,7 @@ is_valid_named_group (const char *group_name)
       i++;
     }
 
-    /* Check non-FIPS groups */
+  /* Check non-FIPS groups */
   if (!EVP_default_properties_is_fips_enabled (NULL))
     {
       i = 0;

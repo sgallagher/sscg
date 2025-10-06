@@ -152,7 +152,7 @@ create_cert (TALLOC_CTX *mem_ctx,
       fprintf (stdout, "Generating RSA key for certificate.\n");
     }
 
-  ret = sscg_generate_rsa_key (tmp_ctx, options->key_strength, &pkey);
+  ret = sscg_generate_rsa_key (tmp_ctx, options->rsa_key_strength, &pkey);
   CHECK_OK (ret);
 
   /* Create a certificate signing request for the private CA */

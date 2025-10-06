@@ -247,8 +247,8 @@ struct sscg_options
   char **subject_alt_names;
 
   /* Encryption requirements */
-  int key_strength;
-  int minimum_key_strength;
+  int rsa_key_strength;
+  int minimum_rsa_key_strength;
   char *hash_alg;
   char *cipher_alg;
   const EVP_CIPHER *cipher;

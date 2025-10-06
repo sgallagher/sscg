@@ -102,17 +102,17 @@ set_default_options (struct sscg_options *opts)
        * will set a minimum of 2048 bits and the sha256 hash algorithm.
        */
       opts->hash_alg = talloc_strdup (opts, "sha256");
-      opts->key_strength = 2048;
+      opts->rsa_key_strength = 2048;
       break;
 
     case 3:
       opts->hash_alg = talloc_strdup (opts, "sha256");
-      opts->key_strength = 3072;
+      opts->rsa_key_strength = 3072;
       break;
 
     case 4:
       opts->hash_alg = talloc_strdup (opts, "sha384");
-      opts->key_strength = 7680;
+      opts->rsa_key_strength = 7680;
       break;
 
     default:
@@ -126,11 +126,11 @@ set_default_options (struct sscg_options *opts)
 
     case 5:
       opts->hash_alg = talloc_strdup (opts, "sha512");
-      opts->key_strength = 15360;
+      opts->rsa_key_strength = 15360;
       break;
     }
 
-  opts->minimum_key_strength = opts->key_strength;
+  opts->minimum_rsa_key_strength = opts->rsa_key_strength;
 
   opts->cipher_alg = talloc_strdup (opts, "aes-256-cbc");
 
@@ -145,7 +145,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 {
   int ret, sret, opt;
   poptContext pc;
-  char *minimum_key_strength_help = NULL;
+  char *minimum_rsa_key_strength_help = NULL;
   char *named_groups_help = NULL;
 
   char *country = NULL;
@@ -171,8 +171,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   if (ret != EOK)
     goto done;
 
-  minimum_key_strength_help = talloc_asprintf (
-    tmp_ctx, _ ("%d or larger"), options->minimum_key_strength);
+  minimum_rsa_key_strength_help = talloc_asprintf (
+    tmp_ctx, _ ("%d or larger"), options->minimum_rsa_key_strength);
 
   named_groups_help =
     talloc_asprintf (tmp_ctx,
@@ -345,10 +345,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       "key-strength",
       '\0',
       POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
-      &options->key_strength,
+      &options->rsa_key_strength,
       0,
       _ ("Strength of the certificate private keys in bits."),
-      minimum_key_strength_help },
+      minimum_rsa_key_strength_help },
     {
       "hash-alg",
       '\0',
@@ -841,11 +841,11 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   /* Add a NULL terminator to the end */
   options->subject_alt_names[i + 1] = NULL;
 
-  if (options->key_strength < options->minimum_key_strength)
+  if (options->rsa_key_strength < options->minimum_rsa_key_strength)
     {
       fprintf (stderr,
                _ ("Key strength must be at least %d bits.\n"),
-               options->minimum_key_strength);
+               options->minimum_rsa_key_strength);
       ret = EINVAL;
       goto done;
     }
