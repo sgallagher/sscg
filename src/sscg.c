@@ -109,6 +109,7 @@ int
 main (int argc, const char **argv)
 {
   int ret, sret;
+  int bits;
   struct sscg_options *options;
   bool build_client_cert = false;
   char *dhparams_file = NULL;
@@ -232,7 +233,19 @@ main (int argc, const char **argv)
 
 
   /* Generate the private CA for the certificate */
-  ret = create_private_CA (main_ctx, options, &cacert, &cakey);
+
+  /* First generate the private CA key */
+  if (options->verbosity >= SSCG_VERBOSE)
+    {
+      fprintf (stdout, _ ("Generating RSA key for private CA.\n"));
+    }
+  /* Use the larger of the minimum strength or the user-specified strength */
+  bits = MAX (SSCG_RSA_CA_KEY_MIN_STRENGTH, options->rsa_key_strength);
+  ret = sscg_generate_rsa_key (main_ctx, bits, &cakey);
+  CHECK_OK (ret);
+
+
+  ret = create_private_CA (main_ctx, options, cakey, &cacert);
   CHECK_OK (ret);
 
   /* Generate the service certificate and sign it with the private CA */
