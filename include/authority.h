@@ -40,7 +40,7 @@
 int
 create_private_CA (TALLOC_CTX *mem_ctx,
                    const struct sscg_options *options,
-                   struct sscg_x509_cert **_cacert,
-                   struct sscg_evp_pkey **_cakey);
+                   struct sscg_evp_pkey *cakey,
+                   struct sscg_x509_cert **_cacert);
 
 #endif /* _AUTHORITY_H */

@@ -46,17 +46,15 @@
 int
 create_private_CA (TALLOC_CTX *mem_ctx,
                    const struct sscg_options *options,
-                   struct sscg_x509_cert **_cacert,
-                   struct sscg_evp_pkey **_cakey)
+                   struct sscg_evp_pkey *cakey,
+                   struct sscg_x509_cert **_cacert)
 {
   int ret;
-  int bits;
   size_t i;
   TALLOC_CTX *tmp_ctx = NULL;
   struct sscg_bignum *serial;
   struct sscg_cert_info *ca_certinfo;
   struct sscg_x509_req *csr;
-  struct sscg_evp_pkey *pkey;
   struct sscg_x509_cert *cert;
   X509_EXTENSION *ex = NULL;
   X509V3_CTX xctx;
@@ -258,25 +256,13 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
   talloc_free (name_constraint);
 
-  /* For the private CA, we always use 4096 bits and an exponent
-       value of RSA F4 aka 0x10001 (65537) */
-  bits = 4096;
-
-  /* Generate an RSA keypair for this CA */
-  if (options->verbosity >= SSCG_VERBOSE)
-    {
-      fprintf (stdout, _ ("Generating RSA key for private CA.\n"));
-    }
-
-  ret = sscg_generate_rsa_key (tmp_ctx, bits, &pkey);
-  CHECK_OK (ret);
 
   /* Create a certificate signing request for the private CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
       fprintf (stdout, _ ("Generating CSR for private CA.\n"));
     }
-  ret = sscg_x509v3_csr_new (tmp_ctx, ca_certinfo, pkey, &csr);
+  ret = sscg_x509v3_csr_new (tmp_ctx, ca_certinfo, cakey, &csr);
   CHECK_OK (ret);
 
   X509V3_set_ctx_nodb (&xctx);
@@ -301,7 +287,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
   sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
 
   /* Finalize the CSR */
-  ret = sscg_x509v3_csr_finalize (ca_certinfo, pkey, csr);
+  ret = sscg_x509v3_csr_finalize (ca_certinfo, cakey, csr);
   CHECK_OK (ret);
 
   if (options->verbosity >= SSCG_DEBUG)
@@ -322,13 +308,12 @@ create_private_CA (TALLOC_CTX *mem_ctx,
                             serial,
                             options->lifetime,
                             NULL,
-                            pkey,
+                            cakey,
                             options->hash_fn,
                             &cert);
   CHECK_OK (ret);
 
   *_cacert = talloc_steal (mem_ctx, cert);
-  *_cakey = talloc_steal (mem_ctx, pkey);
 
   ret = EOK;
 

@@ -278,7 +278,10 @@ main (int argc, char **argv)
 
   /* Test 2: Create a private CA for testing */
   printf ("Creating private CA for testing. ");
-  ret = create_private_CA (tmp_ctx, options, &ca_cert, &ca_key);
+  ret = sscg_generate_rsa_key (tmp_ctx, SSCG_RSA_CA_KEY_MIN_STRENGTH, &ca_key);
+  CHECK_OK (ret);
+
+  ret = create_private_CA (tmp_ctx, options, ca_key, &ca_cert);
   if (ret != EOK)
     {
       printf ("FAILED.\n");
