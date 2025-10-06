@@ -43,16 +43,15 @@ create_cert (TALLOC_CTX *mem_ctx,
              const struct sscg_options *options,
              struct sscg_x509_cert *ca_cert,
              struct sscg_evp_pkey *ca_key,
+             struct sscg_evp_pkey *svc_key,
              enum sscg_cert_type type,
-             struct sscg_x509_cert **_cert,
-             struct sscg_evp_pkey **_key)
+             struct sscg_x509_cert **_cert)
 {
   int ret;
   size_t i;
   struct sscg_bignum *serial;
   struct sscg_cert_info *certinfo;
   struct sscg_x509_req *csr;
-  struct sscg_evp_pkey *pkey;
   struct sscg_x509_cert *cert;
   char *dot;
   X509_EXTENSION *ex = NULL;
@@ -146,25 +145,16 @@ create_cert (TALLOC_CTX *mem_ctx,
   CHECK_MEM (ex);
   sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
-  /* Generate an RSA keypair for this CA */
-  if (options->verbosity >= SSCG_VERBOSE)
-    {
-      fprintf (stdout, "Generating RSA key for certificate.\n");
-    }
-
-  ret = sscg_generate_rsa_key (tmp_ctx, options->rsa_key_strength, &pkey);
-  CHECK_OK (ret);
-
   /* Create a certificate signing request for the private CA */
   if (options->verbosity >= SSCG_VERBOSE)
     {
       fprintf (stdout, "Generating CSR for certificate.\n");
     }
-  ret = sscg_x509v3_csr_new (tmp_ctx, certinfo, pkey, &csr);
+  ret = sscg_x509v3_csr_new (tmp_ctx, certinfo, svc_key, &csr);
   CHECK_OK (ret);
 
   /* Finalize the CSR */
-  ret = sscg_x509v3_csr_finalize (certinfo, pkey, csr);
+  ret = sscg_x509v3_csr_finalize (certinfo, svc_key, csr);
   CHECK_OK (ret);
 
   if (options->verbosity >= SSCG_DEBUG)
@@ -196,7 +186,6 @@ create_cert (TALLOC_CTX *mem_ctx,
   CHECK_OK (ret);
 
   *_cert = talloc_steal (mem_ctx, cert);
-  *_key = talloc_steal (mem_ctx, pkey);
 
   ret = EOK;
 done:
