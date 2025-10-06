@@ -90,7 +90,7 @@ set_default_options (struct sscg_options *opts)
 
   /* Select the default key strength based on the system security level
    * See:
-   * https://www.openssl.org/docs/man1.1.0/ssl/SSL_CTX_get_security_level.html
+   * https://docs.openssl.org/master/man3/SSL_CTX_set_security_level/#default-callback-behaviour
    * for the specification of the minimums.
    */
   switch (security_level)
