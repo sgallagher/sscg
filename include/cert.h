@@ -43,8 +43,8 @@ create_cert (TALLOC_CTX *mem_ctx,
              const struct sscg_options *options,
              struct sscg_x509_cert *ca_cert,
              struct sscg_evp_pkey *ca_key,
+             struct sscg_evp_pkey *svc_key,
              enum sscg_cert_type type,
-             struct sscg_x509_cert **_svc_cert,
-             struct sscg_evp_pkey **_svc_key);
+             struct sscg_x509_cert **_svc_cert);
 
 #endif /* _SSCG_CERT_H */
