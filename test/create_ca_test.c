@@ -949,7 +949,7 @@ main (int argc, char **argv)
   CHECK_MEM (certinfo->cn);
 
   /* Set up comprehensive subject alternative names covering all supported formats
-   * 
+   *
    * SSCG SAN Format Support Summary:
    * - DNS names: Supported (both implicit and explicit "DNS:" prefix)
    * - IPv4/IPv6 addresses: Supported (with "IP:" prefix)
@@ -957,11 +957,11 @@ main (int argc, char **argv)
    * - URIs: Partial support (limitation: slashes get truncated due to IP subnet mask handling)
    * - Wildcards: Supported in DNS names
    * - Internationalized domains: Limited (needs ACE encoding)
-   * 
+   *
    * Known limitations:
    * 1. URI paths with slashes get truncated (affects https://example.com/path)
    * 2. Only basic SAN formats supported (no otherName, directoryName, etc.)
-   * 
+   *
    * IP Address Netmask Handling:
    * - SSCG automatically strips netmask suffixes (e.g., /24, /64) from IP addresses
    * - This is intentional behavior to ensure clean IP address encoding in certificates
@@ -1104,7 +1104,10 @@ main (int argc, char **argv)
 
   /* Create the private CA */
   printf ("Creating private CA certificate. ");
-  ret = create_private_CA (tmp_ctx, &ca_options, &ca_cert, &ca_key);
+  ret = sscg_generate_rsa_key (tmp_ctx, SSCG_RSA_CA_KEY_MIN_STRENGTH, &ca_key);
+  CHECK_OK (ret);
+
+  ret = create_private_CA (tmp_ctx, &ca_options, ca_key, &ca_cert);
   if (ret != EOK)
     {
       printf ("FAILED.\n");

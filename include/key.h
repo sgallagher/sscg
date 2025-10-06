@@ -41,6 +41,9 @@
 #include "include/sscg.h"
 #include "include/bignum.h"
 
+#define SSCG_RSA_CA_KEY_MIN_STRENGTH 4096
+
+
 struct sscg_evp_pkey
 {
   EVP_PKEY *evp_pkey;

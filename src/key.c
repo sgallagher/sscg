@@ -31,6 +31,7 @@
     Copyright 2017-2025 by Stephen Gallagher <sgallagh@redhat.com>
 */
 
+#include <sys/param.h>
 #include <openssl/err.h>
 
 #include "config.h"
