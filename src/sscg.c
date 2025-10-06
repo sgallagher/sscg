@@ -248,14 +248,24 @@ main (int argc, const char **argv)
   ret = create_private_CA (main_ctx, options, cakey, &cacert);
   CHECK_OK (ret);
 
+
+  /* Generate an RSA keypair for this certificate */
+  if (options->verbosity >= SSCG_VERBOSE)
+    {
+      fprintf (stdout, "Generating RSA key for certificate.\n");
+    }
+
+  ret = sscg_generate_rsa_key (main_ctx, options->rsa_key_strength, &svc_key);
+  CHECK_OK (ret);
+
   /* Generate the service certificate and sign it with the private CA */
   ret = create_cert (main_ctx,
                      options,
                      cacert,
                      cakey,
+                     svc_key,
                      SSCG_CERT_TYPE_SERVER,
-                     &svc_cert,
-                     &svc_key);
+                     &svc_cert);
   CHECK_OK (ret);
 
   /* If requested, generate the client auth certificate and sign it with the
@@ -264,13 +274,17 @@ main (int argc, const char **argv)
   build_client_cert = !!(GET_BIO (SSCG_FILE_TYPE_CLIENT));
   if (build_client_cert)
     {
+      ret = sscg_generate_rsa_key (
+        main_ctx, options->rsa_key_strength, &client_key);
+      CHECK_OK (ret);
+
       ret = create_cert (main_ctx,
                          options,
                          cacert,
                          cakey,
+                         client_key,
                          SSCG_CERT_TYPE_CLIENT,
-                         &client_cert,
-                         &client_key);
+                         &client_cert);
       CHECK_OK (ret);
     }
 

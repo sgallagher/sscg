@@ -140,9 +140,9 @@ create_cert_with_params (TALLOC_CTX *mem_ctx,
                          int key_strength,
                          struct sscg_x509_cert *ca_cert,
                          struct sscg_evp_pkey *ca_key,
+                         struct sscg_evp_pkey *svc_key,
                          enum sscg_cert_type cert_type,
-                         struct sscg_x509_cert **_cert,
-                         struct sscg_evp_pkey **_key)
+                         struct sscg_x509_cert **_cert)
 {
   int ret;
   struct sscg_options *options;
@@ -163,7 +163,7 @@ create_cert_with_params (TALLOC_CTX *mem_ctx,
 
   /* Create certificate with specified parameters */
   ret =
-    create_cert (mem_ctx, options, ca_cert, ca_key, cert_type, _cert, _key);
+    create_cert (mem_ctx, options, ca_cert, ca_key, svc_key, cert_type, _cert);
 
   return ret;
 }
@@ -291,13 +291,17 @@ main (int argc, char **argv)
 
   /* Test 3: Create a server certificate */
   printf ("Creating server certificate. ");
+  ret =
+    sscg_generate_rsa_key (tmp_ctx, options->rsa_key_strength, &server_key);
+  CHECK_OK (ret);
+
   ret = create_cert (tmp_ctx,
                      options,
                      ca_cert,
                      ca_key,
+                     server_key,
                      SSCG_CERT_TYPE_SERVER,
-                     &server_cert,
-                     &server_key);
+                     &server_cert);
   if (ret != EOK)
     {
       printf ("FAILED.\n");
@@ -327,13 +331,17 @@ main (int argc, char **argv)
 
   /* Test 6: Create a client certificate */
   printf ("Creating client certificate. ");
+  ret =
+    sscg_generate_rsa_key (tmp_ctx, options->rsa_key_strength, &client_key);
+  CHECK_OK (ret);
+
   ret = create_cert (tmp_ctx,
                      options,
                      ca_cert,
                      ca_key,
+                     client_key,
                      SSCG_CERT_TYPE_CLIENT,
-                     &client_cert,
-                     &client_key);
+                     &client_cert);
   if (ret != EOK)
     {
       printf ("FAILED.\n");
@@ -370,9 +378,9 @@ main (int argc, char **argv)
                      options,
                      ca_cert,
                      ca_key,
+                     invalid_key,
                      SSCG_CERT_TYPE_UNKNOWN,
-                     &invalid_cert,
-                     &invalid_key);
+                     &invalid_cert);
   if (ret == EOK)
     {
       printf ("FAILED. Expected error but got success.\n");
@@ -395,13 +403,17 @@ main (int argc, char **argv)
   struct sscg_x509_cert *isolated_cert = NULL;
   struct sscg_evp_pkey *isolated_key = NULL;
 
+  ret = sscg_generate_rsa_key (
+    isolated_ctx, options->rsa_key_strength, &isolated_key);
+  CHECK_OK (ret);
+
   ret = create_cert (isolated_ctx,
                      options,
                      ca_cert,
                      ca_key,
+                     isolated_key,
                      SSCG_CERT_TYPE_SERVER,
-                     &isolated_cert,
-                     &isolated_key);
+                     &isolated_cert);
   if (ret != EOK)
     {
       printf ("FAILED. Could not create certificate in isolated context.\n");
@@ -433,6 +445,9 @@ main (int argc, char **argv)
       struct sscg_x509_cert *hash_test_cert = NULL;
       struct sscg_evp_pkey *hash_test_key = NULL;
 
+      ret = sscg_generate_rsa_key (tmp_ctx, 2048, &hash_test_key);
+      CHECK_OK (ret);
+
       ret = create_cert_with_params (
         tmp_ctx,
         hash_test_cases[h].name,
@@ -440,9 +455,9 @@ main (int argc, char **argv)
         2048, /* Use standard key size for hash tests */
         ca_cert,
         ca_key,
+        hash_test_key,
         SSCG_CERT_TYPE_SERVER,
-        &hash_test_cert,
-        &hash_test_key);
+        &hash_test_cert);
       if (ret != EOK)
         {
           printf ("FAILED.\n");
@@ -470,15 +485,19 @@ main (int argc, char **argv)
       struct sscg_x509_cert *key_test_cert = NULL;
       struct sscg_evp_pkey *key_test_key = NULL;
 
+      ret = sscg_generate_rsa_key (
+        tmp_ctx, key_strength_test_cases[k].bits, &key_test_key);
+      CHECK_OK (ret);
+
       ret = create_cert_with_params (tmp_ctx,
                                      "SHA-256",
                                      EVP_sha256 (),
                                      key_strength_test_cases[k].bits,
                                      ca_cert,
                                      ca_key,
+                                     key_test_key,
                                      SSCG_CERT_TYPE_SERVER,
-                                     &key_test_cert,
-                                     &key_test_key);
+                                     &key_test_cert);
       if (ret != EOK)
         {
           printf ("FAILED.\n");
@@ -522,6 +541,10 @@ main (int argc, char **argv)
       struct sscg_x509_cert *matrix_cert = NULL;
       struct sscg_evp_pkey *matrix_key = NULL;
 
+      ret =
+        sscg_generate_rsa_key (tmp_ctx, matrix_tests[m].key_bits, &matrix_key);
+      CHECK_OK (ret);
+
       ret = create_cert_with_params (
         tmp_ctx,
         matrix_tests[m].hash_name,
@@ -529,9 +552,9 @@ main (int argc, char **argv)
         matrix_tests[m].key_bits,
         ca_cert,
         ca_key,
+        matrix_key,
         SSCG_CERT_TYPE_CLIENT, /* Use client for variety */
-        &matrix_cert,
-        &matrix_key);
+        &matrix_cert);
       if (ret != EOK)
         {
           printf ("FAILED.\n");
@@ -556,15 +579,18 @@ main (int argc, char **argv)
   struct sscg_x509_cert *high_sec_cert = NULL;
   struct sscg_evp_pkey *high_sec_key = NULL;
 
+  ret = sscg_generate_rsa_key (tmp_ctx, 4096, &high_sec_key);
+  CHECK_OK (ret);
+
   ret = create_cert_with_params (tmp_ctx,
                                  "SHA-512",
                                  EVP_sha512 (),
                                  4096,
                                  ca_cert,
                                  ca_key,
+                                 high_sec_key,
                                  SSCG_CERT_TYPE_SERVER,
-                                 &high_sec_cert,
-                                 &high_sec_key);
+                                 &high_sec_cert);
   if (ret != EOK)
     {
       printf ("FAILED.\n");
