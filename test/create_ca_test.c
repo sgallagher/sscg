@@ -1030,11 +1030,48 @@ main (int argc, char **argv)
   /* NULL terminator */
   certinfo->subject_alt_names[12] = NULL;
 
-  /* Generate an RSA keypair */
+  /* Test RSA key generation */
+  printf ("Testing RSA key generation. ");
   bits = 4096;
-
   ret = sscg_generate_rsa_key (certinfo, bits, &pkey);
   CHECK_OK (ret);
+  printf ("SUCCESS.\n");
+
+  /* Test EC key generation with different curves */
+  printf ("Testing EC key generation (prime256v1). ");
+  ret = sscg_generate_ec_key (certinfo, "prime256v1", &pkey);
+  CHECK_OK (ret);
+  printf ("SUCCESS.\n");
+
+  printf ("Testing EC key generation (secp384r1). ");
+  ret = sscg_generate_ec_key (certinfo, "secp384r1", &pkey);
+  CHECK_OK (ret);
+  printf ("SUCCESS.\n");
+
+  printf ("Testing EC key generation (secp521r1). ");
+  ret = sscg_generate_ec_key (certinfo, "secp521r1", &pkey);
+  CHECK_OK (ret);
+  printf ("SUCCESS.\n");
+
+  /* Test ML-DSA key generation (if available) */
+#ifdef HAVE_ML_DSA
+  printf ("Testing ML-DSA key generation (NIST level 2). ");
+  ret = sscg_generate_mldsa_key (certinfo, 2, &pkey);
+  CHECK_OK (ret);
+  printf ("SUCCESS.\n");
+
+  printf ("Testing ML-DSA key generation (NIST level 3). ");
+  ret = sscg_generate_mldsa_key (certinfo, 3, &pkey);
+  CHECK_OK (ret);
+  printf ("SUCCESS.\n");
+
+  printf ("Testing ML-DSA key generation (NIST level 5). ");
+  ret = sscg_generate_mldsa_key (certinfo, 5, &pkey);
+  CHECK_OK (ret);
+  printf ("SUCCESS.\n");
+#else
+  printf ("ML-DSA not available, skipping test.\n");
+#endif
 
   /* Create the CSR */
   ret = sscg_x509v3_csr_new (tmp_ctx, certinfo, pkey, &csr);
@@ -1102,21 +1139,122 @@ main (int argc, char **argv)
   /* Set up the same subject alternative names for the CA */
   ca_options.subject_alt_names = certinfo->subject_alt_names;
 
-  /* Create the private CA */
-  printf ("Creating private CA certificate. ");
+  /* Test CA creation with RSA key */
+  printf ("Testing CA creation with RSA key. ");
   ret = sscg_generate_rsa_key (tmp_ctx, SSCG_RSA_CA_KEY_MIN_STRENGTH, &ca_key);
   CHECK_OK (ret);
-
   ret = create_private_CA (tmp_ctx, &ca_options, ca_key, &ca_cert);
   if (ret != EOK)
     {
       printf ("FAILED.\n");
       goto done;
     }
-  else
+  printf ("SUCCESS.\n");
+
+  /* Verify name constraints for RSA CA */
+  printf ("Verifying name constraints for RSA CA. ");
+  ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
+  if (ret != EOK)
     {
-      printf ("SUCCESS.\n");
+      printf ("FAILED.\n");
+      goto done;
     }
+  printf ("SUCCESS.\n");
+
+  /* Test CA creation with EC key (secp384r1) */
+  printf ("Testing CA creation with EC key (secp384r1). ");
+  ret = sscg_generate_ec_key (tmp_ctx, "secp384r1", &ca_key);
+  CHECK_OK (ret);
+  ret = create_private_CA (tmp_ctx, &ca_options, ca_key, &ca_cert);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+
+  /* Verify name constraints for EC CA (secp384r1) */
+  printf ("Verifying name constraints for EC CA (secp384r1). ");
+  ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+
+  /* Test CA creation with EC key (secp521r1) */
+  printf ("Testing CA creation with EC key (secp521r1). ");
+  ret = sscg_generate_ec_key (tmp_ctx, "secp521r1", &ca_key);
+  CHECK_OK (ret);
+  ret = create_private_CA (tmp_ctx, &ca_options, ca_key, &ca_cert);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+
+  /* Verify name constraints for EC CA (secp521r1) */
+  printf ("Verifying name constraints for EC CA (secp521r1). ");
+  ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+
+#ifdef HAVE_ML_DSA
+  /* Test CA creation with ML-DSA key (NIST level 3) */
+  printf ("Testing CA creation with ML-DSA key (NIST level 3). ");
+  ret = sscg_generate_mldsa_key (tmp_ctx, 3, &ca_key);
+  CHECK_OK (ret);
+  ret = create_private_CA (tmp_ctx, &ca_options, ca_key, &ca_cert);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+
+  /* Verify name constraints for ML-DSA CA (NIST level 3) */
+  printf ("Verifying name constraints for ML-DSA CA (NIST level 3). ");
+  ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+
+  /* Test CA creation with ML-DSA key (NIST level 5) */
+  printf ("Testing CA creation with ML-DSA key (NIST level 5). ");
+  ret = sscg_generate_mldsa_key (tmp_ctx, 5, &ca_key);
+  CHECK_OK (ret);
+  ret = create_private_CA (tmp_ctx, &ca_options, ca_key, &ca_cert);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+
+  /* Verify name constraints for ML-DSA CA (NIST level 5) */
+  printf ("Verifying name constraints for ML-DSA CA (NIST level 5). ");
+  ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
+  if (ret != EOK)
+    {
+      printf ("FAILED.\n");
+      goto done;
+    }
+  printf ("SUCCESS.\n");
+#else
+  printf ("ML-DSA not available for CA, skipping test.\n");
+#endif
+
+  /* Use the last generated key for the rest of the test */
+  printf ("Using final CA key for remaining tests. SUCCESS.\n");
   /* If create_private_CA returns EOK, ca_cert must be non-NULL */
   if (ca_cert == NULL)
     {
@@ -1125,15 +1263,6 @@ main (int argc, char **argv)
       goto done;
     }
 
-  /* Verify name constraints in the CA certificate */
-  printf ("Verifying name constraints in CA certificate. ");
-  ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
-  if (ret != EOK)
-    {
-      printf ("FAILED.\n");
-      goto done;
-    }
-  printf ("SUCCESS.\n");
 
 done:
   if (ret != EOK)
