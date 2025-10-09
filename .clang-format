@@ -1,5 +1,4 @@
 ---
-
 # This file is part of sscg.
 #
 # sscg is free software: you can redistribute it and/or modify
@@ -51,11 +50,11 @@ AlwaysBreakAfterReturnType: All
 AlwaysBreakBeforeMultilineStrings: true
 BinPackArguments: false
 BinPackParameters: false
-BreakBeforeBinaryOperators: None
+BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: GNU
 BreakBeforeTernaryOperators: false
 ColumnLimit: 79
-CommentPragmas:  '^ IWYU pragma:'
+CommentPragmas: "^ IWYU pragma:"
 ContinuationIndentWidth: 2
 DerivePointerAlignment: false
 DisableFormat: false
@@ -64,8 +63,8 @@ IndentCaseLabels: false
 IndentWidth: 2
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false
-MacroBlockBegin: ''
-MacroBlockEnd:   ''
+MacroBlockBegin: ""
+MacroBlockEnd: ""
 MaxEmptyLinesToKeep: 2
 PenaltyBreakBeforeFirstCallParameter: 19
 PenaltyBreakComment: 300
@@ -87,5 +86,5 @@ SpacesInSquareBrackets: false
 Standard: Cpp11
 TabWidth: 4
 UseTab: Never
-...
+---
 
