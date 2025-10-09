@@ -861,8 +861,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     }
 
   options->hash_fn = EVP_get_digestbyname (options->hash_alg);
-  if (!options->hash_fn ||
-      EVP_MD_is_a (options->hash_fn, options->hash_alg) != 1)
+  if (!options->hash_fn
+      || EVP_MD_is_a (options->hash_fn, options->hash_alg) != 1)
     {
       /* This check ensures that the passed hash algorithm is both a real
        * algorithm and that it is permitted by the current system policy. */
