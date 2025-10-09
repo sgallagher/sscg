@@ -694,7 +694,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       exit (0);
     }
 
-  verbosity = options->verbosity;
+  set_verbosity (options->verbosity);
 
   /* Process the Subject information */
 

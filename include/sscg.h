@@ -47,6 +47,8 @@
 #include <talloc.h>
 #include <stdint.h>
 
+#include "include/logging.h"
+
 #ifndef _
 #ifdef HAVE_GETTEXT
 #define _(STRING) gettext (STRING)
@@ -146,41 +148,6 @@
 #define SSCG_CERT_DEFAULT_MODE_HELP _ ("0644")
 #define SSCG_KEY_DEFAULT_MODE 0600
 #define SSCG_KEY_DEFAULT_MODE_HELP _ ("0600")
-
-
-enum sscg_verbosity
-{
-  SSCG_QUIET = -1,
-  SSCG_DEFAULT,
-  SSCG_VERBOSE,
-  SSCG_DEBUG
-};
-
-extern int verbosity;
-
-const char *sscg_get_verbosity_name (enum sscg_verbosity);
-
-#define SSCG_LOG(_level, _format, ...)                                        \
-  do                                                                          \
-    {                                                                         \
-      if (verbosity >= _level)                                                \
-        {                                                                     \
-          printf ("%s", sscg_get_verbosity_name (_level));                    \
-          printf (_format, ##__VA_ARGS__);                                    \
-        }                                                                     \
-    }                                                                         \
-  while (0)
-
-#define SSCG_ERROR(_format, ...)                                              \
-  do                                                                          \
-    {                                                                         \
-      if (verbosity > SSCG_QUIET)                                             \
-        {                                                                     \
-          fprintf (stderr, "ERROR: ");                                        \
-          fprintf (stderr, _format, ##__VA_ARGS__);                           \
-        }                                                                     \
-    }                                                                         \
-  while (0)
 
 
 enum sscg_file_type
