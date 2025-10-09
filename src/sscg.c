@@ -55,27 +55,6 @@
 #include "include/io_utils.h"
 
 
-int verbosity;
-
-
-const char *
-sscg_get_verbosity_name (enum sscg_verbosity type)
-{
-  switch (type)
-    {
-    case SSCG_DEFAULT:
-    case SSCG_VERBOSE: return "";
-
-    case SSCG_DEBUG: return "DEBUG: ";
-
-    default: break;
-    }
-
-  /* If it wasn't one of these, we have a bug */
-  return "Unknown Verbosity (bug):";
-}
-
-
 const char *
 sscg_get_file_type_name (enum sscg_file_type type)
 {
