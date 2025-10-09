@@ -106,9 +106,9 @@
         {                                                                     \
           /* Get information about error from OpenSSL */                      \
           unsigned long _ssl_error = ERR_get_error ();                        \
-          if ((ERR_GET_LIB (_ssl_error) == ERR_LIB_UI) &&                     \
-              ((ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_LARGE) ||      \
-               (ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_SMALL)))       \
+          if ((ERR_GET_LIB (_ssl_error) == ERR_LIB_UI)                        \
+              && ((ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_LARGE)      \
+                  || (ERR_GET_REASON (_ssl_error) == UI_R_RESULT_TOO_SMALL))) \
             {                                                                 \
               fprintf (                                                       \
                 stderr,                                                       \
@@ -199,8 +199,8 @@ enum sscg_file_type
 };
 
 #define SSCG_FILE_TYPE_KEYS                                                   \
-  ((1 << SSCG_FILE_TYPE_CA_KEY) | (1 << SSCG_FILE_TYPE_SVC_KEY) |             \
-   (1 << SSCG_FILE_TYPE_CLIENT_KEY))
+  ((1 << SSCG_FILE_TYPE_CA_KEY) | (1 << SSCG_FILE_TYPE_SVC_KEY)               \
+   | (1 << SSCG_FILE_TYPE_CLIENT_KEY))
 
 #define SSCG_FILE_TYPE_SVC_TYPES                                              \
   ((1 << SSCG_FILE_TYPE_SVC) | (1 << SSCG_FILE_TYPE_SVC_KEY))

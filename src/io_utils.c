@@ -244,8 +244,8 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
 
   /* Read up to one more character than the MAX_PW_LEN */
   for (offset = 0;
-       (i = BIO_read (pwdbio, tpass + offset, MAX_PW_LEN + 1 - offset)) > 0 &&
-       offset < (MAX_PW_LEN + 1);
+       (i = BIO_read (pwdbio, tpass + offset, MAX_PW_LEN + 1 - offset)) > 0
+       && offset < (MAX_PW_LEN + 1);
        offset += i)
     ;
 
@@ -457,8 +457,8 @@ io_utils_validate (struct sscg_stream **streams)
         }
 
       /* The CRL file may only contain certificate revocations */
-      if ((stream->filetypes & (1 << SSCG_FILE_TYPE_CRL)) &&
-          (stream->filetypes ^ (1 << SSCG_FILE_TYPE_CRL)))
+      if ((stream->filetypes & (1 << SSCG_FILE_TYPE_CRL))
+          && (stream->filetypes ^ (1 << SSCG_FILE_TYPE_CRL)))
         {
           ret = IO_UTILS_CRL_NON_EXCLUSIVE;
           goto done;
@@ -470,8 +470,8 @@ io_utils_validate (struct sscg_stream **streams)
   /* If the public or private key is present for the service cert, the other
    * must be present also
    */
-  if ((allbits & SSCG_FILE_TYPE_SVC_TYPES) &&
-      ((allbits & SSCG_FILE_TYPE_SVC_TYPES) != SSCG_FILE_TYPE_SVC_TYPES))
+  if ((allbits & SSCG_FILE_TYPE_SVC_TYPES)
+      && ((allbits & SSCG_FILE_TYPE_SVC_TYPES) != SSCG_FILE_TYPE_SVC_TYPES))
     {
       ret = IO_UTILS_SVC_UNMATCHED;
       goto done;
@@ -480,8 +480,9 @@ io_utils_validate (struct sscg_stream **streams)
   /* If the public or private key is present for the client cert, the other
    * must be present also
    */
-  if ((allbits & SSCG_FILE_TYPE_CLIENT_TYPES) &&
-      ((allbits & SSCG_FILE_TYPE_CLIENT_TYPES) != SSCG_FILE_TYPE_CLIENT_TYPES))
+  if ((allbits & SSCG_FILE_TYPE_CLIENT_TYPES)
+      && ((allbits & SSCG_FILE_TYPE_CLIENT_TYPES)
+          != SSCG_FILE_TYPE_CLIENT_TYPES))
     {
       ret = IO_UTILS_CLIENT_UNMATCHED;
       goto done;
@@ -490,8 +491,8 @@ io_utils_validate (struct sscg_stream **streams)
   /* If the private key is present for the CA cert, the public key must be
    * present also
    */
-  if ((allbits & (1 << SSCG_FILE_TYPE_CA_KEY)) &&
-      !(allbits & (1 << SSCG_FILE_TYPE_CA)))
+  if ((allbits & (1 << SSCG_FILE_TYPE_CA_KEY))
+      && !(allbits & (1 << SSCG_FILE_TYPE_CA)))
     {
       ret = IO_UTILS_CA_UNMATCHED;
       goto done;
