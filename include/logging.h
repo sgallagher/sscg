@@ -65,4 +65,5 @@ const char *sscg_get_verbosity_name (enum sscg_verbosity);
     }                                                                         \
   while (0)
 
-void set_verbosity (int verbosity);
+void
+set_verbosity (int verbosity);
