@@ -68,7 +68,7 @@ get_security_level (void)
 static int
 set_default_options (struct sscg_options *opts)
 {
-  int security_level = get_security_level ();
+  opts->system_security_level = get_security_level ();
 
   opts->ca_mode = SSCG_CERT_DEFAULT_MODE;
   opts->ca_key_mode = SSCG_KEY_DEFAULT_MODE;
@@ -88,31 +88,47 @@ set_default_options (struct sscg_options *opts)
   opts->dhparams_group = talloc_strdup (opts, "ffdhe4096");
   opts->dhparams_generator = 2;
 
+  opts->key_type = talloc_strdup (opts, "rsa");
+
   /* Select the default key strength based on the system security level
    * See:
    * https://docs.openssl.org/master/man3/SSL_CTX_set_security_level/#default-callback-behaviour
+   * and
+   * https://docs.openssl.org/master/man7/EVP_PKEY-ML-DSA/#description
    * for the specification of the minimums.
    */
-  switch (security_level)
+
+  /* Security level 2 and below permits lower RSA key-strengths, but SSCG
+  * will set a minimum of 2048 bits and the sha256 hash algorithm.
+  */
+  opts->hash_alg = talloc_strdup (opts, "sha256");
+  opts->rsa_key_strength = 2048;
+
+  /* The minimum EC curve we support is prime256v1. */
+  opts->ec_curve = talloc_strdup (opts, "prime256v1");
+
+  /* We will not support ML-DSA keys below NIST level 2. */
+  opts->mldsa_nist_level = 2;
+
+  switch (opts->system_security_level)
     {
     case 0:
     case 1:
     case 2:
-      /* Security level 2 and below permits lower key-strengths, but SSCG
-       * will set a minimum of 2048 bits and the sha256 hash algorithm.
-       */
-      opts->hash_alg = talloc_strdup (opts, "sha256");
-      opts->rsa_key_strength = 2048;
+      /* No change from defaults below case 3 */
       break;
 
     case 3:
-      opts->hash_alg = talloc_strdup (opts, "sha256");
       opts->rsa_key_strength = 3072;
+      opts->mldsa_nist_level = 3;
+      opts->ec_curve = talloc_strdup (opts, "secp384r1");
       break;
 
     case 4:
       opts->hash_alg = talloc_strdup (opts, "sha384");
       opts->rsa_key_strength = 7680;
+      opts->mldsa_nist_level = 3;
+      opts->ec_curve = talloc_strdup (opts, "secp384r1");
       break;
 
     default:
@@ -121,12 +137,14 @@ set_default_options (struct sscg_options *opts)
         stderr,
         _ ("Unknown system security level %d. Defaulting to highest-known "
            "level.\n"),
-        security_level);
+        opts->system_security_level);
       /* Fall through */
 
     case 5:
       opts->hash_alg = talloc_strdup (opts, "sha512");
       opts->rsa_key_strength = 15360;
+      opts->mldsa_nist_level = 5;
+      opts->ec_curve = talloc_strdup (opts, "secp521r1");
       break;
     }
 
@@ -147,6 +165,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   poptContext pc;
   char *minimum_rsa_key_strength_help = NULL;
   char *named_groups_help = NULL;
+  char *key_type = NULL;
+  char *ec_curve = NULL;
 
   char *country = NULL;
   char *state = NULL;
@@ -342,13 +362,55 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     },
 
     {
+      "key-type",
+      '\0',
+      POPT_ARG_STRING,
+      &key_type,
+      0,
+      _ ("Type of key to use for the certificate private keys. (default: "
+         "rsa)"),
+#ifdef HAVE_ML_DSA
+      _ ("{rsa,ecdsa,mldsa}"),
+#else
+      _ ("{rsa,ecdsa}"),
+#endif /* HAVE_ML_DSA */
+    },
+
+    {
       "key-strength",
       '\0',
       POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
       &options->rsa_key_strength,
       0,
-      _ ("Strength of the certificate private keys in bits."),
-      minimum_rsa_key_strength_help },
+      _ ("Strength of the certificate private keys in bits. "
+         "This argument is only valid if --key-type is set to rsa."),
+      minimum_rsa_key_strength_help
+    },
+
+    {
+      "ec-curve",
+      '\0',
+      POPT_ARG_STRING,
+      &ec_curve,
+      0,
+      _ ("EC curve to use for the certificate private keys. "
+         "This argument is only valid if --key-type is set to ecdsa."),
+      _ ("{secp224r1,secp256r1,secp384r1,secp521r1}"),
+    },
+
+#ifdef HAVE_ML_DSA
+    {
+      "mldsa-nist-level",
+      '\0',
+      POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
+      &options->mldsa_nist_level,
+      0,
+      _ ("NIST level to use for the ML-DSA key. "
+         "This argument is only valid if --key-type is set to mldsa."),
+      _ ("{2,3,5}"),
+    },
+#endif /* HAVE_ML_DSA */
+
     {
       "hash-alg",
       '\0',
@@ -841,11 +903,47 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   /* Add a NULL terminator to the end */
   options->subject_alt_names[i + 1] = NULL;
 
-  if (options->rsa_key_strength < options->minimum_rsa_key_strength)
+  if (key_type)
     {
-      fprintf (stderr,
-               _ ("Key strength must be at least %d bits.\n"),
-               options->minimum_rsa_key_strength);
+      talloc_free (options->key_type);
+      options->key_type = talloc_strdup (options, key_type);
+    }
+
+  if (strcmp (options->key_type, "rsa") == 0)
+    {
+      if (options->rsa_key_strength < options->minimum_rsa_key_strength)
+        {
+          fprintf (stderr,
+                   _ ("Key strength must be at least %d bits.\n"),
+                   options->minimum_rsa_key_strength);
+          ret = EINVAL;
+          goto done;
+        }
+    }
+  else if (strcmp (options->key_type, "ecdsa") == 0)
+    {
+      if (ec_curve)
+        {
+          talloc_free (options->ec_curve);
+          options->ec_curve = talloc_strdup (options, ec_curve);
+        }
+    }
+#ifdef HAVE_ML_DSA
+  else if (strcmp (options->key_type, "mldsa") == 0)
+    {
+      if (options->mldsa_nist_level < options->system_security_level)
+        {
+          fprintf (stderr,
+                   _ ("ML-DSA NIST level must be at least %d.\n"),
+                   options->system_security_level);
+          ret = EINVAL;
+          goto done;
+        }
+    }
+#endif /* HAVE_ML_DSA */
+  else
+    {
+      SSCG_ERROR ("Unknown key type: %s\n", options->key_type);
       ret = EINVAL;
       goto done;
     }
