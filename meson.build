@@ -277,6 +277,11 @@ test_rsa_cert_validity = find_program(
     required: true,
 )
 
+test_ecdsa_cert_validity = find_program(
+    'test/test_ecdsa_cert_validity.sh',
+    required: true,
+)
+
 test_dhparams_creation = find_program(
     'test/test_dhparams_creation.sh',
     required: true,
@@ -366,6 +371,42 @@ foreach hash_alg : hash_algs
                 depends: sscg,
                 timeout: key_strength / 32,
                 should_fail: true,
+            )
+        endforeach
+    endforeach
+endforeach
+
+# Test ECDSA certificate validity with various curves and hash algorithms
+ec_curves = [
+    'secp224r1',
+    'secp256k1',
+    'secp384r1',
+    'secp521r1',
+    'prime256v1',
+    'brainpoolP256r1',
+    'brainpoolP256t1',
+    'brainpoolP320r1',
+    'brainpoolP320t1',
+    'brainpoolP384r1',
+    'brainpoolP384t1',
+    'brainpoolP512r1',
+    'brainpoolP512t1',
+]
+
+foreach hash_alg : hash_algs
+    foreach cipher_alg : cipher_algs
+        foreach ec_curve : ec_curves
+            test(
+                'test_ecdsa_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + ec_curve,
+                test_ecdsa_cert_validity,
+                args: [
+                    '--hash-alg', hash_alg,
+                    '--cipher-alg', cipher_alg,
+                    '--ec-curve', ec_curve,
+                ],
+                env: test_env,
+                depends: sscg,
+                timeout: 120,
             )
         endforeach
     endforeach
