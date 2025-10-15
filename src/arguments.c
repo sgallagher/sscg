@@ -958,29 +958,35 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       goto done;
     }
 
-  options->hash_fn = EVP_get_digestbyname (options->hash_alg);
-  if (!options->hash_fn
-      || EVP_MD_is_a (options->hash_fn, options->hash_alg) != 1)
+  if (strcmp (options->key_type, "mldsa") == 0)
     {
-      /* This check ensures that the passed hash algorithm is both a real
-       * algorithm and that it is permitted by the current system policy. */
-      fprintf (stderr, _ ("Unsupported hashing algorithm."));
-      ret = EINVAL;
-      goto done;
+      /* ML-DSA keys do not use a hash algorithm */
+      options->hash_alg = NULL;
+      options->hash_fn = NULL;
     }
+  else
+    {
+      options->hash_fn = EVP_get_digestbyname (options->hash_alg);
+      if (!options->hash_fn
+          || EVP_MD_is_a (options->hash_fn, options->hash_alg) != 1)
+        {
+          /* This check ensures that the passed hash algorithm is both a real
+          * algorithm and that it is permitted by the current system policy. */
+          fprintf (stderr, _ ("Unsupported hashing algorithm.\n"));
+          ret = EINVAL;
+          goto done;
+        }
+    }
+  SSCG_LOG (SSCG_DEBUG,
+            "Hash algorithm: %s, %p\n",
+            options->hash_alg,
+            options->hash_fn);
 
   if (!is_valid_named_group (options->dhparams_group))
     {
       fprintf (stderr, _ ("Unknown Diffie Hellman finite field group.\n"));
       fprintf (
         stderr, _ ("Valid groups are: %s.\n"), valid_dh_group_names (tmp_ctx));
-      ret = EINVAL;
-      goto done;
-    }
-
-  if (!options->hash_fn)
-    {
-      fprintf (stderr, _ ("Unsupported hashing algorithm."));
       ret = EINVAL;
       goto done;
     }
