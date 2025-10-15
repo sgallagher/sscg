@@ -88,7 +88,6 @@ int
 main (int argc, const char **argv)
 {
   int ret, sret;
-  int bits;
   struct sscg_options *options;
   bool build_client_cert = false;
   char *dhparams_file = NULL;
@@ -216,11 +215,9 @@ main (int argc, const char **argv)
   /* First generate the private CA key */
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, _ ("Generating RSA key for private CA.\n"));
+      fprintf (stdout, _ ("Generating keypair for private CA.\n"));
     }
-  /* Use the larger of the minimum strength or the user-specified strength */
-  bits = MAX (SSCG_RSA_CA_KEY_MIN_STRENGTH, options->rsa_key_strength);
-  ret = sscg_generate_rsa_key (main_ctx, bits, &cakey);
+  ret = sscg_generate_keypair (main_ctx, options, &cakey);
   CHECK_OK (ret);
 
 
@@ -228,13 +225,13 @@ main (int argc, const char **argv)
   CHECK_OK (ret);
 
 
-  /* Generate an RSA keypair for this certificate */
+  /* Generate a keypair for this certificate */
   if (options->verbosity >= SSCG_VERBOSE)
     {
-      fprintf (stdout, "Generating RSA key for certificate.\n");
+      fprintf (stdout, "Generating keypair for certificate.\n");
     }
 
-  ret = sscg_generate_rsa_key (main_ctx, options->rsa_key_strength, &svc_key);
+  ret = sscg_generate_keypair (main_ctx, options, &svc_key);
   CHECK_OK (ret);
 
   /* Generate the service certificate and sign it with the private CA */
@@ -253,8 +250,7 @@ main (int argc, const char **argv)
   build_client_cert = !!(GET_BIO (SSCG_FILE_TYPE_CLIENT));
   if (build_client_cert)
     {
-      ret = sscg_generate_rsa_key (
-        main_ctx, options->rsa_key_strength, &client_key);
+      ret = sscg_generate_keypair (main_ctx, options, &client_key);
       CHECK_OK (ret);
 
       ret = create_cert (main_ctx,
