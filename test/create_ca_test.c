@@ -115,14 +115,14 @@ verify_subject_alt_names (struct sscg_x509_cert *cert)
                       ip_data[2],
                       ip_data[3]);
 
-              if (ip_data[0] == 192 && ip_data[1] == 168 && ip_data[2] == 1 &&
-                  ip_data[3] == 100)
+              if (ip_data[0] == 192 && ip_data[1] == 168 && ip_data[2] == 1
+                  && ip_data[3] == 100)
                 found_ip4_1 = 1;
-              else if (ip_data[0] == 10 && ip_data[1] == 0 &&
-                       ip_data[2] == 0 && ip_data[3] == 1)
+              else if (ip_data[0] == 10 && ip_data[1] == 0 && ip_data[2] == 0
+                       && ip_data[3] == 1)
                 found_ip4_2 = 1;
-              else if (ip_data[0] == 203 && ip_data[1] == 0 &&
-                       ip_data[2] == 113 && ip_data[3] == 0)
+              else if (ip_data[0] == 203 && ip_data[1] == 0
+                       && ip_data[2] == 113 && ip_data[3] == 0)
                 found_ip4_netmask = 1;
             }
           else if (ASN1_STRING_length (san_str) == 16) /* IPv6 */
@@ -138,24 +138,24 @@ verify_subject_alt_names (struct sscg_x509_cert *cert)
               printf ("\n");
 
               /* Check for 2001:db8::1 */
-              if (ip_data[0] == 0x20 && ip_data[1] == 0x01 &&
-                  ip_data[2] == 0x0d && ip_data[3] == 0xb8 &&
-                  ip_data[4] == 0x00 && ip_data[5] == 0x00 &&
-                  ip_data[6] == 0x00 && ip_data[7] == 0x00 &&
-                  ip_data[8] == 0x00 && ip_data[9] == 0x00 &&
-                  ip_data[10] == 0x00 && ip_data[11] == 0x00 &&
-                  ip_data[12] == 0x00 && ip_data[13] == 0x00 &&
-                  ip_data[14] == 0x00 && ip_data[15] == 0x01)
+              if (ip_data[0] == 0x20 && ip_data[1] == 0x01
+                  && ip_data[2] == 0x0d && ip_data[3] == 0xb8
+                  && ip_data[4] == 0x00 && ip_data[5] == 0x00
+                  && ip_data[6] == 0x00 && ip_data[7] == 0x00
+                  && ip_data[8] == 0x00 && ip_data[9] == 0x00
+                  && ip_data[10] == 0x00 && ip_data[11] == 0x00
+                  && ip_data[12] == 0x00 && ip_data[13] == 0x00
+                  && ip_data[14] == 0x00 && ip_data[15] == 0x01)
                 found_ip6 = 1;
               /* Check for 2001:db8:85a3:: (netmask stripped) */
-              else if (ip_data[0] == 0x20 && ip_data[1] == 0x01 &&
-                       ip_data[2] == 0x0d && ip_data[3] == 0xb8 &&
-                       ip_data[4] == 0x85 && ip_data[5] == 0xa3 &&
-                       ip_data[6] == 0x00 && ip_data[7] == 0x00 &&
-                       ip_data[8] == 0x00 && ip_data[9] == 0x00 &&
-                       ip_data[10] == 0x00 && ip_data[11] == 0x00 &&
-                       ip_data[12] == 0x00 && ip_data[13] == 0x00 &&
-                       ip_data[14] == 0x00 && ip_data[15] == 0x00)
+              else if (ip_data[0] == 0x20 && ip_data[1] == 0x01
+                       && ip_data[2] == 0x0d && ip_data[3] == 0xb8
+                       && ip_data[4] == 0x85 && ip_data[5] == 0xa3
+                       && ip_data[6] == 0x00 && ip_data[7] == 0x00
+                       && ip_data[8] == 0x00 && ip_data[9] == 0x00
+                       && ip_data[10] == 0x00 && ip_data[11] == 0x00
+                       && ip_data[12] == 0x00 && ip_data[13] == 0x00
+                       && ip_data[14] == 0x00 && ip_data[15] == 0x00)
                 found_ip6_netmask = 1;
             }
           break;
@@ -509,8 +509,8 @@ test_ip_netmask_handling (struct sscg_x509_cert *cert)
               const unsigned char *ip_data = ASN1_STRING_get0_data (san_str);
 
               /* Check for 203.0.113.0 (from original 203.0.113.0/24) */
-              if (ip_data[0] == 203 && ip_data[1] == 0 && ip_data[2] == 113 &&
-                  ip_data[3] == 0)
+              if (ip_data[0] == 203 && ip_data[1] == 0 && ip_data[2] == 113
+                  && ip_data[3] == 0)
                 {
                   printf (
                     "      ✓ IPv4 netmask stripped: 203.0.113.0/24 → "
@@ -523,14 +523,14 @@ test_ip_netmask_handling (struct sscg_x509_cert *cert)
               const unsigned char *ip_data = ASN1_STRING_get0_data (san_str);
 
               /* Check for 2001:db8:85a3:: (from original 2001:db8:85a3::/64) */
-              if (ip_data[0] == 0x20 && ip_data[1] == 0x01 &&
-                  ip_data[2] == 0x0d && ip_data[3] == 0xb8 &&
-                  ip_data[4] == 0x85 && ip_data[5] == 0xa3 &&
-                  ip_data[6] == 0x00 && ip_data[7] == 0x00 &&
-                  ip_data[8] == 0x00 && ip_data[9] == 0x00 &&
-                  ip_data[10] == 0x00 && ip_data[11] == 0x00 &&
-                  ip_data[12] == 0x00 && ip_data[13] == 0x00 &&
-                  ip_data[14] == 0x00 && ip_data[15] == 0x00)
+              if (ip_data[0] == 0x20 && ip_data[1] == 0x01
+                  && ip_data[2] == 0x0d && ip_data[3] == 0xb8
+                  && ip_data[4] == 0x85 && ip_data[5] == 0xa3
+                  && ip_data[6] == 0x00 && ip_data[7] == 0x00
+                  && ip_data[8] == 0x00 && ip_data[9] == 0x00
+                  && ip_data[10] == 0x00 && ip_data[11] == 0x00
+                  && ip_data[12] == 0x00 && ip_data[13] == 0x00
+                  && ip_data[14] == 0x00 && ip_data[15] == 0x00)
                 {
                   printf (
                     "      ✓ IPv6 netmask stripped: 2001:db8:85a3::/64 → "
@@ -839,8 +839,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
                           /* Skip the "IP:" prefix for comparison since ip_start doesn't include it */
                           char *constraint_without_prefix =
                             expected_constraint + 3; /* Skip "IP:" */
-                          if (strcmp (ip_start, constraint_without_prefix) ==
-                              0)
+                          if (strcmp (ip_start, constraint_without_prefix)
+                              == 0)
                             {
                               found_constraints[j + 1] = 1;
                             }
@@ -870,9 +870,9 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
           if (!found_constraints[j + 1])
             {
               /* Only report missing DNS and IP constraints, skip email/URI */
-              if (!strchr (expected_san_list[j], ':') ||
-                  strncmp (expected_san_list[j], "DNS:", 4) == 0 ||
-                  strncmp (expected_san_list[j], "IP:", 3) == 0)
+              if (!strchr (expected_san_list[j], ':')
+                  || strncmp (expected_san_list[j], "DNS:", 4) == 0
+                  || strncmp (expected_san_list[j], "IP:", 3) == 0)
                 {
                   printf ("      MISSING: Constraint for '%s' not found.\n",
                           expected_san_list[j]);

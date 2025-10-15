@@ -317,8 +317,8 @@ verify_server_certificate_extensions (struct sscg_x509_cert *cert)
 
   /* Check for Key Usage extension */
   int key_usage = X509_get_key_usage (x509);
-  if (!(key_usage & X509v3_KU_DIGITAL_SIGNATURE) ||
-      !(key_usage & X509v3_KU_KEY_ENCIPHERMENT))
+  if (!(key_usage & X509v3_KU_DIGITAL_SIGNATURE)
+      || !(key_usage & X509v3_KU_KEY_ENCIPHERMENT))
     {
       printf ("Server certificate missing required key usage extensions.\n");
       return EINVAL;
