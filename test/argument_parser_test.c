@@ -46,7 +46,7 @@ main (int argc, const char **argv)
   ret = sscg_process_arguments (main_ctx, argc, argv, &options);
   CHECK_OK (ret);
 
-  printf("Verbosity: %d\n", options->global_options->verbosity);
+  printf ("Verbosity: %d\n", options->global_options->verbosity);
 
   ret = EOK;
 

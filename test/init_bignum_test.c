@@ -144,8 +144,8 @@ main (int argc, char **argv)
     goto memory_test_failed;
 
   /* Verify values are correct */
-  if (BN_get_word (bn1->bn) != 100 || BN_get_word (bn2->bn) != 200 ||
-      BN_get_word (bn3->bn) != 300)
+  if (BN_get_word (bn1->bn) != 100 || BN_get_word (bn2->bn) != 200
+      || BN_get_word (bn3->bn) != 300)
     {
       goto memory_test_failed;
     }
@@ -170,10 +170,9 @@ main (int argc, char **argv)
     goto range_test_failed;
 
   /* Verify values are correct */
-  if (BN_get_word (bn_small->bn) != 1 ||
-      BN_get_word (bn_medium->bn) != 65536 ||
-      (BN_get_word (bn_large->bn) != 4294967295UL &&
-       BN_get_word (bn_large->bn) != 0xffffffffL))
+  if (BN_get_word (bn_small->bn) != 1 || BN_get_word (bn_medium->bn) != 65536
+      || (BN_get_word (bn_large->bn) != 4294967295UL
+          && BN_get_word (bn_large->bn) != 0xffffffffL))
     {
       goto range_test_failed;
     }

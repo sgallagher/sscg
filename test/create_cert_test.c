@@ -61,7 +61,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
   if (ext_idx < 0)
     {
       printf (
-        "      ERROR: Name Constraints extension not found in CA certificate.\n");
+        "      ERROR: Name Constraints extension not found in CA "
+        "certificate.\n");
       return EINVAL;
     }
 
@@ -108,7 +109,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
   ext_str = malloc (ext_len + 1);
   if (!ext_str)
     {
-      printf ("      ERROR: Failed to allocate memory for extension string.\n");
+      printf (
+        "      ERROR: Failed to allocate memory for extension string.\n");
       BIO_free (bio);
       return EINVAL;
     }
@@ -315,8 +317,8 @@ verify_server_certificate_extensions (struct sscg_x509_cert *cert)
 
   /* Check for Key Usage extension */
   int key_usage = X509_get_key_usage (x509);
-  if (!(key_usage & X509v3_KU_DIGITAL_SIGNATURE) ||
-      !(key_usage & X509v3_KU_KEY_ENCIPHERMENT))
+  if (!(key_usage & X509v3_KU_DIGITAL_SIGNATURE)
+      || !(key_usage & X509v3_KU_KEY_ENCIPHERMENT))
     {
       printf ("Server certificate missing required key usage extensions.\n");
       return EINVAL;

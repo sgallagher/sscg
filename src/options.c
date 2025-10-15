@@ -110,31 +110,30 @@ sscg_process_arguments (TALLOC_CTX *mem_ctx,
 
   /* First parse the global options
    */
-  popt_ctx =
-    poptGetContext (argv[0], argc, (const char **)argv, global_options_table, 0);
+  popt_ctx = poptGetContext (
+    argv[0], argc, (const char **)argv, global_options_table, 0);
 
-Try poptArgAddTable here
-  if (!popt_ctx)
-  /* poptGetNextOpt has a poorly-documented feature where it will stop
+  Try poptArgAddTable here if (!popt_ctx)
+    /* poptGetNextOpt has a poorly-documented feature where it will stop
    * processing when it encounters a double-dash option ('--'), which is
    * perfect for our needs. We'll read until the first double-dash option
    * (or the end of the arguments) and treat this as the first coterie
    * of options.
    */
-  while ((opt = poptGetNextOpt (popt_ctx)) > 0)
-    {
-      switch (opt)
-        {
-        default:
-          fprintf (stderr,
-                   _ ("\nInvalid option %s: %s\n\n"),
-                   poptBadOption (popt_ctx, 0),
-                   poptStrerror (opt));
-          poptPrintUsage (popt_ctx, stderr, 0);
-          ret = EINVAL;
-          goto done;
-        }
-    }
+    while ((opt = poptGetNextOpt (popt_ctx)) > 0)
+  {
+    switch (opt)
+      {
+      default:
+        fprintf (stderr,
+                 _ ("\nInvalid option %s: %s\n\n"),
+                 poptBadOption (popt_ctx, 0),
+                 poptStrerror (opt));
+        poptPrintUsage (popt_ctx, stderr, 0);
+        ret = EINVAL;
+        goto done;
+      }
+  }
 
   set_verbosity (opts->global_options->verbosity);
 
