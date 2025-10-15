@@ -272,8 +272,8 @@ test_env.set('LC_ALL', 'C')
 test_env.set ('MESON_SOURCE_ROOT', meson.current_source_dir())
 test_env.set ('MESON_BUILD_ROOT', meson.current_build_dir())
 
-test_cert_validity = find_program(
-    'test/test_cert_validity.sh',
+test_rsa_cert_validity = find_program(
+    'test/test_rsa_cert_validity.sh',
     required: true,
 )
 
@@ -315,8 +315,8 @@ foreach hash_alg : hash_algs
     foreach cipher_alg : cipher_algs
         foreach key_strength : key_strengths
             test(
-                'test_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + key_strength.to_string(),
-                test_cert_validity,
+                'test_rsa_cert_validity_' + hash_alg + '_' + cipher_alg + '_' + key_strength.to_string(),
+                test_rsa_cert_validity,
                 args: [
                     '--hash-alg', hash_alg,
                     '--cipher-alg', cipher_alg,
@@ -336,7 +336,7 @@ foreach hash_alg : bad_algs
         foreach key_strength : key_strengths
             test(
                 'test_cert_invalidity_bad_alg_' + hash_alg + '_' + cipher_alg + '_' + key_strength.to_string(),
-                test_cert_validity,
+                test_rsa_cert_validity,
                 args: [
                     '--hash-alg', hash_alg,
                     '--cipher-alg', cipher_alg,
@@ -356,7 +356,7 @@ foreach hash_alg : hash_algs
         foreach key_strength : bad_strengths
             test(
                 'test_cert_invalidity_bad_strength_' + hash_alg + '_' + cipher_alg + '_' + key_strength.to_string(),
-                test_cert_validity,
+                test_rsa_cert_validity,
                 args: [
                     '--hash-alg', hash_alg,
                     '--cipher-alg', cipher_alg,
