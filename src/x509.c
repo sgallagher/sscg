@@ -106,14 +106,8 @@ sscg_cert_info_new (TALLOC_CTX *mem_ctx, const EVP_MD *hash_fn)
   certinfo = talloc_zero (mem_ctx, struct sscg_cert_info);
   CHECK_MEM (certinfo);
 
-  if (hash_fn)
-    {
-      certinfo->hash_fn = hash_fn;
-    }
-  else
-    {
-      certinfo->hash_fn = EVP_sha256 ();
-    }
+  SSCG_LOG (SSCG_DEBUG, "Creating certinfo with hash function %p\n", hash_fn);
+  certinfo->hash_fn = hash_fn;
 
   /* Allocate space for the stack of extensions */
   certinfo->extensions = sk_X509_EXTENSION_new_null ();
@@ -350,6 +344,8 @@ sscg_x509v3_csr_finalize (struct sscg_cert_info *certinfo,
   CHECK_SSL (sslret, X509_REQ_add_extensions);
 
   /* Set the private key */
+  SSCG_LOG (
+    SSCG_DEBUG, "Signing CSR with hash function %p\n", certinfo->hash_fn);
   sslret = X509_REQ_sign (csr->x509_req, spkey->evp_pkey, certinfo->hash_fn);
   if (sslret <= 0)
     {
