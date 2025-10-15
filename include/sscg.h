@@ -269,6 +269,8 @@ struct sscg_options
 enum sscg_cert_type
 {
   SSCG_CERT_TYPE_UNKNOWN = -1,
+
+  SSCG_CERT_TYPE_CA,
   SSCG_CERT_TYPE_SERVER,
   SSCG_CERT_TYPE_CLIENT,
 

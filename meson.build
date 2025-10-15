@@ -96,6 +96,7 @@ sscg_lib_srcs = [
     'src/logging.c',
     'src/io_utils.c',
     'src/key.c',
+    'src/options.c',
     'src/x509.c',
 ]
 
@@ -107,6 +108,7 @@ sscg_lib_hdrs = [
     'include/logging.h',
     'include/io_utils.h',
     'include/key.h',
+    'include/options.h',
     'include/sscg.h',
     'include/x509.h',
 ]
@@ -222,6 +224,15 @@ init_bignum_test = executable(
     install : false,
 )
 test('init_bignum_test', init_bignum_test)
+
+argument_parser_test = executable(
+    'argument_parser_test',
+    'test/argument_parser_test.c',
+    link_with : sscg_lib,
+    dependencies: [ popt, talloc ],
+    install : false,
+)
+test('argument_parser_test', argument_parser_test)
 
 
 # Test generating 512-bit, 1024-bit and 2048-bit and 4096 DH params with
