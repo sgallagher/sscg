@@ -154,3 +154,33 @@ done:
 }
 #endif /* HAVE_ML_DSA */
 
+
+int
+sscg_generate_keypair (TALLOC_CTX *mem_ctx,
+                       struct sscg_options *options,
+                       struct sscg_evp_pkey **_key)
+{
+  int ret;
+
+  if (strcmp (options->key_type, "rsa") == 0)
+    {
+      ret = sscg_generate_rsa_key (mem_ctx, options->rsa_key_strength, _key);
+    }
+  else if (strcmp (options->key_type, "ecdsa") == 0)
+    {
+      ret = sscg_generate_ec_key (mem_ctx, options->ec_curve, _key);
+    }
+#ifdef HAVE_ML_DSA
+  else if (strcmp (options->key_type, "mldsa") == 0)
+    {
+      ret = sscg_generate_mldsa_key (mem_ctx, options->mldsa_nist_level, _key);
+    }
+#endif /* HAVE_ML_DSA */
+  else
+    {
+      SSCG_ERROR ("Unknown key type: %s\n", options->key_type);
+      ret = EINVAL;
+    }
+
+  return ret;
+}

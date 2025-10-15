@@ -64,4 +64,9 @@ sscg_generate_mldsa_key (TALLOC_CTX *mem_ctx,
                          int nist_level,
                          struct sscg_evp_pkey **_key);
 
+int
+sscg_generate_keypair (TALLOC_CTX *mem_ctx,
+                       struct sscg_options *options,
+                       struct sscg_evp_pkey **_key);
+
 #endif /* _SSCG_KEY_H */
