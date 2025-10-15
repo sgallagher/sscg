@@ -960,7 +960,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 
   if (strcmp (options->key_type, "mldsa") == 0)
     {
-      /* ML-DSA keys do not use a hash algorithm */
+      /* ML-DSA keys do not use a hash algorithm.
+       * If the user specified --hash-alg, it is ignored. */
       options->hash_alg = NULL;
       options->hash_fn = NULL;
     }

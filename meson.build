@@ -282,6 +282,11 @@ test_ecdsa_cert_validity = find_program(
     required: true,
 )
 
+test_mldsa_cert_validity = find_program(
+    'test/test_mldsa_cert_validity.sh',
+    required: true,
+)
+
 test_dhparams_creation = find_program(
     'test/test_dhparams_creation.sh',
     required: true,
@@ -411,6 +416,51 @@ foreach hash_alg : hash_algs
         endforeach
     endforeach
 endforeach
+
+# Test ML-DSA certificate validity with various NIST levels and hash algorithms
+if has_ml_dsa
+mldsa_nist_levels = [
+    2,
+    3,
+    5,
+]
+
+foreach cipher_alg : cipher_algs
+    foreach nist_level : mldsa_nist_levels
+        test(
+            'test_mldsa_cert_validity_' + cipher_alg + '_nist' + nist_level.to_string(),
+            test_mldsa_cert_validity,
+            args: [
+                '--cipher-alg', cipher_alg,
+                '--mldsa-nist-level', nist_level.to_string(),
+            ],
+            env: test_env,
+            depends: sscg,
+            timeout: 120,
+        )
+    endforeach
+endforeach
+
+# Test that ML-DSA ignores explicit hash-alg specification
+foreach hash_alg : hash_algs
+    foreach cipher_alg : cipher_algs
+        foreach nist_level : mldsa_nist_levels
+            test(
+                'test_mldsa_cert_validity_with_ignored_hash_' + hash_alg + '_' + cipher_alg + '_nist' + nist_level.to_string(),
+                test_mldsa_cert_validity,
+                args: [
+                    '--hash-alg', hash_alg,
+                    '--cipher-alg', cipher_alg,
+                    '--mldsa-nist-level', nist_level.to_string(),
+                ],
+                env: test_env,
+                depends: sscg,
+                timeout: 120,
+            )
+        endforeach
+    endforeach
+endforeach
+endif
 
 # Test DH parameters creation behavior
 test(
