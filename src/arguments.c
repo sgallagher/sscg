@@ -683,7 +683,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       &options->dhparams_file,
       0,
       _("A file to contain a set of Diffie-Hellman parameters. "
-        "(Default: \"./dhparams.pem\")"),
+        "(Default: not created)"),
       NULL
     },
 
@@ -693,7 +693,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       POPT_ARG_NONE,
       &options->skip_dhparams,
       0,
-      _ ("Do not create the dhparams file"),
+      _ ("Deprecated: Retained for backwards compatibility. To be removed in SSCG 5.0."),
       NULL
     },
 
