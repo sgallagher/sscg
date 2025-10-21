@@ -42,6 +42,10 @@
 # just warn and ignore it if it was not (returning 0). However, if it is
 # explicitly requested on the command-line and cannot be written to that
 # location, it should fail with an error code.
+#
+# Updated 2025-10-21: SSCG 4.0 no longer creates the dhparams file by default.
+# It should not attempt to create it unless explicitly requested using the
+# --dhparams-file option.
 
 set -e
 
@@ -86,9 +90,9 @@ function run_test {
     local expected_file="$6"
     local should_create_file="$7"
     local output_dir="$8"
-    
+
     echo "Test $test_num: $description"
-    
+
     pushd "$work_dir" >/dev/null
 
     # Check if the expected file exists before running sscg
@@ -102,7 +106,7 @@ function run_test {
     if [ -z "$output_dir" ]; then
         output_dir="."
     fi
-    
+
     # Run sscg with the specified arguments
     local cmd_args=(
         "${MESON_BUILD_ROOT}/sscg"
@@ -110,22 +114,22 @@ function run_test {
         --cert-file "${output_dir}/service.pem"
         --cert-key-file "${output_dir}/service-key.pem"
     )
-    
+
     if [ -n "$dhparams_output_file" ]; then
         cmd_args+=("--dhparams-file=$dhparams_output_file")
     fi
-    
+
     local exit_code=0
     "${cmd_args[@]}" >/dev/null 2>&1 || exit_code=$?
-    
+
     local test_passed=true
-    
+
     # Check exit code
     if [ "$exit_code" -ne "$expected_exit_code" ]; then
         echo "  FAIL: Expected exit code $expected_exit_code, got $exit_code"
         test_passed=false
     fi
-    
+
     # Check file creation
     if [ "$should_create_file" = "true" ]; then
         if [ ! -f "$expected_file" ]; then
@@ -145,17 +149,17 @@ function run_test {
             test_passed=false
         fi
     fi
-    
+
     if [ "$test_passed" = "true" ]; then
         echo "  PASS"
     else
         ((failed_tests++))
     fi
-    
+
     # Clean up any created files for next test
     rm -f "${output_dir}/ca.crt" "${output_dir}/service.pem" "${output_dir}/service-key.pem"
     rm -f "$expected_file" || true # Ignore errors
-    
+
     popd >/dev/null
     echo
 }
@@ -172,7 +176,7 @@ run_test \
     "" \
     0 \
     "$WRITABLE_DIR/dhparams.pem" \
-    "true" \
+    "false" \
     "$WRITABLE_DIR"
 
 # Test 2: No --dhparams-file, readonly directory, no existing file
@@ -248,7 +252,7 @@ run_test \
     "false" \
     "$WRITABLE_DIR"
 
-# Test 8: --dhparams-file to non-writable path, existing file  
+# Test 8: --dhparams-file to non-writable path, existing file
 # Arguments: test_num description work_dir dhparams_output_file expected_exit_code expected_file should_create_file output_dir
 run_test \
     8 \

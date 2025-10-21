@@ -187,16 +187,9 @@ main (int argc, const char **argv)
                                        options->crl_mode);
   CHECK_OK (ret);
 
-  if (!options->skip_dhparams)
+  if (options->dhparams_file)
     {
-      if (options->dhparams_file)
-        {
-          dhparams_file = talloc_strdup (main_ctx, options->dhparams_file);
-        }
-      else
-        {
-          dhparams_file = talloc_strdup (main_ctx, "./dhparams.pem");
-        }
+      dhparams_file = talloc_strdup (main_ctx, options->dhparams_file);
       CHECK_MEM (dhparams_file);
 
       ret = sscg_io_utils_add_output_file (options->streams,
@@ -205,6 +198,7 @@ main (int argc, const char **argv)
                                            options->dhparams_mode);
       CHECK_OK (ret);
     }
+
   /* Validate and open the file paths */
   ret = sscg_io_utils_open_output_files (options->streams, options->overwrite);
   CHECK_OK (ret);
