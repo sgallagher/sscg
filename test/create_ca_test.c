@@ -1151,6 +1151,14 @@ main (int argc, char **argv)
     }
   printf ("SUCCESS.\n");
 
+    /* If create_private_CA returns EOK, ca_cert must be non-NULL */
+  if (ca_cert == NULL)
+    {
+      printf ("FAILED: ca_cert is NULL.\n");
+      ret = EINVAL;
+      goto done;
+    }
+
   /* Verify name constraints for RSA CA */
   printf ("Verifying name constraints for RSA CA. ");
   ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
@@ -1172,6 +1180,14 @@ main (int argc, char **argv)
       goto done;
     }
   printf ("SUCCESS.\n");
+
+  /* If create_private_CA returns EOK, ca_cert must be non-NULL */
+  if (ca_cert == NULL)
+    {
+      printf ("FAILED: ca_cert is NULL.\n");
+      ret = EINVAL;
+      goto done;
+    }
 
   /* Verify name constraints for EC CA (secp384r1) */
   printf ("Verifying name constraints for EC CA (secp384r1). ");
@@ -1226,6 +1242,14 @@ main (int argc, char **argv)
     }
   printf ("SUCCESS.\n");
 
+  /* If create_private_CA returns EOK, ca_cert must be non-NULL */
+  if (ca_cert == NULL)
+    {
+      printf ("FAILED: ca_cert is NULL.\n");
+      ret = EINVAL;
+      goto done;
+    }
+
   /* Verify name constraints for ML-DSA CA (NIST level 3) */
   printf ("Verifying name constraints for ML-DSA CA (NIST level 3). ");
   ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
@@ -1247,6 +1271,14 @@ main (int argc, char **argv)
       goto done;
     }
   printf ("SUCCESS.\n");
+
+  /* If create_private_CA returns EOK, ca_cert must be non-NULL */
+  if (ca_cert == NULL)
+    {
+      printf ("FAILED: ca_cert is NULL.\n");
+      ret = EINVAL;
+      goto done;
+    }
 
   /* Verify name constraints for ML-DSA CA (NIST level 5) */
   printf ("Verifying name constraints for ML-DSA CA (NIST level 5). ");
