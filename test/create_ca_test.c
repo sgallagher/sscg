@@ -1195,6 +1195,14 @@ main (int argc, char **argv)
     }
   printf ("SUCCESS.\n");
 
+  /* If create_private_CA returns EOK, ca_cert must be non-NULL */
+  if (ca_cert == NULL)
+    {
+      printf ("FAILED: ca_cert is NULL.\n");
+      ret = EINVAL;
+      goto done;
+    }
+
   /* Verify name constraints for EC CA (secp521r1) */
   printf ("Verifying name constraints for EC CA (secp521r1). ");
   ret = verify_name_constraints (ca_cert, certinfo->subject_alt_names);
@@ -1255,13 +1263,6 @@ main (int argc, char **argv)
 
   /* Use the last generated key for the rest of the test */
   printf ("Using final CA key for remaining tests. SUCCESS.\n");
-  /* If create_private_CA returns EOK, ca_cert must be non-NULL */
-  if (ca_cert == NULL)
-    {
-      printf ("FAILED: ca_cert is NULL.\n");
-      ret = EINVAL;
-      goto done;
-    }
 
 
 done:
