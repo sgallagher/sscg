@@ -319,6 +319,10 @@ main (int argc, const char **argv)
     {
       if (options->dhparams_prime_len > 0)
         {
+          SSCG_LOG (
+            SSCG_DEFAULT,
+            "Warning: Generating custom DH parameters is deprecated and will "
+            "be removed in SSCG 5.0. Use --dhparams-named-group instead.\n");
           ret = create_dhparams (options->verbosity,
                                  options->dhparams_prime_len,
                                  options->dhparams_generator,
