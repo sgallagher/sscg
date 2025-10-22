@@ -175,7 +175,6 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   char *organizational_unit = NULL;
   char *email = NULL;
   char *hostname = NULL;
-  char *packagename;
   char **alternative_names = NULL;
 
   TALLOC_CTX *tmp_ctx = talloc_new (NULL);
@@ -349,16 +348,6 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
          "IP:xxx.xxx.xxx.xxx "
          "May be specified multiple times."),
       _ ("alt.example.com")
-    },
-
-    {
-      "package",
-      '\0',
-      POPT_ARG_STRING,
-      &packagename,
-      0,
-      _ ("Unused. Retained for compatibility with earlier versions of sscg."),
-      NULL,
     },
 
     {
