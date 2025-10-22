@@ -200,10 +200,9 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
                      valid_dh_group_names (tmp_ctx));
 
   options->verbosity = SSCG_DEFAULT;
-  // clang-format off
-  struct poptOption long_options[] = {
-    POPT_AUTOHELP
 
+  // clang-format off
+  struct poptOption verbosity_options[] = {
     {
       "quiet",
       'q',
@@ -235,26 +234,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       NULL
     },
 
-    {
-      "version",
-      'V',
-      POPT_ARG_NONE,
-      &options->print_version,
-      0,
-      _ ("Display the version number and exit."),
-      NULL
-    },
+    POPT_TABLEEND
+  };
 
-    {
-      "force",
-      'f',
-      POPT_ARG_NONE,
-      &options->overwrite,
-      0,
-      _ ("Overwrite any pre-existing files in the requested locations"),
-      NULL
-    },
-
+  struct poptOption subject_options[] = {
     {
       "lifetime",
       '\0',
@@ -350,6 +333,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       _ ("alt.example.com")
     },
 
+    POPT_TABLEEND
+  };
+
+  struct poptOption key_options[] = {
     {
       "key-type",
       '\0',
@@ -406,7 +393,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT,
       &options->hash_alg,
       0,
-      _ ("Hashing algorithm to use for signing."),
+      _ ("Hashing algorithm to use for signing RSA and ECDSA keys. "
+         "This argument is only valid if --key-type is rsa or ecdsa."),
       _ ("{sha256,sha384,sha512}"),
     },
 
@@ -419,6 +407,11 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       _ ("Cipher to use for encrypting key files."),
       _ ("{des-ede3-cbc,aes-256-cbc}"),
     },
+
+    POPT_TABLEEND
+  };
+
+  struct poptOption ca_file_options[] = {
 
     {
       "ca-file",
@@ -495,6 +488,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       NULL
     },
 
+    POPT_TABLEEND
+  };
+
+  struct poptOption crl_file_options[] = {
     {
       "crl-file",
       '\0',
@@ -517,6 +514,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       SSCG_CERT_DEFAULT_MODE_HELP,
     },
 
+    POPT_TABLEEND
+  };
+
+  struct poptOption svc_cert_file_options[] = {
     {
       "cert-file",
       '\0',
@@ -592,6 +593,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       NULL
     },
 
+    POPT_TABLEEND
+  };
+
+  struct poptOption client_cert_file_options[] = {
     {
       "client-file",
       '\0',
@@ -665,6 +670,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       NULL
     },
 
+    POPT_TABLEEND
+  };
+
+  struct poptOption dh_file_options[] = {
     {
       "dhparams-file",
       '\0',
@@ -721,9 +730,114 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 
     POPT_TABLEEND
   };
+
+  struct poptOption cli_options[] = {
+    POPT_AUTOHELP
+    {
+      "version",
+      'V',
+      POPT_ARG_NONE,
+      &options->print_version,
+      0,
+      _ ("Display the version number and exit."),
+      NULL
+    },
+
+    {
+      "force",
+      'f',
+      POPT_ARG_NONE,
+      &options->overwrite,
+      0,
+      _ ("Overwrite any pre-existing files in the requested locations"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      verbosity_options,
+      0,
+      _ ("Verbosity options"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      subject_options,
+      0,
+      _ ("Certificate Subject options"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      key_options,
+      0,
+      _ ("Certificate Key Cryptography Options"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      ca_file_options,
+      0,
+      _ ("Certificate Authority File Options"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      crl_file_options,
+      0,
+      _ ("Certificate Revocation List File Options"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      svc_cert_file_options,
+      0,
+      _ ("Service Certificate File Options"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      client_cert_file_options,
+      0,
+      _ ("Client Authentication Certificate File Options"),
+      NULL
+    },
+
+    {
+      NULL,
+      '\0',
+      POPT_ARG_INCLUDE_TABLE,
+      dh_file_options,
+      0,
+      _ ("Diffie-Hellman Parameter File Options"),
+      NULL
+    },
+
+    POPT_TABLEEND
+  };
   // clang-format on
 
-  pc = poptGetContext (argv[0], argc, argv, long_options, 0);
+  pc = poptGetContext (argv[0], argc, argv, cli_options, 0);
   while ((opt = poptGetNextOpt (pc)) != -1)
     {
       switch (opt)
