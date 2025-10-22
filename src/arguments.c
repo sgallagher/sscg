@@ -690,7 +690,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     {
       "no-dhparams-file",
       '\0',
-      POPT_ARG_NONE,
+      POPT_ARG_NONE | POPT_ARGFLAG_DOC_HIDDEN,
       &options->skip_dhparams,
       0,
       _ ("Deprecated: Retained for backwards compatibility. To be removed in SSCG 5.0."),
@@ -710,12 +710,13 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     {
       "dhparams-prime-len",
       '\0',
-      POPT_ARG_INT | POPT_ARGFLAG_SHOW_DEFAULT,
+      POPT_ARG_INT | POPT_ARGFLAG_DOC_HIDDEN,
       &options->dhparams_prime_len,
       0,
-      _ ("The length of the prime number to generate for dhparams, in bits. "
-         "If set to non-zero, the parameters will be generated rather than "
-         "using a well-known group."),
+      _ ("Deprecated: Retained for backwards compatibility. To be removed in "
+         "SSCG 5.0. The length of the prime number to generate for dhparams, "
+         "in bits. If set to non-zero, the parameters will be generated "
+         "rather than using a well-known group."),
       NULL
     },
 
