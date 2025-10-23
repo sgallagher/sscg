@@ -46,7 +46,7 @@ enum sscg_cert_file_format
 {
   SSCG_CERT_FILE_FORMAT_PEM = 0,
   SSCG_CERT_FILE_FORMAT_DER,
-  
+
   SSCG_NUM_CERT_FILE_FORMATS
 };
 
