@@ -42,12 +42,22 @@
 #include "include/sscg.h"
 
 
+enum sscg_cert_file_format
+{
+  SSCG_CERT_FILE_FORMAT_PEM = 0,
+  SSCG_CERT_FILE_FORMAT_DER,
+  
+  SSCG_NUM_CERT_FILE_FORMATS
+};
+
+
 struct sscg_stream
 {
   BIO *bio;
   char *path;
   int mode;
   int filetypes;
+  enum sscg_cert_file_format format;
 
   bool pass_prompt;
   char *passphrase;
