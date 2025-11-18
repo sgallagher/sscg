@@ -71,7 +71,6 @@ crypto = dependency('libcrypto', version: '>= 3.0.0')
 
 ssl = dependency('libssl', version: '>= 3.0.0')
 
-path_utils = dependency('path_utils')
 talloc = dependency('talloc')
 
 popt = dependency(
@@ -130,7 +129,6 @@ sscg = executable(
     dependencies : [
         crypto,
         gettext,
-        path_utils,
         popt,
         ssl,
         talloc,
@@ -222,6 +220,15 @@ init_bignum_test = executable(
     install : false,
 )
 test('init_bignum_test', init_bignum_test)
+
+test_io_utils = executable(
+    'test_io_utils',
+    'test/test_io_utils.c',
+    link_with : sscg_lib,
+    dependencies: [ crypto ],
+    install : false,
+)
+test('test_io_utils', test_io_utils)
 
 
 # Test generating 512-bit, 1024-bit and 2048-bit and 4096 DH params with

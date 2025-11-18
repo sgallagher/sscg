@@ -120,12 +120,12 @@ Diffie-Hellman Parameter File Options
 ```bash
 # Fedora/RHEL/CentOS
 dnf install meson ninja-build gcc pkgconf-pkg-config
-dnf install openssl-devel talloc-devel popt-devel path_utils-devel
+dnf install openssl-devel talloc-devel popt-devel
 dnf install gettext-devel help2man clang-format
 
 # Debian/Ubuntu
 apt-get install meson ninja-build gcc pkg-config
-apt-get install libssl-dev libtalloc-dev libpopt-dev libpath-utils-dev
+apt-get install libssl-dev libtalloc-dev libpopt-dev
 apt-get install gettext help2man clang-format
 ```
 
@@ -133,7 +133,6 @@ apt-get install gettext help2man clang-format
 - OpenSSL 3.0.0+ (libssl, libcrypto)
 - talloc
 - popt
-- path_utils
 
 #### Build Process
 
