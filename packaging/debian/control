@@ -4,7 +4,6 @@ Priority: optional
 Build-Depends: debhelper-compat (= 12),
  meson,
  help2man,
- libpath-utils-dev,
  libpopt-dev,
  libssl-dev,
  libtalloc-dev,

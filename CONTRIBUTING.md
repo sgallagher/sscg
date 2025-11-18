@@ -23,15 +23,14 @@ Before contributing, ensure you have the necessary tools installed:
 ```bash
 sudo dnf install meson ninja-build gcc pkgconf-pkg-config \
                  openssl-devel libtalloc-devel popt-devel \
-                 libpath_utils-devel gettext-devel help2man \
-                 clang-format git
+                 gettext-devel help2man clang-format git
 ```
 
 **Ubuntu/Debian:**
 ```bash
 sudo apt-get install meson ninja-build gcc pkg-config libssl-dev \
-                           libtalloc-dev libpopt-dev libpath-utils-dev \
-                           gettext help2man clang-format git
+                           libtalloc-dev libpopt-dev gettext help2man \
+                           clang-format git
 ```
 
 ### Setting Up Your Development Environment

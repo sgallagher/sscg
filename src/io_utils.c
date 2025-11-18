@@ -33,10 +33,14 @@
 
 
 #include <assert.h>
-#include <path_utils.h>
+#include <libgen.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <talloc.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include "config.h"
 #ifdef HAVE_GETTEXT
@@ -87,24 +91,73 @@ sscg_normalize_path (TALLOC_CTX *mem_ctx,
                      char **_normalized_path)
 {
   int ret;
+  char *path_copy = NULL;
+  char *dir_copy = NULL;
+  char *dir_part = NULL;
+  char *file_part = NULL;
+  char *resolved_dir = NULL;
   char *normalized_path = NULL;
 
   TALLOC_CTX *tmp_ctx = talloc_new (NULL);
   CHECK_MEM (tmp_ctx);
 
-  normalized_path = talloc_zero_array (tmp_ctx, char, PATH_MAX);
+  /* Validate input */
+  if (path == NULL || path[0] == '\0')
+    {
+      ret = EINVAL;
+      goto done;
+    }
+
+  /* Make copies for dirname() and basename() since they modify the input */
+  path_copy = talloc_strdup (tmp_ctx, path);
+  CHECK_MEM (path_copy);
+
+  dir_copy = talloc_strdup (tmp_ctx, path);
+  CHECK_MEM (dir_copy);
+
+  /* Extract directory and filename components */
+  dir_part = dirname (dir_copy);
+  file_part = basename (path_copy);
+
+  /* Allocate buffer for realpath() */
+  resolved_dir = talloc_zero_array (tmp_ctx, char, PATH_MAX);
+  CHECK_MEM (resolved_dir);
+
+  /* Normalize the directory path */
+  if (realpath (dir_part, resolved_dir) == NULL)
+    {
+      ret = errno;
+      goto done;
+    }
+
+  /* Concatenate normalized directory with filename */
+  if (strcmp (file_part, ".") == 0 || strcmp (file_part, "/") == 0)
+    {
+      /* If the filename is just "." or "/", use the directory as-is */
+      normalized_path = talloc_strdup (mem_ctx, resolved_dir);
+    }
+  else
+    {
+      /* Check that the resulting path won't exceed PATH_MAX */
+      size_t resolved_len = strlen (resolved_dir);
+      size_t file_len = strlen (file_part);
+      /* +2 for the "/" separator and null terminator */
+      if (resolved_len + file_len + 2 > PATH_MAX)
+        {
+          ret = ENAMETOOLONG;
+          goto done;
+        }
+
+      /* Append filename to the normalized directory */
+      normalized_path =
+        talloc_asprintf (mem_ctx, "%s/%s", resolved_dir, file_part);
+    }
   CHECK_MEM (normalized_path);
 
-  ret = make_normalized_absolute_path (normalized_path, PATH_MAX, path);
-  CHECK_OK (ret);
-
-  *_normalized_path = talloc_strdup (mem_ctx, normalized_path);
-  CHECK_MEM (*_normalized_path);
-
+  *_normalized_path = normalized_path;
   ret = EOK;
 
 done:
-  talloc_free (normalized_path);
   talloc_free (tmp_ctx);
   return ret;
 }
