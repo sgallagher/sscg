@@ -130,7 +130,7 @@ apt-get install gettext help2man clang-format
 ```
 
 **Runtime dependencies:**
-- OpenSSL 1.1.0+ (libssl, libcrypto)
+- OpenSSL 3.0.0+ (libssl, libcrypto)
 - talloc
 - popt
 - path_utils
