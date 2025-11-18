@@ -52,6 +52,35 @@
 #define MAX_PW_LEN 1024
 
 
+const char *
+sscg_get_file_type_name (enum sscg_file_type type)
+{
+  switch (type)
+    {
+    case SSCG_FILE_TYPE_CA: return "CA certificate";
+
+    case SSCG_FILE_TYPE_CA_KEY: return "CA certificate key";
+
+    case SSCG_FILE_TYPE_SVC: return "service certificate";
+
+    case SSCG_FILE_TYPE_SVC_KEY: return "service certificate key";
+
+    case SSCG_FILE_TYPE_CLIENT: return "client auth certificate";
+
+    case SSCG_FILE_TYPE_CLIENT_KEY: return "client auth certificate key";
+
+    case SSCG_FILE_TYPE_CRL: return "certificate revocation list";
+
+    case SSCG_FILE_TYPE_DHPARAMS: return "Diffie-Hellman parameters";
+
+    default: break;
+    }
+
+  /* If it wasn't one of these, we have a bug */
+  return "Unknown (bug)";
+}
+
+
 int
 sscg_normalize_path (TALLOC_CTX *mem_ctx,
                      const char *path,

@@ -42,6 +42,7 @@
 #include "include/cert.h"
 #include "include/authority.h"
 #include "include/x509.h"
+#include "include/io_utils.h"
 
 static int
 verify_name_constraints (struct sscg_x509_cert *ca_cert,

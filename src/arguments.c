@@ -41,6 +41,7 @@
 
 #include "include/sscg.h"
 #include "include/dhparams.h"
+#include "include/io_utils.h"
 
 #include "config.h"
 #ifdef HAVE_GETTEXT

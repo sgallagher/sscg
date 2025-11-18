@@ -39,6 +39,66 @@
 #include <talloc.h>
 
 #include "include/key.h"
+
+#define CHECK_BIO(ptr, file)                                                  \
+  do                                                                          \
+    {                                                                         \
+      if (!ptr)                                                               \
+        {                                                                     \
+          ret = errno;                                                        \
+          fprintf (stderr,                                                    \
+                   "Could not write to %s. Check directory permissions.\n",   \
+                   file);                                                     \
+          goto done;                                                          \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+
+
+#define SSCG_CERT_DEFAULT_MODE 0644
+#define SSCG_CERT_DEFAULT_MODE_HELP _ ("0644")
+#define SSCG_KEY_DEFAULT_MODE 0600
+#define SSCG_KEY_DEFAULT_MODE_HELP _ ("0600")
+
+#define GET_BIO(_type) sscg_io_utils_get_bio_by_type (options->streams, _type)
+
+#define GET_PATH(_type)                                                       \
+  sscg_io_utils_get_path_by_type (options->streams, _type)
+
+#define ANNOUNCE_WRITE(_type)                                                 \
+  SSCG_LOG (SSCG_DEFAULT,                                                     \
+            "Wrote %s to %s\n",                                               \
+            sscg_get_file_type_name (_type),                                  \
+            GET_PATH (_type));
+
+enum sscg_file_type
+{
+  SSCG_FILE_TYPE_UNKNOWN = -1,
+  SSCG_FILE_TYPE_CA,
+  SSCG_FILE_TYPE_CA_KEY,
+  SSCG_FILE_TYPE_SVC,
+  SSCG_FILE_TYPE_SVC_KEY,
+  SSCG_FILE_TYPE_CLIENT,
+  SSCG_FILE_TYPE_CLIENT_KEY,
+  SSCG_FILE_TYPE_CRL,
+  SSCG_FILE_TYPE_DHPARAMS,
+
+  SSCG_NUM_FILE_TYPES
+};
+
+#define SSCG_FILE_TYPE_KEYS                                                   \
+  ((1 << SSCG_FILE_TYPE_CA_KEY) | (1 << SSCG_FILE_TYPE_SVC_KEY)               \
+   | (1 << SSCG_FILE_TYPE_CLIENT_KEY))
+
+#define SSCG_FILE_TYPE_SVC_TYPES                                              \
+  ((1 << SSCG_FILE_TYPE_SVC) | (1 << SSCG_FILE_TYPE_SVC_KEY))
+
+#define SSCG_FILE_TYPE_CLIENT_TYPES                                           \
+  ((1 << SSCG_FILE_TYPE_CLIENT) | (1 << SSCG_FILE_TYPE_CLIENT_KEY))
+
+#define SSCG_FILE_TYPE_CA_TYPES                                               \
+  ((1 << SSCG_FILE_TYPE_CA) | (1 << SSCG_FILE_TYPE_CA_KEY))
+
 #include "include/sscg.h"
 
 
@@ -58,6 +118,10 @@ int
 sscg_normalize_path (TALLOC_CTX *mem_ctx,
                      const char *path,
                      char **_normalized_path);
+
+
+const char *
+sscg_get_file_type_name (enum sscg_file_type _type);
 
 
 struct sscg_stream *
