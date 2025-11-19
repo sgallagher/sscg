@@ -296,6 +296,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
       BIO *ca_csr_out = BIO_new_file ("/tmp/debug-ca.csr", "w");
       int sslret = PEM_write_bio_X509_REQ (ca_csr_out, csr->x509_req);
       CHECK_SSL (sslret, PEM_write_bio_X509_REQ);
+      BIO_free (ca_csr_out);
     }
 
   /* Self-sign the private CA */
