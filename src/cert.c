@@ -166,6 +166,7 @@ create_cert (TALLOC_CTX *mem_ctx,
       BIO *csr_out = BIO_new_file (tempcert, "w");
       int sslret = PEM_write_bio_X509_REQ (csr_out, csr->x509_req);
       CHECK_SSL (sslret, PEM_write_bio_X509_REQ);
+      BIO_free (csr_out);
     }
 
   /* Sign the certificate */
