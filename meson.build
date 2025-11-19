@@ -478,6 +478,8 @@ test(
     timeout: 120,
 )
 
+# Check if HOST_NAME_MAX is defined in limits.h or unistd.h
+has_host_name_max = cc.has_header_symbol('limits.h', 'HOST_NAME_MAX') or cc.has_header_symbol('unistd.h', 'HOST_NAME_MAX')
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
@@ -485,6 +487,9 @@ cdata.set_quoted('PACKAGE_NAME', meson.project_name())
 cdata.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('datadir'), 'locale'))
 cdata.set('HAVE_GETTEXT', gettext.found())
 cdata.set('HAVE_ML_DSA', has_ml_dsa)
+if not has_host_name_max
+    cdata.set('HOST_NAME_MAX', '_POSIX_HOST_NAME_MAX')
+endif
 configure_file(
     output : 'config.h',
     configuration : cdata)
