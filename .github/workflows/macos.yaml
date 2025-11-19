@@ -1,0 +1,35 @@
+name: Continuous Integration (MacOS)
+
+on: [push, pull_request]
+
+jobs:
+  macos:
+    name: macOS
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-13
+          - macos-26
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install build dependencies
+        run: |
+          brew install talloc popt help2man openssl meson ninja
+
+      - name: Configure build directory
+        run: |
+          meson setup ${{ matrix.os }}
+
+      - name: Build SSCG
+        run: |
+          ninja -C ${{ matrix.os }}
+
+      - name: Run in-tree tests
+        run: |
+          meson test -t 5 --print-errorlogs -C ${{ matrix.os }}
