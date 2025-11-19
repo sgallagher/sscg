@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <libgen.h>
 #include <limits.h>
+#include <openssl/bio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <talloc.h>
@@ -180,20 +181,55 @@ sscg_stream_destructor (TALLOC_CTX *ptr)
 }
 
 
+static int
+sscg_io_utils_open_file (const char *path, bool overwrite, FILE **fp)
+{
+  FILE *_fp = NULL;
+  if (overwrite)
+    _fp = fopen (path, "w");
+  else
+    _fp = fopen (path, "wx");
+  if (!_fp)
+    {
+      SSCG_ERROR ("Could not open file %s: %s\n", path, strerror (errno));
+      return errno;
+    }
+  *fp = _fp;
+  return EOK;
+}
+
+
 struct sscg_stream *
-sscg_io_utils_get_stream_by_path (struct sscg_stream **streams,
-                                  const char *normalized_path)
+sscg_io_utils_get_stream_by_fp (struct sscg_stream **streams, FILE *fp)
 {
   struct sscg_stream *stream = NULL;
+  struct stat st, saved_st;
+  int ret = 0;
+
+  ret = fstat (fileno (fp), &st);
+  if (ret != 0)
+    {
+      SSCG_ERROR ("Could not get stat for file: %s\n", strerror (errno));
+      return NULL;
+    }
 
   /* First see if this path already exists in the list */
   for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
     {
-      if (strcmp (normalized_path, stream->path) == 0)
-        break;
+      ret = fstat (fileno (stream->fp), &saved_st);
+      if (ret != 0)
+        {
+          SSCG_ERROR ("Could not get stat for file: %s\n", strerror (errno));
+          return NULL;
+        }
+
+      if (saved_st.st_dev == st.st_dev && saved_st.st_ino == st.st_ino)
+        {
+          return stream;
+        }
     }
 
-  return stream;
+  return NULL;
 }
 
 
@@ -358,6 +394,7 @@ int
 sscg_io_utils_add_output_key (struct sscg_stream **streams,
                               enum sscg_file_type filetype,
                               const char *path,
+                              bool overwrite,
                               int mode,
                               bool pass_prompt,
                               char *passphrase,
@@ -365,8 +402,8 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
 {
   int ret, i;
   TALLOC_CTX *tmp_ctx = NULL;
+  FILE *fp = NULL;
   struct sscg_stream *stream = NULL;
-  char *normalized_path = NULL;
 
   if (filetype < 0 || filetype > SSCG_NUM_FILE_TYPES)
     {
@@ -404,21 +441,31 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
   tmp_ctx = talloc_new (NULL);
   CHECK_MEM (tmp_ctx);
 
-  /* Get the normalized version of the path */
-  ret = sscg_normalize_path (tmp_ctx, path, &normalized_path);
-  CHECK_OK (ret);
-
   SSCG_LOG (SSCG_DEBUG,
             "%s file path: %s\n",
             sscg_get_file_type_name (filetype),
-            normalized_path);
+            path);
+
+  /* Open the file here. If it turns out later that it's already been opened
+   * by another stream, we'll close this one and attach to the existing one.
+   */
+  ret = sscg_io_utils_open_file (path, overwrite, &fp);
+  CHECK_OK (ret);
 
   /* First see if this path already exists in the list */
-  stream = sscg_io_utils_get_stream_by_path (streams, normalized_path);
+  stream = sscg_io_utils_get_stream_by_fp (streams, fp);
 
-  if (stream == NULL)
+  if (stream != NULL)
     {
-      /* The path wasn't found, so open it and create it */
+      /* The path was found, so close this file. We'll use the existing
+      one from here on out.
+      */
+
+      fclose (fp);
+    }
+  else
+    {
+      /* The path wasn't found, so create a new sscg_stream for it */
 
       /* First advance the index to the end */
       for (i = 0; streams[i]; i++)
@@ -435,9 +482,9 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
       CHECK_MEM (stream);
       talloc_set_destructor ((TALLOC_CTX *)stream, sscg_stream_destructor);
 
-      stream->path = talloc_steal (stream, normalized_path);
+      stream->fp = fp;
+      stream->path = talloc_strdup (stream, path);
       CHECK_MEM (stream->path);
-
       streams[i] = talloc_steal (streams, stream);
     }
 
@@ -489,10 +536,11 @@ int
 sscg_io_utils_add_output_file (struct sscg_stream **streams,
                                enum sscg_file_type filetype,
                                const char *path,
+                               bool overwrite,
                                int mode)
 {
   return sscg_io_utils_add_output_key (
-    streams, filetype, path, mode, false, NULL, NULL);
+    streams, filetype, path, overwrite, mode, false, NULL, NULL);
 }
 
 
@@ -589,12 +637,10 @@ done:
 
 
 int
-sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
+sscg_io_utils_open_BIOs (struct sscg_stream **streams)
 {
   int ret;
-  TALLOC_CTX *tmp_ctx = NULL;
   enum io_utils_errors validation_result;
-  char *create_mode = NULL;
   struct sscg_stream *stream = NULL;
 
   validation_result = io_utils_validate (streams);
@@ -638,19 +684,10 @@ sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
     case IO_UTILS_OK: break;
     }
 
-  tmp_ctx = talloc_new (NULL);
-  CHECK_MEM (tmp_ctx);
-
-  if (overwrite)
-    create_mode = talloc_strdup (tmp_ctx, "w");
-  else
-    create_mode = talloc_strdup (tmp_ctx, "wx");
-  CHECK_MEM (create_mode);
-
   for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
     {
       SSCG_LOG (SSCG_DEBUG, "Opening %s\n", stream->path);
-      stream->bio = BIO_new_file (stream->path, create_mode);
+      stream->bio = BIO_new_fp (stream->fp, BIO_NOCLOSE);
       if (!stream->bio)
         {
           /* The dhparams file is special, it will be handled later */
@@ -664,7 +701,6 @@ sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite)
 
   ret = EOK;
 done:
-  talloc_free (tmp_ctx);
   return ret;
 }
 
