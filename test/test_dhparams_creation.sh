@@ -110,6 +110,7 @@ function run_test {
     # Run sscg with the specified arguments
     local cmd_args=(
         "${MESON_BUILD_ROOT}/sscg"
+        --debug
         --ca-file "${output_dir}/ca.crt"
         --cert-file "${output_dir}/service.pem"
         --cert-key-file "${output_dir}/service-key.pem"
@@ -118,6 +119,7 @@ function run_test {
     if [ -n "$dhparams_output_file" ]; then
         cmd_args+=("--dhparams-file=$dhparams_output_file")
     fi
+    echo "${cmd_args[@]}"
 
     local exit_code=0
     "${cmd_args[@]}" >/dev/null 2>&1 || exit_code=$?
@@ -235,7 +237,7 @@ run_test \
     "--dhparams-file to non-writable path, no existing file" \
     "$WRITABLE_DIR" \
     "$READONLY_DIR/new_dhparams.pem" \
-    1 \
+    13 \
     "$READONLY_DIR/new_dhparams.pem" \
     "false" \
     "$WRITABLE_DIR"
@@ -247,7 +249,7 @@ run_test \
     "--dhparams-file to writable path, existing file" \
     "$WRITABLE_DIR" \
     "$DHPARAMS_DIR/dhparams.pem" \
-    1 \
+    17 \
     "$DHPARAMS_DIR/dhparams.pem" \
     "false" \
     "$WRITABLE_DIR"
@@ -259,7 +261,7 @@ run_test \
     "--dhparams-file to non-writable path, existing file" \
     "$WRITABLE_DIR" \
     "$READONLY_DIR/dhparams.pem" \
-    1 \
+    17 \
     "$READONLY_DIR/dhparams.pem" \
     "false" \
     "$WRITABLE_DIR"

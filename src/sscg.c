@@ -105,12 +105,14 @@ main (int argc, const char **argv)
                                        SSCG_FILE_TYPE_CA,
                                        options->ca_file ? options->ca_file :
                                                           "./ca.crt",
+                                       options->overwrite,
                                        options->ca_mode);
   CHECK_OK (ret);
 
   ret = sscg_io_utils_add_output_key (options->streams,
                                       SSCG_FILE_TYPE_CA_KEY,
                                       options->ca_key_file,
+                                      options->overwrite,
                                       options->ca_key_mode,
                                       options->ca_key_pass_prompt,
                                       options->ca_key_password,
@@ -121,6 +123,7 @@ main (int argc, const char **argv)
     options->streams,
     SSCG_FILE_TYPE_SVC,
     options->cert_file ? options->cert_file : "./service.pem",
+    options->overwrite,
     options->cert_mode);
   CHECK_OK (ret);
 
@@ -128,6 +131,7 @@ main (int argc, const char **argv)
     options->streams,
     SSCG_FILE_TYPE_SVC_KEY,
     options->cert_key_file ? options->cert_key_file : "./service-key.pem",
+    options->overwrite,
     options->cert_key_mode,
     options->cert_key_pass_prompt,
     options->cert_key_password,
@@ -138,6 +142,7 @@ main (int argc, const char **argv)
   ret = sscg_io_utils_add_output_file (options->streams,
                                        SSCG_FILE_TYPE_CLIENT,
                                        options->client_file,
+                                       options->overwrite,
                                        options->client_mode);
   CHECK_OK (ret);
 
@@ -146,6 +151,7 @@ main (int argc, const char **argv)
     options->streams,
     SSCG_FILE_TYPE_CLIENT_KEY,
     options->client_key_file ? options->client_key_file : options->client_file,
+    options->overwrite,
     options->client_key_mode,
     options->client_key_pass_prompt,
     options->client_key_password,
@@ -155,6 +161,7 @@ main (int argc, const char **argv)
   ret = sscg_io_utils_add_output_file (options->streams,
                                        SSCG_FILE_TYPE_CRL,
                                        options->crl_file,
+                                       options->overwrite,
                                        options->crl_mode);
   CHECK_OK (ret);
 
@@ -166,12 +173,13 @@ main (int argc, const char **argv)
       ret = sscg_io_utils_add_output_file (options->streams,
                                            SSCG_FILE_TYPE_DHPARAMS,
                                            dhparams_file,
+                                           options->overwrite,
                                            options->dhparams_mode);
       CHECK_OK (ret);
     }
 
   /* Validate and open the file paths */
-  ret = sscg_io_utils_open_output_files (options->streams, options->overwrite);
+  ret = sscg_io_utils_open_BIOs (options->streams);
   CHECK_OK (ret);
 
 

@@ -36,6 +36,7 @@
 
 #include <openssl/ssl.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <talloc.h>
 
 #include "include/key.h"
@@ -105,6 +106,7 @@ enum sscg_file_type
 struct sscg_stream
 {
   BIO *bio;
+  FILE *fp;
   char *path;
   int mode;
   int filetypes;
@@ -124,9 +126,12 @@ const char *
 sscg_get_file_type_name (enum sscg_file_type _type);
 
 
+int
+sscg_io_utils_open_BIOs (struct sscg_stream **streams);
+
+
 struct sscg_stream *
-sscg_io_utils_get_stream_by_path (struct sscg_stream **streams,
-                                  const char *normalized_path);
+sscg_io_utils_get_stream_by_fp (struct sscg_stream **streams, FILE *fp);
 
 
 struct sscg_stream *
@@ -149,16 +154,21 @@ sscg_io_utils_get_path_by_type (struct sscg_stream **streams,
  * @streams: The array of streams from the sscg_options
  * @filetype:
  * @path: The path to the file on disk.
+ * @overwrite: Whether to overwrite the file if it already exists.
  * @mode: The filesystem mode this file should have when written to disk.
  * See chmod(1) for the possible values.
  *
- * Prepares all output filenames to be opened. Files are not created until
- * sscg_io_utils_open_output_files() is called.
+ * Prepares the output file for the given filetype. If the file already exists,
+ * and overwrite is false, the file is not opened and an error is returned.
+ *
+ * If the same output file is requested for multiple filetypes, the file is
+ * opened once and used for all filetypes.
  */
 int
 sscg_io_utils_add_output_file (struct sscg_stream **streams,
                                enum sscg_file_type filetype,
                                const char *path,
+                               bool overwrite,
                                int mode);
 
 
@@ -167,6 +177,7 @@ sscg_io_utils_add_output_file (struct sscg_stream **streams,
  * @streams: The array of streams from the sscg_options
  * @filetype:
  * @path: The path to the file on disk.
+ * @overwrite: Whether to overwrite the file if it already exists.
  * @mode: The filesystem mode this file should have when written to disk.
  * See chmod(1) for the possible values.
  * @pass_prompt: Whether the user should be prompted to enter a passphrase
@@ -174,21 +185,22 @@ sscg_io_utils_add_output_file (struct sscg_stream **streams,
  * @passphrase: The passphrase supplied at the command line.
  * @passfile: The path to a file containing the passphrase.
  *
- * Prepares all output filenames to be opened. Files are not created until
- * sscg_io_utils_open_output_files() is called.
+ * Prepares the output file for the given filetype. If the file already exists,
+ * and overwrite is false, the file is not opened and an error is returned.
+ *
+ * If the same output file is requested for multiple filetypes, the file is
+ * opened once and used for all filetypes.
  */
 int
 sscg_io_utils_add_output_key (struct sscg_stream **streams,
                               enum sscg_file_type filetype,
                               const char *path,
+                              bool overwrite,
                               int mode,
                               bool pass_prompt,
                               char *passphrase,
                               char *passfile);
 
-
-int
-sscg_io_utils_open_output_files (struct sscg_stream **streams, bool overwrite);
 
 int
 sscg_io_utils_write_privatekey (struct sscg_stream **streams,
