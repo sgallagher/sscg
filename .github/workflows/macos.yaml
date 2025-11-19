@@ -20,7 +20,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          brew install talloc popt help2man openssl meson ninja
+          brew install talloc popt help2man openssl meson ninja gettext
 
       - name: Configure build directory
         run: |
