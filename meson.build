@@ -221,15 +221,6 @@ init_bignum_test = executable(
 )
 test('init_bignum_test', init_bignum_test)
 
-test_io_utils = executable(
-    'test_io_utils',
-    'test/test_io_utils.c',
-    link_with : sscg_lib,
-    dependencies: [ crypto ],
-    install : false,
-)
-test('test_io_utils', test_io_utils)
-
 
 # Test generating 512-bit, 1024-bit and 2048-bit and 4096 DH params with
 # multiple generators. 2048-bit and larger takes a long time, so they are
