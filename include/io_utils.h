@@ -116,12 +116,6 @@ struct sscg_stream
 };
 
 
-int
-sscg_normalize_path (TALLOC_CTX *mem_ctx,
-                     const char *path,
-                     char **_normalized_path);
-
-
 const char *
 sscg_get_file_type_name (enum sscg_file_type _type);
 
