@@ -116,7 +116,7 @@ sscg_io_utils_open_file (const char *path, bool overwrite, FILE **fp)
 }
 
 
-struct sscg_stream *
+static struct sscg_stream *
 sscg_io_utils_get_stream_by_fp (struct sscg_stream **streams, FILE *fp)
 {
   struct sscg_stream *stream = NULL;

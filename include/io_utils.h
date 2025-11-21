@@ -125,10 +125,6 @@ sscg_io_utils_open_BIOs (struct sscg_stream **streams);
 
 
 struct sscg_stream *
-sscg_io_utils_get_stream_by_fp (struct sscg_stream **streams, FILE *fp);
-
-
-struct sscg_stream *
 sscg_io_utils_get_stream_by_type (struct sscg_stream **streams,
                                   enum sscg_file_type filetype);
 
