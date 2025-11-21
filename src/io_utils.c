@@ -400,6 +400,7 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
       talloc_set_destructor ((TALLOC_CTX *)stream, sscg_stream_destructor);
 
       stream->fp = fp;
+      fp = NULL;
       stream->path = talloc_strdup (stream, path);
       CHECK_MEM (stream->path);
       streams[i] = talloc_steal (streams, stream);
@@ -444,6 +445,8 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
   ret = EOK;
 
 done:
+  if (fp)
+    fclose (fp);
   talloc_free (tmp_ctx);
   return ret;
 }
