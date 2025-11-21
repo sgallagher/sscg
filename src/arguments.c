@@ -965,11 +965,25 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       goto done;
     }
 
-  if ((strchr (options->hostname, '.') - options->hostname) > MAX_HOST_LEN + 4)
+  /* Check hostname label length (first label for FQDN, entire name for single-label) */
+  char *dot_pos = strchr (options->hostname, '.');
+  size_t label_len;
+
+  if (dot_pos)
+    {
+      /* FQDN: check length of first label (before first dot) */
+      label_len = dot_pos - options->hostname;
+    }
+  else
+    {
+      /* Single-label hostname: check entire hostname length */
+      label_len = strnlen (options->hostname, MAX_HOST_LEN + 1);
+    }
+
+  if (label_len > MAX_HOST_LEN)
     {
       fprintf (stderr,
-               _ ("Hostnames may not exceed %d characters in Subject "
-                  "Alternative Names\n"),
+               _ ("Hostname labels may not exceed %d characters\n"),
                MAX_HOST_LEN);
       ret = EINVAL;
       goto done;
