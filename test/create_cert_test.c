@@ -48,12 +48,20 @@ static int
 verify_name_constraints (struct sscg_x509_cert *ca_cert,
                          char **expected_san_list)
 {
+  int ret = EOK;
+  TALLOC_CTX *tmp_ctx = NULL;
   X509 *x509 = ca_cert->certificate;
   X509_EXTENSION *name_constraints_ext = NULL;
   ASN1_OCTET_STRING *ext_data = NULL;
   BIO *bio = NULL;
   char *ext_str = NULL;
   int ext_len = 0;
+
+  tmp_ctx = talloc_new (NULL);
+  if (!tmp_ctx)
+    {
+      return ENOMEM;
+    }
 
   printf ("\n    Verifying name constraints in CA certificate:\n");
 
@@ -64,14 +72,16 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
       printf (
         "      ERROR: Name Constraints extension not found in CA "
         "certificate.\n");
-      return EINVAL;
+      ret = EINVAL;
+      goto done;
     }
 
   name_constraints_ext = X509_get_ext (x509, ext_idx);
   if (!name_constraints_ext)
     {
       printf ("      ERROR: Failed to get Name Constraints extension.\n");
-      return EINVAL;
+      ret = EINVAL;
+      goto done;
     }
 
   /* Get the extension data */
@@ -79,7 +89,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
   if (!ext_data)
     {
       printf ("      ERROR: Failed to get Name Constraints extension data.\n");
-      return EINVAL;
+      ret = EINVAL;
+      goto done;
     }
 
   /* Create a BIO to capture the extension output */
@@ -87,7 +98,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
   if (!bio)
     {
       printf ("      ERROR: Failed to create BIO for extension output.\n");
-      return EINVAL;
+      ret = EINVAL;
+      goto done;
     }
 
   /* Print the extension to the BIO */
@@ -95,7 +107,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
     {
       printf ("      ERROR: Failed to print Name Constraints extension.\n");
       BIO_free (bio);
-      return EINVAL;
+      ret = EINVAL;
+      goto done;
     }
 
   /* Get the extension string from BIO */
@@ -104,16 +117,18 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
     {
       printf ("      ERROR: No extension data captured.\n");
       BIO_free (bio);
-      return EINVAL;
+      ret = EINVAL;
+      goto done;
     }
 
-  ext_str = malloc (ext_len + 1);
+  ext_str = talloc_array (tmp_ctx, char, ext_len + 1);
   if (!ext_str)
     {
       printf (
         "      ERROR: Failed to allocate memory for extension string.\n");
       BIO_free (bio);
-      return EINVAL;
+      ret = ENOMEM;
+      goto done;
     }
 
   BIO_read (bio, ext_str, ext_len);
@@ -122,7 +137,6 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
 
   printf ("      Name Constraints extension content:\n");
   printf ("      %s\n", ext_str);
-  free (ext_str);
 
   /* Check for expected constraints in the extension */
   /* This is a simplified check - in a real implementation, you'd parse the ASN.1 */
@@ -130,7 +144,11 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
   printf ("      Name Constraints extension found and readable.\n");
 
   printf ("      All expected name constraints found successfully.\n");
-  return EOK;
+  ret = EOK;
+
+done:
+  talloc_free (tmp_ctx);
+  return ret;
 }
 
 static int
