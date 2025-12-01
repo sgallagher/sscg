@@ -185,18 +185,18 @@ pushd "$TMPDIR"
 						 --key-type ecdsa \
 						 --ec-curve "$_arg_ec_curve" \
 						 --cert-key-password mypassword \
-						 --dhparams-file "dhparams.pem"
+						 --dhparams-file "dhparams.pem" \
+						 --ca-file "combined.crt" \
+						 --cert-file "combined.crt"
 
 # Verify that the expected files were created
 test -e dhparams.pem
-test -e ca.crt
-test -e service.pem
+test -e combined.crt
 test -e service-key.pem
 
 # Verify that they have the correct file format
 openssl dhparam -noout -in dhparams.pem
-openssl x509    -noout -in ca.crt
-openssl x509    -noout -in service.pem
+openssl x509    -noout -in combined.crt
 
 grep "ENCRYPTED PRIVATE KEY" service-key.pem
 openssl pkey    -noout -in service-key.pem -passin pass:mypassword
@@ -210,7 +210,7 @@ curve_info=$(openssl pkey -text -noout -in service-key.pem -passin pass:mypasswo
 echo "$curve_info" | grep "$_arg_ec_curve"
 
 # Validate the certificates
-openssl verify -x509_strict -CAfile ca.crt service.pem
+openssl verify -x509_strict -CAfile combined.crt combined.crt
 
 popd # $TMPDIR
 
