@@ -37,6 +37,7 @@
 #include <string.h>
 #include <talloc.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "config.h"
 #ifdef HAVE_GETTEXT
@@ -102,17 +103,85 @@ static int
 sscg_io_utils_open_file (const char *path, bool overwrite, FILE **fp)
 {
   FILE *_fp = NULL;
-  if (overwrite)
-    _fp = fopen (path, "w");
-  else
-    _fp = fopen (path, "wx");
+  struct stat st;
+  int ret;
+  int fd;
+
+  /* Try to open with r+ mode (file must exist) */
+  _fp = fopen (path, "r+");
   if (!_fp)
     {
-      SSCG_ERROR ("Could not open file %s: %s\n", path, strerror (errno));
-      return errno;
+      /* If file doesn't exist, create it with w+ mode */
+      if (errno == ENOENT)
+        {
+          _fp = fopen (path, "w+");
+          if (!_fp)
+            {
+              SSCG_ERROR (
+                "Could not create file %s: %s\n", path, strerror (errno));
+              return errno;
+            }
+          /* New file has size 0, so we can proceed */
+          ret = EOK;
+          goto done;
+        }
+      else
+        {
+          SSCG_ERROR ("Could not open file %s: %s\n", path, strerror (errno));
+          ret = errno;
+          goto done;
+        }
     }
-  *fp = _fp;
-  return EOK;
+
+  /* File exists and was opened successfully, check its size */
+  fd = fileno (_fp);
+  ret = fstat (fd, &st);
+  if (ret != 0)
+    {
+      SSCG_ERROR ("Could not stat file %s: %s\n", path, strerror (errno));
+      ret = errno;
+      goto done;
+    }
+
+  /* Check if file size is greater than zero */
+  if (st.st_size > 0)
+    {
+      if (overwrite)
+        {
+          /* Truncate the file */
+          ret = ftruncate (fd, 0);
+          if (ret != 0)
+            {
+              SSCG_ERROR (
+                "Could not truncate file %s: %s\n", path, strerror (errno));
+              ret = errno;
+              goto done;
+            }
+          /* Rewind to beginning after truncation */
+          rewind (_fp);
+        }
+      else
+        {
+          /* File exists and overwrite is false - return error */
+          SSCG_ERROR ("File %s already exists\n", path);
+          ret = EEXIST;
+          goto done;
+        }
+    }
+
+  /* File size is zero or has been truncated */
+  ret = EOK;
+
+done:
+  if (ret == EOK)
+    {
+      *fp = _fp;
+      _fp = NULL;
+    }
+
+  if (_fp)
+    fclose (_fp);
+  return ret;
 }
 
 

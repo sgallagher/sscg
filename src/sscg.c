@@ -75,10 +75,11 @@ main (int argc, const char **argv)
 
   struct sscg_stream *stream = NULL;
 
-  /* Always use umask 0577 for generating certificates and keys
-       This means that it's opened as write-only by the effective
-       user. */
-  umask (0577);
+  /* Always use umask 0177 for generating certificates and keys
+     This means that it's opened as read/write only by the effective
+     user.
+  */
+  umask (0177);
 
 #ifdef HAVE_GETTEXT
   /* Initialize internationalization */

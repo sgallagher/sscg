@@ -54,6 +54,7 @@ set -e
 DHPARAMS_TMPDIR=$(mktemp --directory --tmpdir=$GITHUB_WORKSPACE sscg_dhparams_test_XXXXXX)
 WRITABLE_DIR="$DHPARAMS_TMPDIR/writable"
 READONLY_DIR="$DHPARAMS_TMPDIR/readonly"
+READONLY_WITH_DHPARAMS_DIR="$DHPARAMS_TMPDIR/readonly_with_dhparams"
 DHPARAMS_DIR="$DHPARAMS_TMPDIR/dhparams"
 
 function cleanup {
@@ -69,14 +70,16 @@ trap cleanup EXIT
 # Set up test directories
 mkdir -p "$WRITABLE_DIR"
 mkdir -p "$READONLY_DIR"
+mkdir -p "$READONLY_WITH_DHPARAMS_DIR"
 mkdir -p "$DHPARAMS_DIR"
 
 # Create a pre-existing dhparams.pem file for some tests
-touch "$DHPARAMS_DIR/dhparams.pem"
+echo "preexisting dhparams.pem" > "$DHPARAMS_DIR/dhparams.pem"
 
 # Copy pre-existing dhparams.pem to readonly directory before making it readonly
-cp "$DHPARAMS_DIR/dhparams.pem" "$READONLY_DIR/dhparams.pem"
-chmod 555 "$READONLY_DIR"
+cp "$DHPARAMS_DIR/dhparams.pem" "$READONLY_WITH_DHPARAMS_DIR/dhparams.pem"
+chmod 0555 "$READONLY_DIR"
+chmod 0555 "$READONLY_WITH_DHPARAMS_DIR"
 
 failed_tests=0
 total_tests=8
@@ -260,9 +263,9 @@ run_test \
     8 \
     "--dhparams-file to non-writable path, existing file" \
     "$WRITABLE_DIR" \
-    "$READONLY_DIR/dhparams.pem" \
+    "$READONLY_WITH_DHPARAMS_DIR/dhparams.pem" \
     17 \
-    "$READONLY_DIR/dhparams.pem" \
+    "$READONLY_WITH_DHPARAMS_DIR/dhparams.pem" \
     "false" \
     "$WRITABLE_DIR"
 
