@@ -750,7 +750,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
       POPT_ARG_NONE,
       &options->overwrite,
       0,
-      _ ("Overwrite any pre-existing files in the requested locations"),
+      _ ("Overwrite any pre-existing files in the requested locations. DANGER: You probably don't want to use this!"),
       NULL
     },
 
