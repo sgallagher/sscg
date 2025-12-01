@@ -203,4 +203,11 @@ int
 sscg_io_utils_finalize_output_files (struct sscg_stream **streams);
 
 
+int
+sscg_io_utils_truncate_output_files (struct sscg_stream **streams);
+
+/* Clean up output files if we are exiting early */
+void
+sscg_io_utils_delete_output_files (struct sscg_stream **streams);
+
 #endif /* _SSCG_IO_UTILS_H */

@@ -240,6 +240,11 @@ main (int argc, const char **argv)
 
   /* ==== Output the final files ==== */
 
+  /* First truncate all the files that we're going to write to, in case they
+   * already exist.
+   */
+  ret = sscg_io_utils_truncate_output_files (options->streams);
+  CHECK_OK (ret);
 
   /* Write private keys first */
 
@@ -335,11 +340,11 @@ main (int argc, const char **argv)
   ret = EOK;
 
 done:
-  talloc_zfree (main_ctx);
   if (ret != EOK)
     {
-      SSCG_ERROR ("%s\n", strerror (ret));
+      sscg_io_utils_delete_output_files (options->streams);
     }
+  talloc_zfree (main_ctx);
   if (getenv ("SSCG_TALLOC_REPORT"))
     talloc_report_full (NULL, stderr);
 
