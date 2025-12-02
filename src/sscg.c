@@ -59,7 +59,7 @@ int
 main (int argc, const char **argv)
 {
   int ret, sret;
-  struct sscg_options *options;
+  struct sscg_options *options = NULL;
   bool build_client_cert = false;
   char *dhparams_file = NULL;
 
@@ -342,7 +342,10 @@ main (int argc, const char **argv)
 done:
   if (ret != EOK)
     {
-      sscg_io_utils_delete_output_files (options->streams);
+      if (options)
+        {
+          sscg_io_utils_delete_output_files (options->streams);
+        }
     }
   talloc_zfree (main_ctx);
   if (getenv ("SSCG_TALLOC_REPORT"))
