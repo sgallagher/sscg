@@ -36,6 +36,7 @@
 
 #include <talloc.h>
 #include <openssl/evp.h>
+#include <stdbool.h>
 
 #include "include/sscg.h"
 
