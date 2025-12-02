@@ -43,7 +43,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
-#include <stdbool.h>
 #include <talloc.h>
 #include <stdint.h>
 
@@ -135,7 +134,7 @@ struct sscg_options
   enum sscg_verbosity verbosity;
 
   /* Whether to print the version and exit */
-  bool print_version;
+  int print_version;
 
   /* How long should certificates be valid (in days) */
   int lifetime;
@@ -203,7 +202,7 @@ struct sscg_options
   int dhparams_generator;
 
   /* Overwrite the output files */
-  bool overwrite;
+  int overwrite;
 };
 
 
