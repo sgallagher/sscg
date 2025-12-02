@@ -479,6 +479,18 @@ test(
     timeout: 120,
 )
 
+test_file_overwrite = find_program(
+    'test/test_file_overwrite.sh',
+    required: true,
+)
+
+test('test_file_overwrite',
+     test_file_overwrite,
+     env: test_env,
+     depends: sscg,
+     timeout: 120,
+)
+
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
