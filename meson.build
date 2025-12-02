@@ -498,6 +498,18 @@ test('test_file_overwrite',
      timeout: 120,
 )
 
+test_missing_arg = find_program(
+    'test/test_missing_arg.sh',
+    required: true,
+)
+
+test('test_missing_arg',
+     test_missing_arg,
+     env: test_env,
+     depends: sscg,
+     timeout: 60,
+)
+
 
 cdata = configuration_data()
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
