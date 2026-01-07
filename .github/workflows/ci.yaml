@@ -19,7 +19,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Install build dependencies
       run: |
@@ -103,7 +103,7 @@ jobs:
         cat /etc/os-release
 
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Install build dependencies
       run: |
@@ -156,7 +156,7 @@ jobs:
         cat /etc/os-release
 
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Enable DNF tools
       run: |
@@ -212,7 +212,7 @@ jobs:
         cat /etc/os-release
 
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Install build dependencies
       run: |

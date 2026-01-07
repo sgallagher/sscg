@@ -20,7 +20,7 @@ jobs:
         yum -y install git-core
 
     - name: Checkout Code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Work around dubious ownership bug (https://github.com/actions/checkout/issues/1169)
       run: |
