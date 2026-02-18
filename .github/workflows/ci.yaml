@@ -191,6 +191,126 @@ jobs:
       run: |
         su -c "meson test -t 5 --print-errorlogs -C centos-stream-${{ matrix.release }}" sscg
 
+  centos-stream-generate-certs:
+    name: CentOS Stream generate certs (${{ matrix.key-type }}-${{ matrix.crypto_policy }})
+    runs-on: ubuntu-latest
+    needs: centos-stream
+    strategy:
+      fail-fast: false
+      matrix:
+        key-type:
+          - rsa
+          - ecdsa
+          - mldsa
+        crypto_policy:
+          - default
+          - pq
+        exclude:
+          - key-type: rsa
+            crypto_policy: pq
+          - key-type: ecdsa
+            crypto_policy: pq
+
+    container:
+      image: quay.io/centos/centos:stream9
+      options: --security-opt seccomp=unconfined
+
+    steps:
+    - name: Identify the system
+      run: |
+        cat /etc/os-release
+
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Enable DNF tools
+      run: |
+        yum -y install dnf-plugins-core
+
+    - name: Enable CRB
+      run: |
+        yum config-manager --set-enabled crb
+
+    - name: Install build dependencies
+      run: |
+        yum install -y meson util-linux pkgconf-pkg-config openssl openssl-devel libpath_utils-devel libtalloc-devel help2man popt-devel gcc
+
+    - name: Create user
+      run: |
+        useradd -m -s /bin/bash -G wheel sscg
+        tail /etc/passwd
+
+    - name: Make checkout directory editable by the sscg user
+      run: |
+        chown -R sscg:wheel ${GITHUB_WORKSPACE}
+
+    - name: Configure build directory
+      run: |
+        CC=gcc su -c "meson setup --errorlogs centos-stream-9" sscg || ( cat centos-stream-9/meson-logs/meson-log.txt && exit 1 )
+
+    - name: Build SSCG
+      run: |
+        su -c "ninja -C centos-stream-9" sscg
+
+    - name: Generate certs with sscg
+      run: |
+        su -c "cd ${GITHUB_WORKSPACE} && ./centos-stream-9/sscg --key-type ${{ matrix.key-type }} --ca-file=ca.crt --cert-file=service.pem --cert-key-file=service-key.pem" sscg
+
+    - name: Upload cert artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: certs-${{ matrix.key-type }}-${{ matrix.crypto_policy }}
+        path: |
+          ca.crt
+          service.pem
+          service-key.pem
+
+  centos-stream-ssl-test:
+    name: CentOS Stream SSL test (${{ matrix.key-type }}-${{ matrix.crypto_policy }})
+    runs-on: ubuntu-latest
+    needs: centos-stream-generate-certs
+    strategy:
+      fail-fast: false
+      matrix:
+        key-type:
+          - rsa
+          - ecdsa
+          - mldsa
+        crypto_policy:
+          - default
+          - pq
+        exclude:
+          - key-type: rsa
+            crypto_policy: pq
+          - key-type: ecdsa
+            crypto_policy: pq
+
+    steps:
+    - name: Download cert artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: certs-${{ matrix.key-type }}-${{ matrix.crypto_policy }}
+        path: certs
+
+    - name: Start openssl s_server
+      run: |
+        docker network create sslnet || true
+        SERVER_CMD='openssl s_server -accept 8080 -cert /certs/service.pem -key /certs/service-key.pem -CAfile /certs/ca.crt -naccept 1 -debug -msg'
+        if [ "${{ matrix.crypto_policy }}" = "pq" ]; then
+          SERVER_CMD='update-crypto-policies --set DEFAULT:PQ && '"$SERVER_CMD"
+        fi
+        docker run -d --name sslserver --network sslnet -v ${{ github.workspace }}/certs:/certs -p 8080:8080 quay.io/centos/centos:stream9 bash -c "$SERVER_CMD"
+
+    - name: Wait for server
+      run: sleep 3
+
+    - name: Run openssl s_client
+      run: |
+        CLIENT_CMD='echo | openssl s_client -connect sslserver:8080 -CAfile /certs/ca.crt -debug -msg -verify_return_error'
+        if [ "${{ matrix.crypto_policy }}" = "pq" ]; then
+          CLIENT_CMD='update-crypto-policies --set DEFAULT:PQ && '"$CLIENT_CMD"
+        fi
+        docker run --rm --network sslnet -v ${{ github.workspace }}/certs:/certs quay.io/centos/centos:stream9 bash -c "$CLIENT_CMD"
 
   fedora-eln:
     name: Fedora ELN x86_64
