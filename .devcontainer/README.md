@@ -8,8 +8,8 @@ This devcontainer provides a complete development environment for the SSCG proje
 - **Container Runtime**: Optimized for Podman (also works with Docker)
 - **Build System**: Meson + Ninja
 - **Compiler**: GCC with C17 support
-- **Dependencies**: All required libraries (OpenSSL 3.0+, talloc, popt, path_utils)
-- **Development Tools**: 
+- **Dependencies**: All required libraries (OpenSSL 3.0+, talloc, popt)
+- **Development Tools**:
   - clang-format for code formatting
   - GDB and Valgrind for debugging
   - Git, vim, nano for development
@@ -32,7 +32,7 @@ This devcontainer provides a complete development environment for the SSCG proje
    ```bash
    # Fedora/RHEL/CentOS
    sudo dnf install podman podman-docker
-   
+
    # Ubuntu/Debian
    sudo apt install podman podman-docker
    ```
@@ -146,7 +146,7 @@ gcc --version
 meson --version
 
 # Check dependencies
-pkg-config --exists openssl talloc popt path_utils && echo "All dependencies found"
+pkg-config --exists openssl talloc popt && echo "All dependencies found"
 
 # Build and test
 meson setup test_build
