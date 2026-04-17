@@ -70,6 +70,11 @@ struct sscg_x509_req
   X509_REQ *x509_req;
 };
 
+struct sscg_x509_name
+{
+  X509_NAME *name;
+};
+
 struct sscg_x509_cert
 {
   X509 *certificate;
