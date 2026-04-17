@@ -35,9 +35,6 @@ pkg-config --exists talloc && echo "✓ Found" || echo "✗ Missing"
 echo -n "popt: "
 pkg-config --exists popt && echo "✓ Found" || echo "✗ Missing"
 
-echo -n "path_utils: "
-pkg-config --exists path_utils && echo "✓ Found" || echo "✗ Missing"
-
 echo -n "gettext: "
 pkg-config --exists intl && echo "✓ Found" || echo "⚠ Optional (not found)"
 

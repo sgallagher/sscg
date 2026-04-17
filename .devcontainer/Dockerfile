@@ -12,7 +12,6 @@ RUN dnf update -y && \
         openssl-devel \
         libtalloc-devel \
         popt-devel \
-        libpath_utils-devel \
         # Internationalization
         gettext-devel \
         # Documentation
