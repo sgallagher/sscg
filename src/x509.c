@@ -135,6 +135,17 @@ _sscg_csr_destructor (TALLOC_CTX *ctx)
   return 0;
 }
 
+static int
+_sscg_x509_name_destructor (TALLOC_CTX *ctx)
+{
+  struct sscg_x509_name *subject_name =
+    talloc_get_type_abort (ctx, struct sscg_x509_name);
+
+  X509_NAME_free (subject_name->name);
+
+  return 0;
+}
+
 int
 sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
                      struct sscg_cert_info *certinfo,
@@ -143,7 +154,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
 {
   int ret, sslret;
   size_t i;
-  X509_NAME *subject;
+  struct sscg_x509_name *subject = NULL;
   char *alt_name = NULL;
   char *tmp = NULL;
   char *san = NULL;
@@ -173,11 +184,16 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   sslret = X509_REQ_set_version (csr->x509_req, 0);
   CHECK_SSL (sslret, X509_REQ_set_version);
 
-  subject = X509_REQ_get_subject_name (csr->x509_req);
+  subject = talloc_zero (tmp_ctx, struct sscg_x509_name);
+  CHECK_MEM (subject);
+
+  subject->name = X509_NAME_new ();
+  CHECK_MEM (subject->name);
+  talloc_set_destructor ((TALLOC_CTX *)subject, _sscg_x509_name_destructor);
 
   /* Country */
   sslret =
-    X509_NAME_add_entry_by_NID (subject,
+    X509_NAME_add_entry_by_NID (subject->name,
                                 NID_countryName,
                                 MBSTRING_UTF8,
                                 (const unsigned char *)certinfo->country,
@@ -190,7 +206,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   if (certinfo->state && certinfo->state[0])
     {
       sslret =
-        X509_NAME_add_entry_by_NID (subject,
+        X509_NAME_add_entry_by_NID (subject->name,
                                     NID_stateOrProvinceName,
                                     MBSTRING_UTF8,
                                     (const unsigned char *)certinfo->state,
@@ -204,7 +220,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   if (certinfo->locality && certinfo->locality[0])
     {
       sslret =
-        X509_NAME_add_entry_by_NID (subject,
+        X509_NAME_add_entry_by_NID (subject->name,
                                     NID_localityName,
                                     MBSTRING_UTF8,
                                     (const unsigned char *)certinfo->locality,
@@ -218,7 +234,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   if (certinfo->org && certinfo->org[0])
     {
       sslret =
-        X509_NAME_add_entry_by_NID (subject,
+        X509_NAME_add_entry_by_NID (subject->name,
                                     NID_organizationName,
                                     MBSTRING_UTF8,
                                     (const unsigned char *)certinfo->org,
@@ -232,7 +248,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   if (certinfo->org_unit && certinfo->org_unit[0])
     {
       sslret =
-        X509_NAME_add_entry_by_NID (subject,
+        X509_NAME_add_entry_by_NID (subject->name,
                                     NID_organizationalUnitName,
                                     MBSTRING_UTF8,
                                     (const unsigned char *)certinfo->org_unit,
@@ -243,7 +259,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
     }
 
   /* Common Name */
-  sslret = X509_NAME_add_entry_by_NID (subject,
+  sslret = X509_NAME_add_entry_by_NID (subject->name,
                                        NID_commonName,
                                        MBSTRING_UTF8,
                                        (const unsigned char *)certinfo->cn,
@@ -256,7 +272,7 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
   if (certinfo->email && certinfo->email[0])
     {
       sslret =
-        X509_NAME_add_entry_by_NID (subject,
+        X509_NAME_add_entry_by_NID (subject->name,
                                     NID_pkcs9_emailAddress,
                                     MBSTRING_UTF8,
                                     (const unsigned char *)certinfo->email,
@@ -265,6 +281,9 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
                                     0);
       CHECK_SSL (sslret, X509_NAME_add_entry_by_NID (Email));
     }
+
+  sslret = X509_REQ_set_subject_name (csr->x509_req, subject->name);
+  CHECK_SSL (sslret, X509_REQ_set_subject_name);
 
   /* SubjectAltNames */
   alt_name = talloc_asprintf (tmp_ctx, "DNS:%s", certinfo->cn);

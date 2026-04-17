@@ -567,8 +567,8 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
   int ret = EOK;
   TALLOC_CTX *tmp_ctx = NULL;
   X509 *x509 = ca_cert->certificate;
-  X509_EXTENSION *name_constraints_ext = NULL;
-  ASN1_OCTET_STRING *ext_data = NULL;
+  const X509_EXTENSION *name_constraints_ext = NULL;
+  const ASN1_OCTET_STRING *ext_data = NULL;
   BIO *bio = NULL;
   char *ext_str = NULL;
   char *ext_str_copy = NULL;
