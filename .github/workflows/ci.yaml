@@ -2,6 +2,9 @@ name: Continuous Integration (x86_64)
 
 on: [ push, pull_request ]
 
+permissions:
+  contents: read
+
 jobs:
   ubuntu:
     name: Ubuntu x86_64

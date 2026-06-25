@@ -6,6 +6,9 @@ on:
       - main
       - upstreamed # For testing changes to this file
 
+permissions:
+  contents: read
+
 jobs:
   coverity:
     name: Coverity Static Analysis

@@ -1,6 +1,9 @@
 name: Automatic Code Formatters
 on: push
 
+permissions:
+  contents: write
+
 jobs:
   autoformat:
     name: Auto-format code

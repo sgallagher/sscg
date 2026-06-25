@@ -2,6 +2,9 @@ name: Continuous Integration (aarch64)
 
 on: [ push, pull_request ]
 
+permissions:
+  contents: read
+
 jobs:
   ubuntu:
     name: Ubuntu aarch64
