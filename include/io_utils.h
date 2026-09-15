@@ -46,7 +46,7 @@
     {                                                                         \
       if (!ptr)                                                               \
         {                                                                     \
-          ret = errno;                                                        \
+          ret = (errno != 0) ? errno : EIO;                                   \
           fprintf (stderr,                                                    \
                    "Could not write to %s. Check directory permissions.\n",   \
                    file);                                                     \
