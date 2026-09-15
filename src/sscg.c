@@ -335,7 +335,8 @@ main (int argc, const char **argv)
     }
 
   /* Set the final file permissions */
-  sscg_io_utils_finalize_output_files (options->streams);
+  ret = sscg_io_utils_finalize_output_files (options->streams);
+  CHECK_OK (ret);
 
   ret = EOK;
 
