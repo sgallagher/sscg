@@ -60,4 +60,4 @@ jobs:
           COVERITY_SCAN_BUILD_COMMAND: ninja -C coverity
           COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_TOKEN }}
         run: |
-          /usr/bin/travisci_build_coverity_scan.sh ||:
+          ${GITHUB_WORKSPACE}/coverity/travisci_build_coverity_scan.sh ||:
