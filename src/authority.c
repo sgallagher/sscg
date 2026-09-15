@@ -40,6 +40,7 @@
 
 #include "include/sscg.h"
 #include "include/authority.h"
+#include "include/io_utils.h"
 #include "include/x509.h"
 #include "include/key.h"
 
@@ -292,8 +293,15 @@ create_private_CA (TALLOC_CTX *mem_ctx,
 
   if (options->verbosity >= SSCG_DEBUG)
     {
-      fprintf (stderr, "DEBUG: Writing CA CSR to /tmp/debug-ca.csr\n");
-      BIO *ca_csr_out = BIO_new_file ("/tmp/debug-ca.csr", "w");
+      char csr_path[256];
+      BIO *ca_csr_out;
+
+      ret = sscg_io_utils_new_debug_csr_bio (
+        "debug-ca", csr_path, sizeof (csr_path), &ca_csr_out);
+      CHECK_OK (ret);
+
+      fprintf (stderr, "DEBUG: Writing CA CSR to %s\n", csr_path);
+      CHECK_BIO (ca_csr_out, csr_path);
       int sslret = PEM_write_bio_X509_REQ (ca_csr_out, csr->x509_req);
       CHECK_SSL (sslret, PEM_write_bio_X509_REQ);
       BIO_free (ca_csr_out);
