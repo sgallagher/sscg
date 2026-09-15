@@ -47,6 +47,12 @@
 #include "include/x509.h"
 #include "include/bignum.h"
 
+static int
+sscg_x509_gmtime_adj (ASN1_TIME *time_field, long offset_sec)
+{
+  return X509_gmtime_adj (time_field, offset_sec) != NULL;
+}
+
 int
 sscg_generate_serial (TALLOC_CTX *mem_ctx, struct sscg_bignum **serial)
 {
@@ -466,8 +472,11 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
     }
 
   /* set time */
-  X509_gmtime_adj (X509_get_notBefore (cert), 0);
-  X509_gmtime_adj (X509_get_notAfter (cert), days * 24 * 60 * 60);
+  sslret = sscg_x509_gmtime_adj (X509_get_notBefore (cert), 0);
+  CHECK_SSL (sslret, X509_gmtime_adj);
+  sslret = sscg_x509_gmtime_adj (X509_get_notAfter (cert),
+                                 (long)days * 24L * 60L * 60L);
+  CHECK_SSL (sslret, X509_gmtime_adj);
 
   /* set subject */
   subject = X509_NAME_dup (X509_REQ_get_subject_name (csr));
