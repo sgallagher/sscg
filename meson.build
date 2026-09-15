@@ -241,6 +241,16 @@ lifetime_validation_test = executable(
 )
 test('lifetime_validation_test', lifetime_validation_test)
 
+io_utils_validate_test = executable(
+    'io_utils_validate_test',
+    ['test/io_utils_validate_test.c'],
+    link_with : sscg_lib,
+    dependencies : [ crypto, talloc ],
+    include_directories : include_directories('.'),
+    install : false,
+)
+test('io_utils_validate_test', io_utils_validate_test)
+
 
 # Test generating 512-bit, 1024-bit and 2048-bit and 4096 DH params with
 # multiple generators. 2048-bit and larger takes a long time, so they are
