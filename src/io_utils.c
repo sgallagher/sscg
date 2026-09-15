@@ -93,7 +93,8 @@ sscg_stream_destructor (TALLOC_CTX *ptr)
   /* Zero out the memory before freeing it so we don't leak passwords */
   if (stream->passphrase)
     {
-      memset (stream->passphrase, 0, strnlen (stream->passphrase, MAX_PW_LEN));
+      OPENSSL_cleanse (stream->passphrase,
+                       strnlen (stream->passphrase, MAX_PW_LEN));
     }
 
   return 0;
@@ -279,7 +280,7 @@ sscg_secure_string_steal (TALLOC_CTX *mem_ctx, char *src)
 {
   char *dest = talloc_strdup (mem_ctx, src);
 
-  memset ((void *)src, 0, strlen (src));
+  OPENSSL_cleanse ((void *)src, strlen (src));
 
   return dest;
 }
@@ -345,7 +346,7 @@ sscg_read_pw_file (TALLOC_CTX *mem_ctx, char *path)
 
   password = talloc_strdup (mem_ctx, tpass);
 
-  memset (tpass, 0, sizeof (tpass));
+  OPENSSL_cleanse (tpass, sizeof (tpass));
 
   return password;
 }
