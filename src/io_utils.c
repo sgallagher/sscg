@@ -181,7 +181,7 @@ sscg_io_utils_get_stream_by_fp (struct sscg_stream **streams, FILE *fp)
     }
 
   /* First see if this path already exists in the list */
-  for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
+  for (int i = 0; i < SSCG_NUM_FILE_TYPES && (stream = streams[i]); i++)
     {
       ret = fstat (fileno (stream->fp), &saved_st);
       if (ret != 0)
@@ -213,7 +213,7 @@ sscg_io_utils_get_stream_by_type (struct sscg_stream **streams,
     }
 
   /* First see if this path already exists in the list */
-  for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
+  for (int i = 0; i < SSCG_NUM_FILE_TYPES && (stream = streams[i]); i++)
     {
       SSCG_LOG (SSCG_DEBUG,
                 "Checking for 0x%.4x in 0x%.4x\n",
@@ -538,7 +538,7 @@ io_utils_validate (struct sscg_stream **streams)
   int keybits;
   int allbits = 0;
 
-  for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
+  for (int i = 0; i < SSCG_NUM_FILE_TYPES && (stream = streams[i]); i++)
     {
       SSCG_LOG (SSCG_DEBUG, "filetypes: 0x%.4x\n", stream->filetypes);
 
@@ -659,7 +659,7 @@ sscg_io_utils_open_BIOs (struct sscg_stream **streams)
     case IO_UTILS_OK: break;
     }
 
-  for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
+  for (int i = 0; i < SSCG_NUM_FILE_TYPES && (stream = streams[i]); i++)
     {
       SSCG_LOG (SSCG_DEBUG, "Opening %s\n", stream->path);
       stream->bio = BIO_new_fp (stream->fp, BIO_NOCLOSE);
@@ -723,7 +723,7 @@ sscg_io_utils_finalize_output_files (struct sscg_stream **streams)
   struct sscg_stream *stream = NULL;
   FILE *fp;
 
-  for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
+  for (int i = 0; i < SSCG_NUM_FILE_TYPES && (stream = streams[i]); i++)
     {
       if (!stream->bio)
         {
@@ -753,7 +753,7 @@ sscg_io_utils_truncate_output_files (struct sscg_stream **streams)
 {
   struct sscg_stream *stream = NULL;
 
-  for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
+  for (int i = 0; i < SSCG_NUM_FILE_TYPES && (stream = streams[i]); i++)
     {
       errno = 0;
       if (ftruncate (fileno (stream->fp), 0) != 0)
@@ -770,7 +770,7 @@ sscg_io_utils_delete_output_files (struct sscg_stream **streams)
   struct sscg_stream *stream = NULL;
   int ret;
 
-  for (int i = 0; (stream = streams[i]) && i < SSCG_NUM_FILE_TYPES; i++)
+  for (int i = 0; i < SSCG_NUM_FILE_TYPES && (stream = streams[i]); i++)
     {
       errno = 0;
       SSCG_LOG (SSCG_DEBUG, "Deleting file %s\n", stream->path);
