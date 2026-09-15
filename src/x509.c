@@ -485,6 +485,8 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
 
   /* Copy the extensions from the CSR */
   extensions = X509_REQ_get_extensions (csr);
+  CHECK_MEM (extensions);
+
   for (i = 0; i < sk_X509_EXTENSION_num (extensions); i++)
     {
       ext = sk_X509_EXTENSION_value (extensions, i);
