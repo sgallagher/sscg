@@ -1066,7 +1066,11 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
 #ifdef HAVE_ML_DSA
   else if (strcmp (options->key_type, "mldsa") == 0)
     {
-      if (options->mldsa_nist_level < options->system_security_level)
+      /* The requested ML-DSA NIST level must be at least the system security
+         level or 2, whichever is greater */
+      if (options->mldsa_nist_level < (options->system_security_level > 2 ?
+                                         options->system_security_level :
+                                         2))
         {
           fprintf (stderr,
                    _ ("ML-DSA NIST level must be at least %d.\n"),
