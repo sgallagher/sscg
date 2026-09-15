@@ -119,6 +119,7 @@ create_cert (TALLOC_CTX *mem_ctx,
   sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
   extended = sk_ASN1_OBJECT_new_null ();
+  CHECK_MEM (extended);
 
   switch (type)
     {
@@ -138,6 +139,8 @@ create_cert (TALLOC_CTX *mem_ctx,
 
 
   ex = X509V3_EXT_i2d (NID_ext_key_usage, 0, extended);
+  CHECK_MEM (ex);
+
   sk_ASN1_OBJECT_pop_free (extended, ASN1_OBJECT_free);
   sk_X509_EXTENSION_push (certinfo->extensions, ex);
 

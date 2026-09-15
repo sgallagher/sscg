@@ -89,7 +89,7 @@ create_private_CA (TALLOC_CTX *mem_ctx,
 
   ca_certinfo->org_unit =
     talloc_asprintf (ca_certinfo, "ca-%lu", BN_get_word (serial->bn));
-
+  CHECK_MEM (ca_certinfo->org_unit);
 
   ca_certinfo->email = talloc_strdup (ca_certinfo, options->email);
   CHECK_MEM (ca_certinfo->email);
