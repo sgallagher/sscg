@@ -30,10 +30,11 @@
 
     Copyright 2019-2025 by Stephen Gallagher <sgallagh@redhat.com>
 */
-
+#define _GNU_SOURCE
 
 #include <assert.h>
 #include <openssl/bio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <talloc.h>
 #include <sys/stat.h>
@@ -761,6 +762,50 @@ sscg_io_utils_truncate_output_files (struct sscg_stream **streams)
       rewind (stream->fp);
     }
 
+  return EOK;
+}
+
+int
+sscg_io_utils_new_debug_csr_bio (const char *basename,
+                                 char *path_template,
+                                 size_t path_template_len,
+                                 BIO **_bio)
+{
+  int fd;
+  BIO *bio = NULL;
+  size_t min_len;
+  static const char suffix[] = ".csr";
+  static const size_t suffix_len = sizeof (suffix) - 1;
+
+  min_len =
+    strlen ("/tmp/") + strlen (basename) + strlen ("-XXXXXX") + suffix_len + 1;
+  if (path_template_len < min_len)
+    {
+      return EINVAL;
+    }
+
+  if (snprintf (
+        path_template, path_template_len, "/tmp/%s-XXXXXX%s", basename, suffix)
+      >= (int)path_template_len)
+    {
+      return EINVAL;
+    }
+
+  fd = mkstemps (path_template, (int)suffix_len);
+  if (fd < 0)
+    {
+      return errno;
+    }
+
+  bio = BIO_new_fd (fd, BIO_CLOSE);
+  if (!bio)
+    {
+      close (fd);
+      unlink (path_template);
+      return ENOMEM;
+    }
+
+  *_bio = bio;
   return EOK;
 }
 

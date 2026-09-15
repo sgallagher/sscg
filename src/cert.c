@@ -35,6 +35,7 @@
 #include <string.h>
 #include "include/sscg.h"
 #include "include/cert.h"
+#include "include/io_utils.h"
 #include "include/x509.h"
 #include "include/key.h"
 
@@ -159,12 +160,17 @@ create_cert (TALLOC_CTX *mem_ctx,
 
   if (options->verbosity >= SSCG_DEBUG)
     {
-      const char *tempcert = (type == SSCG_CERT_TYPE_SERVER) ?
-                               "/tmp/debug-service.csr" :
-                               "/tmp/debug-client.csr";
+      const char *basename =
+        (type == SSCG_CERT_TYPE_SERVER) ? "debug-service" : "debug-client";
+      char csr_path[256];
+      BIO *csr_out;
 
-      fprintf (stderr, "DEBUG: Writing certificate CSR to %s\n", tempcert);
-      BIO *csr_out = BIO_new_file (tempcert, "w");
+      ret = sscg_io_utils_new_debug_csr_bio (
+        basename, csr_path, sizeof (csr_path), &csr_out);
+      CHECK_OK (ret);
+
+      fprintf (stderr, "DEBUG: Writing certificate CSR to %s\n", csr_path);
+      CHECK_BIO (csr_out, csr_path);
       int sslret = PEM_write_bio_X509_REQ (csr_out, csr->x509_req);
       CHECK_SSL (sslret, PEM_write_bio_X509_REQ);
       BIO_free (csr_out);

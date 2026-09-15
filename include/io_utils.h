@@ -210,4 +210,15 @@ sscg_io_utils_truncate_output_files (struct sscg_stream **streams);
 void
 sscg_io_utils_delete_output_files (struct sscg_stream **streams);
 
+/*
+ * Create a unique debug CSR file under /tmp (O_EXCL via mkstemps).
+ * basename is e.g. "debug-service"; path_template must hold at least
+ * strlen("/tmp/") + strlen(basename) + strlen("-XXXXXX.csr") + 1 bytes.
+ */
+int
+sscg_io_utils_new_debug_csr_bio (const char *basename,
+                                 char *path_template,
+                                 size_t path_template_len,
+                                 BIO **_bio);
+
 #endif /* _SSCG_IO_UTILS_H */
