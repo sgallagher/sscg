@@ -231,6 +231,16 @@ hostname_validation_test = executable(
 )
 test('hostname_validation_test', hostname_validation_test)
 
+lifetime_validation_test = executable(
+    'lifetime_validation_test',
+    ['test/lifetime_validation_test.c', 'src/arguments.c'],
+    link_with : sscg_lib,
+    dependencies : [ crypto, popt, talloc, gettext ],
+    include_directories : include_directories('.'),
+    install : false,
+)
+test('lifetime_validation_test', lifetime_validation_test)
+
 
 # Test generating 512-bit, 1024-bit and 2048-bit and 4096 DH params with
 # multiple generators. 2048-bit and larger takes a long time, so they are
