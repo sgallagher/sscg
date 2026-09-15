@@ -42,6 +42,7 @@
 #include "include/sscg.h"
 #include "include/dhparams.h"
 #include "include/io_utils.h"
+#include "include/names.h"
 
 #include "config.h"
 #ifdef HAVE_GETTEXT
@@ -973,37 +974,8 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     }
   CHECK_MEM (options->hostname);
 
-  if (strnlen (options->hostname, MAX_FQDN_LEN + 1) > MAX_FQDN_LEN)
-    {
-      fprintf (
-        stderr, _ ("FQDNs may not exceed %d characters\n"), MAX_FQDN_LEN);
-      ret = EINVAL;
-      goto done;
-    }
-
-  /* Check hostname label length (first label for FQDN, entire name for single-label) */
-  char *dot_pos = strchr (options->hostname, '.');
-  size_t label_len;
-
-  if (dot_pos)
-    {
-      /* FQDN: check length of first label (before first dot) */
-      label_len = dot_pos - options->hostname;
-    }
-  else
-    {
-      /* Single-label hostname: check entire hostname length */
-      label_len = strnlen (options->hostname, MAX_HOST_LEN + 1);
-    }
-
-  if (label_len > MAX_HOST_LEN)
-    {
-      fprintf (stderr,
-               _ ("Hostname labels may not exceed %d characters\n"),
-               MAX_HOST_LEN);
-      ret = EINVAL;
-      goto done;
-    }
+  ret = sscg_validate_dns_hostname (options->hostname);
+  CHECK_OK (ret);
 
   /* Use a realloc loop to copy the names from popt into the
        options struct. It's not the most efficient approach, but
@@ -1014,6 +986,9 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
     {
       while (alternative_names[i] != NULL)
         {
+          ret = sscg_validate_subject_alt_name (alternative_names[i]);
+          CHECK_OK (ret);
+
           options->subject_alt_names = talloc_realloc (
             options, options->subject_alt_names, char *, i + 1);
           CHECK_MEM (options->subject_alt_names);

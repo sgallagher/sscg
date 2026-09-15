@@ -286,21 +286,23 @@ main (int argc, char **argv)
   printf ("SUCCESS.\n");
 
   /*
-   * Test 9: Edge case - hostname with dot at the end (trailing dot)
+   * Test 9: Trailing dot is not a valid hostname label structure
    */
-  printf ("Test 9: Hostname with trailing dot 'server.example.com.'. ");
+  printf ("Test 9: Hostname with trailing dot (should reject). ");
 
   const char *argv_trailing_dot[] = {
     "sscg", "--hostname", "server.example.com.", NULL
   };
   ret = sscg_handle_arguments (tmp_ctx, 3, argv_trailing_dot, &options);
-  if (ret != EOK)
+  if (ret == EOK)
     {
-      printf ("FAILED (ret=%d).\n", ret);
+      printf ("FAILED. Should have rejected trailing-dot hostname.\n");
+      ret = EINVAL;
       goto done;
     }
 
-  printf ("SUCCESS.\n");
+  printf ("SUCCESS (correctly rejected).\n");
+  ret = EOK;
 
   /*
    * Test 10: Regression test - ensure no crash with NULL hostname
