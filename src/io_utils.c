@@ -470,7 +470,11 @@ sscg_io_utils_add_output_key (struct sscg_stream **streams,
 
 
   /* Set the password options */
-  stream->pass_prompt = pass_prompt;
+
+  /* If we are sharing this file with other filetypes, we want to ensure that
+     if any of them need to prompt for a password, a subsequent call of this
+     function won't clear it.*/
+  stream->pass_prompt |= pass_prompt;
 
   if (passphrase)
     {
