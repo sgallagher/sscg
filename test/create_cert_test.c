@@ -85,7 +85,7 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
     }
 
   /* Get the extension data */
-  ext_data = X509_EXTENSION_get_data (name_constraints_ext);
+  ext_data = X509_EXTENSION_get_data (discard_const (name_constraints_ext));
   if (!ext_data)
     {
       printf ("      ERROR: Failed to get Name Constraints extension data.\n");
@@ -103,7 +103,7 @@ verify_name_constraints (struct sscg_x509_cert *ca_cert,
     }
 
   /* Print the extension to the BIO */
-  if (!X509V3_EXT_print (bio, name_constraints_ext, 0, 0))
+  if (!X509V3_EXT_print (bio, discard_const (name_constraints_ext), 0, 0))
     {
       printf ("      ERROR: Failed to print Name Constraints extension.\n");
       BIO_free (bio);
