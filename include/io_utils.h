@@ -100,6 +100,17 @@ enum sscg_file_type
 #define SSCG_FILE_TYPE_CA_TYPES                                               \
   ((1 << SSCG_FILE_TYPE_CA) | (1 << SSCG_FILE_TYPE_CA_KEY))
 
+enum io_utils_errors
+{
+  IO_UTILS_OK = 0,
+  IO_UTILS_TOOMANYKEYS,
+  IO_UTILS_DHPARAMS_NON_EXCLUSIVE,
+  IO_UTILS_CRL_NON_EXCLUSIVE,
+  IO_UTILS_SVC_UNMATCHED,
+  IO_UTILS_CLIENT_UNMATCHED,
+  IO_UTILS_CA_UNMATCHED
+};
+
 #include "include/sscg.h"
 
 
@@ -118,6 +129,10 @@ struct sscg_stream
 
 const char *
 sscg_get_file_type_name (enum sscg_file_type _type);
+
+
+enum io_utils_errors
+sscg_io_utils_validate (struct sscg_stream **streams);
 
 
 int
