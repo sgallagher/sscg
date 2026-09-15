@@ -283,7 +283,8 @@ get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
       goto done;
     }
 
-  name = talloc_strdup (NULL, group_name);
+  name = talloc_strdup (tmp_ctx, group_name);
+  CHECK_MEM (name);
 
   ossl_params[0] = OSSL_PARAM_construct_utf8_string ("group", name, 0);
   ossl_params[1] = OSSL_PARAM_construct_end ();
