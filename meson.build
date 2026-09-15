@@ -93,6 +93,7 @@ sscg_lib_srcs = [
     'src/cert.c',
     'src/dhparams.c',
     'src/logging.c',
+    'src/names.c',
     'src/io_utils.c',
     'src/key.c',
     'src/x509.c',
@@ -104,6 +105,7 @@ sscg_lib_hdrs = [
     'include/cert.h',
     'include/dhparams.h',
     'include/logging.h',
+    'include/names.h',
     'include/io_utils.h',
     'include/key.h',
     'include/sscg.h',
@@ -250,6 +252,16 @@ io_utils_validate_test = executable(
     install : false,
 )
 test('io_utils_validate_test', io_utils_validate_test)
+
+dns_name_validation_test = executable(
+    'dns_name_validation_test',
+    ['test/dns_name_validation_test.c'],
+    link_with : sscg_lib,
+    dependencies : [ crypto, talloc, gettext ],
+    include_directories : include_directories('.'),
+    install : false,
+)
+test('dns_name_validation_test', dns_name_validation_test)
 
 
 # Test generating 512-bit, 1024-bit and 2048-bit and 4096 DH params with
@@ -525,6 +537,18 @@ test_missing_arg = find_program(
 
 test('test_missing_arg',
      test_missing_arg,
+     env: test_env,
+     depends: sscg,
+     timeout: 60,
+)
+
+test_hostname_san_cli = find_program(
+    'test/test_hostname_san_cli.sh',
+    required: true,
+)
+
+test('test_hostname_san_cli',
+     test_hostname_san_cli,
      env: test_env,
      depends: sscg,
      timeout: 60,
