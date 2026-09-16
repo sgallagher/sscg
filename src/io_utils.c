@@ -683,6 +683,13 @@ sscg_io_utils_write_privatekey (struct sscg_stream **streams,
     sscg_io_utils_get_stream_by_type (streams, filetype);
   if (stream)
     {
+      if (!key)
+        {
+          SSCG_ERROR ("No key provided for %s\n", stream->path);
+          ret = EINVAL;
+          goto done;
+        }
+
       /* This function has a default mechanism for prompting for the
        * password if it is passed a cipher and gets a NULL password.
        *
