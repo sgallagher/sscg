@@ -52,7 +52,7 @@ expect_lifetime_ok (TALLOC_CTX *tmp_ctx,
   if (ret != EOK)
     {
       printf ("FAILED (ret=%d, expected success).\n", ret);
-      return ret != EOK ? ret : EINVAL;
+      return ret;
     }
 
   if (options->lifetime != expected_lifetime)
