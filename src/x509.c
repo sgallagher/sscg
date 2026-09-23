@@ -502,6 +502,7 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
       CHECK_SSL (sslret, X509_add_ext);
     }
   sk_X509_EXTENSION_pop_free (extensions, X509_EXTENSION_free);
+  extensions = NULL;
 
   /* set pubkey from req */
   pktmp = X509_REQ_get_pubkey (csr);
@@ -551,6 +552,7 @@ done:
     {
       *_cert = talloc_steal (mem_ctx, scert);
     }
+  sk_X509_EXTENSION_pop_free (extensions, X509_EXTENSION_free);
   X509_NAME_free (subject);
   talloc_free (tmp_ctx);
   return ret;
