@@ -276,9 +276,10 @@ get_params_by_named_group (const char *group_name, EVP_PKEY **dhparams)
 
   if (!is_valid_named_group (group_name))
     {
+      char *valid_names = valid_dh_group_names (tmp_ctx);
       fprintf (stderr, "Unknown Diffie Hellman finite field group.\n");
-      fprintf (
-        stderr, "Valid groups are: %s.\n", valid_dh_group_names (tmp_ctx));
+      if (valid_names)
+        fprintf (stderr, "Valid groups are: %s.\n", valid_names);
       ret = EINVAL;
       goto done;
     }
