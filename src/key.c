@@ -57,22 +57,20 @@ sscg_generate_rsa_key (TALLOC_CTX *mem_ctx,
                        struct sscg_evp_pkey **_key)
 {
   int ret;
-  EVP_PKEY *pkey = NULL;
-  TALLOC_CTX *tmp_ctx = NULL;
+  struct sscg_evp_pkey *spkey = NULL;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+  CHECK_MEM (tmp_ctx);
 
-  pkey = EVP_PKEY_Q_keygen (NULL, NULL, "RSA", (size_t)(0 + (bits)));
-  CHECK_MEM (pkey);
+  spkey = talloc_zero (tmp_ctx, struct sscg_evp_pkey);
+  CHECK_MEM (spkey);
 
-  /* Create the talloc container to hold the memory */
-  (*_key) = talloc_zero (mem_ctx, struct sscg_evp_pkey);
-  if (!(*_key))
-    {
-      ret = ENOMEM;
-      goto done;
-    }
+  talloc_set_destructor ((TALLOC_CTX *)spkey, _sscg_evp_pkey_destructor);
 
-  (*_key)->evp_pkey = pkey;
-  talloc_set_destructor ((TALLOC_CTX *)(*_key), _sscg_evp_pkey_destructor);
+  spkey->evp_pkey =
+    EVP_PKEY_Q_keygen (NULL, NULL, "RSA", (size_t)(0 + (bits)));
+  CHECK_MEM (spkey->evp_pkey);
+
+  *_key = talloc_steal (mem_ctx, spkey);
 
   ret = EOK;
 
@@ -88,22 +86,19 @@ sscg_generate_ec_key (TALLOC_CTX *mem_ctx,
                       struct sscg_evp_pkey **_key)
 {
   int ret;
-  EVP_PKEY *pkey = NULL;
-  TALLOC_CTX *tmp_ctx = NULL;
+  struct sscg_evp_pkey *spkey = NULL;
+  TALLOC_CTX *tmp_ctx = talloc_new (NULL);
+  CHECK_MEM (tmp_ctx);
 
-  pkey = EVP_PKEY_Q_keygen (NULL, NULL, "EC", alg);
-  CHECK_MEM (pkey);
+  spkey = talloc_zero (tmp_ctx, struct sscg_evp_pkey);
+  CHECK_MEM (spkey);
 
-  /* Create the talloc container to hold the memory */
-  (*_key) = talloc_zero (mem_ctx, struct sscg_evp_pkey);
-  if (!(*_key))
-    {
-      ret = ENOMEM;
-      goto done;
-    }
+  talloc_set_destructor ((TALLOC_CTX *)spkey, _sscg_evp_pkey_destructor);
 
-  (*_key)->evp_pkey = pkey;
-  talloc_set_destructor ((TALLOC_CTX *)(*_key), _sscg_evp_pkey_destructor);
+  spkey->evp_pkey = EVP_PKEY_Q_keygen (NULL, NULL, "EC", alg);
+  CHECK_MEM (spkey->evp_pkey);
+
+  *_key = talloc_steal (mem_ctx, spkey);
 
   ret = EOK;
 
@@ -121,7 +116,7 @@ sscg_generate_mldsa_key (TALLOC_CTX *mem_ctx,
 {
   int ret;
   const char *type = NULL;
-  EVP_PKEY *pkey = NULL;
+  struct sscg_evp_pkey *spkey = NULL;
   TALLOC_CTX *tmp_ctx = NULL;
 
   switch (nist_level)
@@ -132,19 +127,18 @@ sscg_generate_mldsa_key (TALLOC_CTX *mem_ctx,
     default: ret = EINVAL; goto done;
     }
 
-  pkey = EVP_PKEY_Q_keygen (NULL, NULL, type);
-  CHECK_MEM (pkey);
+  tmp_ctx = talloc_new (NULL);
+  CHECK_MEM (tmp_ctx);
 
-  /* Create the talloc container to hold the memory */
-  (*_key) = talloc_zero (mem_ctx, struct sscg_evp_pkey);
-  if (!(*_key))
-    {
-      ret = ENOMEM;
-      goto done;
-    }
+  spkey = talloc_zero (tmp_ctx, struct sscg_evp_pkey);
+  CHECK_MEM (spkey);
 
-  (*_key)->evp_pkey = pkey;
-  talloc_set_destructor ((TALLOC_CTX *)(*_key), _sscg_evp_pkey_destructor);
+  talloc_set_destructor ((TALLOC_CTX *)spkey, _sscg_evp_pkey_destructor);
+
+  spkey->evp_pkey = EVP_PKEY_Q_keygen (NULL, NULL, type);
+  CHECK_MEM (spkey->evp_pkey);
+
+  *_key = talloc_steal (mem_ctx, spkey);
 
   ret = EOK;
 
