@@ -116,7 +116,11 @@ create_cert (TALLOC_CTX *mem_ctx,
   ex = X509V3_EXT_conf_nid (
     NULL, NULL, NID_key_usage, "critical,digitalSignature,keyEncipherment");
   CHECK_MEM (ex);
-  sk_X509_EXTENSION_push (certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   extended = sk_ASN1_OBJECT_new_null ();
   CHECK_MEM (extended);
@@ -141,12 +145,20 @@ create_cert (TALLOC_CTX *mem_ctx,
   ex = X509V3_EXT_i2d (NID_ext_key_usage, 0, extended);
   CHECK_MEM (ex);
 
-  sk_X509_EXTENSION_push (certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   /* Mark it as not a CA */
   ex = X509V3_EXT_conf_nid (NULL, NULL, NID_basic_constraints, "CA:FALSE");
   CHECK_MEM (ex);
-  sk_X509_EXTENSION_push (certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   /* Create a certificate signing request for the private CA */
   if (options->verbosity >= SSCG_VERBOSE)

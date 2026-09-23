@@ -343,7 +343,11 @@ sscg_x509v3_csr_new (TALLOC_CTX *mem_ctx,
       goto done;
     }
 
-  sk_X509_EXTENSION_push (certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   /* Set the public key for the certificate */
   sslret = X509_REQ_set_pubkey (csr->x509_req, spkey->evp_pkey);
@@ -458,7 +462,11 @@ sscg_sign_x509_csr (TALLOC_CTX *mem_ctx,
   csr = scsr->x509_req;
 
   /* Set the serial number for the new certificate */
-  BN_to_ASN1_INTEGER (serial->bn, X509_get_serialNumber (cert));
+  if (!BN_to_ASN1_INTEGER (serial->bn, X509_get_serialNumber (cert)))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   /* set the issuer name */
   if (issuer)
