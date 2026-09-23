@@ -56,7 +56,7 @@ create_cert (TALLOC_CTX *mem_ctx,
   struct sscg_x509_cert *cert;
   char *dot;
   X509_EXTENSION *ex = NULL;
-  EXTENDED_KEY_USAGE *extended;
+  EXTENDED_KEY_USAGE *extended = NULL;
   TALLOC_CTX *tmp_ctx = NULL;
 
   tmp_ctx = talloc_new (NULL);
@@ -141,7 +141,6 @@ create_cert (TALLOC_CTX *mem_ctx,
   ex = X509V3_EXT_i2d (NID_ext_key_usage, 0, extended);
   CHECK_MEM (ex);
 
-  sk_ASN1_OBJECT_pop_free (extended, ASN1_OBJECT_free);
   sk_X509_EXTENSION_push (certinfo->extensions, ex);
 
   /* Mark it as not a CA */
@@ -200,6 +199,7 @@ create_cert (TALLOC_CTX *mem_ctx,
 
   ret = EOK;
 done:
+  sk_ASN1_OBJECT_pop_free (extended, ASN1_OBJECT_free);
   talloc_free (tmp_ctx);
   return ret;
 }
