@@ -207,6 +207,12 @@ validate_ip_san (const char *value)
       memcpy (hostbuf, value, hostlen);
       hostbuf[hostlen] = '\0';
 
+      if (*(slash + 1) == '\0')
+        {
+          fprintf (stderr, _ ("Invalid subject alternative name.\n"));
+          return EINVAL;
+        }
+
       for (const char *p = slash + 1; *p; p++)
         {
           if (!isdigit ((unsigned char)*p))
@@ -215,6 +221,16 @@ validate_ip_san (const char *value)
               return EINVAL;
             }
         }
+
+      {
+        int cidr = atoi (slash + 1);
+        int max_prefix = strchr (hostbuf, ':') ? 128 : 32;
+        if (cidr > max_prefix)
+          {
+            fprintf (stderr, _ ("Invalid subject alternative name.\n"));
+            return EINVAL;
+          }
+      }
     }
   else
     {

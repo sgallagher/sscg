@@ -136,10 +136,21 @@ main (int argc, char **argv)
     }
 
   const struct dns_case accept_san[] = {
-    { "alt.example.com", EOK },      { "DNS:alt.example.com", EOK },
-    { "IP:192.0.2.1", EOK },         { "IP:2001:db8::1", EOK },
+    { "alt.example.com", EOK },
+    { "DNS:alt.example.com", EOK },
+    { "IP:192.0.2.1", EOK },
+    { "IP:2001:db8::1", EOK },
     { "IP:203.0.113.0/24", EOK },
-    { "*.example.com", EOK },        { "DNS:*.example.com", EOK },
+    /* IPv4 CIDR boundary values */
+    { "IP:0.0.0.0/0", EOK },
+    { "IP:10.0.0.0/12", EOK },
+    { "IP:10.0.0.0/32", EOK },
+    /* IPv6 CIDR boundary values */
+    { "IP:2001:db8::/0", EOK },
+    { "IP:2001:db8::/48", EOK },
+    { "IP:::1/128", EOK },
+    { "*.example.com", EOK },
+    { "DNS:*.example.com", EOK },
   };
 
   const struct dns_case reject_san[] = {
@@ -148,6 +159,11 @@ main (int argc, char **argv)
     { "OTHER:foo", EINVAL },
     { "IP:not-an-ip", EINVAL },
     { "evil, DNS:other", EINVAL },
+    /* CIDR: empty suffix */
+    { "IP:10.0.0.0/", EINVAL },
+    /* CIDR: prefix out of range for address family */
+    { "IP:10.0.0.0/33", EINVAL },
+    { "IP:::1/129", EINVAL },
   };
 
   ret = run_san_cases (accept_san,
