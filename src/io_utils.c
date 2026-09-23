@@ -136,6 +136,18 @@ sscg_io_utils_open_file (const char *path,
           ret = EEXIST;
           goto done;
         }
+
+      /* Overwriting an existing file: restrict permissions immediately so the
+         old (possibly loose) mode is not in effect while content is written.
+         sscg_io_utils_finalize_output_files() applies the final mode. */
+      if (fchmod (fileno (_fp), S_IRUSR | S_IWUSR) != 0)
+        {
+          SSCG_ERROR ("Could not restrict permissions on %s: %s\n",
+                      path,
+                      strerror (errno));
+          ret = errno;
+          goto done;
+        }
     }
   else if (errno == ENOENT)
     {
