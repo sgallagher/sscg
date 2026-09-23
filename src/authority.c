@@ -126,13 +126,21 @@ create_private_CA (TALLOC_CTX *mem_ctx,
     NID_key_usage,
     "critical,digitalSignature,keyEncipherment,keyCertSign");
   CHECK_MEM (ex);
-  sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (ca_certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   /* Mark it as a CA */
   ex = X509V3_EXT_conf_nid (
     NULL, NULL, NID_basic_constraints, "critical,CA:TRUE");
   CHECK_MEM (ex);
-  sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (ca_certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   /* Restrict signing to the CN and subjectAltNames of the service certificate */
   name_constraint =
@@ -254,7 +262,11 @@ create_private_CA (TALLOC_CTX *mem_ctx,
       fprintf (stderr, _ ("Invalid name constraint: %s\n"), name_constraint);
       goto done;
     }
-  sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (ca_certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
   talloc_free (name_constraint);
 
 
@@ -285,7 +297,11 @@ create_private_CA (TALLOC_CTX *mem_ctx,
       ret = EIO;
       goto done;
     }
-  sk_X509_EXTENSION_push (ca_certinfo->extensions, ex);
+  if (!sk_X509_EXTENSION_push (ca_certinfo->extensions, ex))
+    {
+      ret = ENOMEM;
+      goto done;
+    }
 
   /* Finalize the CSR */
   ret = sscg_x509v3_csr_finalize (ca_certinfo, cakey, csr);
