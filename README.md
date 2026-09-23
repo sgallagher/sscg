@@ -51,13 +51,14 @@ Certificate Subject options
                                                                times.
 
 Certificate Key Cryptography Options
-      --key-type={rsa,ecdsa,mldsa}                             Type of key to use for the certificate private keys. (default: rsa)
+      --key-type={rsa,ecdsa[,mldsa]}                           Type of key to use for the certificate private keys. (default: rsa)
+                                                               (mldsa is only available when built with ML-DSA support)
       --key-strength=2048 or larger                            Strength of the certificate private keys in bits. This argument is only valid if --key-type is set to
                                                                rsa. (default: 2048)
       --ec-curve={secp224r1,secp256r1,secp384r1,secp521r1}     EC curve to use for the certificate private keys. This argument is only valid if --key-type is set to
                                                                ecdsa.
       --mldsa-nist-level={2,3,5}                               NIST level to use for the ML-DSA key. This argument is only valid if --key-type is set to mldsa.
-                                                               (default: 2)
+                                                               Only available when built with ML-DSA support. (default: 2)
       --hash-alg={sha256,sha384,sha512}                        Hashing algorithm to use for signing RSA and ECDSA keys. This argument is only valid if --key-type is
                                                                rsa or ecdsa. (default: "sha256")
       --cipher-alg={des-ede3-cbc,aes-256-cbc}                  Cipher to use for encrypting key files. (default: "aes-256-cbc")
@@ -224,6 +225,9 @@ SSCG_TALLOC_REPORT=true ./build/sscg
 - `src/key.c` - Key generation and management
 - `src/io_utils.c` - File I/O operations
 - `src/dhparams.c` - Diffie-Hellman parameter generation
+- `src/bignum.c` - Big number utilities
+- `src/logging.c` - Logging infrastructure
+- `src/names.c` - Hostname and SAN name handling
 
 **Memory management:**
 - All dynamic memory uses [talloc](https://talloc.samba.org/talloc/doc/html/index.html)
@@ -238,6 +242,8 @@ SSCG_TALLOC_REPORT=true ./build/sscg
 - Provide meaningful error messages to users
 
 ### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines. A summary follows.
 
 #### Before Submitting
 
@@ -261,7 +267,7 @@ SSCG_TALLOC_REPORT=true ./build/sscg
    Add support for ECDSA key generation
    
    - Implement ECDSA key creation in key.c
-   - Add curve selection via --key-curve option
+   - Add curve selection via --ec-curve option
    - Update tests for ECDSA functionality
    - Update documentation
    ```
