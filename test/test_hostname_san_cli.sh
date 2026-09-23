@@ -252,6 +252,114 @@ fi
 popd >/dev/null
 echo
 
+echo "Test 12: IPv4 /12 CIDR nameConstraint produces correct mask (expect 255.240.0.0)"
+TEST_DIR="$TMPDIR/cidr-ipv4-12"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:10.0.0.0/12'
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo "  FAIL: sscg exited with $exit_code"
+    ((failed_tests++))
+elif ! openssl x509 -in ca.crt -text -noout 2>/dev/null | grep -q "10.0.0.0/255.240.0.0"; then
+    echo "  FAIL: expected 10.0.0.0/255.240.0.0 in nameConstraints"
+    openssl x509 -in ca.crt -text -noout 2>/dev/null | grep "IP:" || true
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 13: IPv6 /48 CIDR nameConstraint produces correct mask (expect FFFF:FFFF:FFFF:0:0:0:0:0)"
+TEST_DIR="$TMPDIR/cidr-ipv6-48"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:2001:db8::/48'
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo "  FAIL: sscg exited with $exit_code"
+    ((failed_tests++))
+elif ! openssl x509 -in ca.crt -text -noout 2>/dev/null | grep -qi "FFFF:FFFF:FFFF:0:0:0:0:0"; then
+    echo "  FAIL: expected FFFF:FFFF:FFFF:0:0:0:0:0 in nameConstraints"
+    openssl x509 -in ca.crt -text -noout 2>/dev/null | grep "IP:" || true
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 14: IP SAN with empty CIDR suffix (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/cidr-empty"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:10.0.0.0/' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 15: IPv4 CIDR prefix out of range /33 (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/cidr-ipv4-outofrange"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:10.0.0.0/33' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 16: IPv6 CIDR prefix out of range /129 (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/cidr-ipv6-outofrange"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:::1/129' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
 echo "===================================="
 if [ "$failed_tests" -gt 0 ]; then
     echo "Failed: $failed_tests"
