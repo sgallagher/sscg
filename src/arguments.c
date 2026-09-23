@@ -164,7 +164,7 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
                        struct sscg_options **config)
 {
   int ret, sret, opt;
-  poptContext pc;
+  poptContext pc = NULL;
   char *minimum_rsa_key_strength_help = NULL;
   char *named_groups_help = NULL;
   char *cert_lifetime_help = NULL;
@@ -1110,13 +1110,13 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
   if (options->verbosity >= SSCG_VERBOSE)
     print_options (options);
 
-  poptFreeContext (pc);
-
   *config = talloc_steal (mem_ctx, options);
 
   ret = EOK;
 
 done:
+  if (pc)
+    poptFreeContext (pc);
   talloc_free (tmp_ctx);
   return ret;
 }
