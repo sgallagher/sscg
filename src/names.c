@@ -96,31 +96,59 @@ sscg_validate_dns_hostname (const char *name)
       return EINVAL;
     }
 
-  dot_pos = strchr (name, '.');
-  if (dot_pos)
+  if (name[0] == '*')
     {
-      label_len = (size_t)(dot_pos - name);
+      /* Wildcard: must be exactly "*." followed by at least two labels,
+         e.g. "*.example.com".  "*.com" (one remaining label) is rejected
+         as too broad; wildcards embedded elsewhere are also rejected. */
+      if (name[1] != '.')
+        {
+          fprintf (stderr, _ ("Invalid hostname.\n"));
+          return EINVAL;
+        }
+
+      int dots = 0;
+      for (const char *p = name + 2; *p; p++)
+        if (*p == '.')
+          dots++;
+
+      if (name[2] == '\0' || dots < 1)
+        {
+          fprintf (stderr, _ ("Invalid hostname.\n"));
+          return EINVAL;
+        }
+
+      start = name + 2;
     }
   else
     {
-      label_len = strnlen (name, MAX_HOST_LEN + 1);
+      dot_pos = strchr (name, '.');
+      if (dot_pos)
+        {
+          label_len = (size_t)(dot_pos - name);
+        }
+      else
+        {
+          label_len = strnlen (name, MAX_HOST_LEN + 1);
+        }
+
+      if (label_len > MAX_HOST_LEN)
+        {
+          fprintf (stderr,
+                   _ ("Hostname labels may not exceed %d characters\n"),
+                   MAX_HOST_LEN);
+          return EINVAL;
+        }
+
+      if (name[0] == '.' || name[strlen (name) - 1] == '.')
+        {
+          fprintf (stderr, _ ("Invalid hostname.\n"));
+          return EINVAL;
+        }
+
+      start = name;
     }
 
-  if (label_len > MAX_HOST_LEN)
-    {
-      fprintf (stderr,
-               _ ("Hostname labels may not exceed %d characters\n"),
-               MAX_HOST_LEN);
-      return EINVAL;
-    }
-
-  if (name[0] == '.' || name[strlen (name) - 1] == '.')
-    {
-      fprintf (stderr, _ ("Invalid hostname.\n"));
-      return EINVAL;
-    }
-
-  start = name;
   while (*start)
     {
       end = strchr (start, '.');

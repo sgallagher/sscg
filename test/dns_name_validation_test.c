@@ -98,14 +98,25 @@ main (int argc, char **argv)
     { "localhost", EOK },
     { "a", EOK },
     { fqdn_63, EOK },
+    { "*.example.com", EOK },
+    { "*.apps.example.com", EOK },
   };
 
   const struct dns_case reject_dns[] = {
-    { "a, DNS:evil.com", EINVAL }, { "foo;bar", EINVAL },
-    { "bad_label", EINVAL },       { "..example.com", EINVAL },
-    { ".example.com", EINVAL },    { "example.com.", EINVAL },
-    { label_64, EINVAL },          { "", EINVAL },
+    { "a, DNS:evil.com", EINVAL },
+    { "foo;bar", EINVAL },
+    { "bad_label", EINVAL },
+    { "..example.com", EINVAL },
+    { ".example.com", EINVAL },
+    { "example.com.", EINVAL },
+    { label_64, EINVAL },
+    { "", EINVAL },
     { "host:name", EINVAL },
+    { "*.com", EINVAL },
+    { "*", EINVAL },
+    { "*x.example.com", EINVAL },
+    { "*.*.example.com", EINVAL },
+    { "foo.*.example.com", EINVAL },
   };
 
   ret = run_dns_cases (accept_dns,
@@ -125,9 +136,10 @@ main (int argc, char **argv)
     }
 
   const struct dns_case accept_san[] = {
-    { "alt.example.com", EOK },   { "DNS:alt.example.com", EOK },
-    { "IP:192.0.2.1", EOK },      { "IP:2001:db8::1", EOK },
+    { "alt.example.com", EOK },      { "DNS:alt.example.com", EOK },
+    { "IP:192.0.2.1", EOK },         { "IP:2001:db8::1", EOK },
     { "IP:203.0.113.0/24", EOK },
+    { "*.example.com", EOK },        { "DNS:*.example.com", EOK },
   };
 
   const struct dns_case reject_san[] = {

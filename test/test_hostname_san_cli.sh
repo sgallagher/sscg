@@ -110,6 +110,148 @@ fi
 popd >/dev/null
 echo
 
+echo "Test 5: wildcard SAN (expect success)"
+TEST_DIR="$TMPDIR/wildcard-san"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name '*.example.com' \
+    --subject-alt-name 'DNS:*.apps.example.com'
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo "  FAIL: sscg exited with $exit_code"
+    ((failed_tests++))
+elif ! is_nonzero ca.crt || ! is_nonzero service.pem; then
+    echo "  FAIL: expected output files missing or empty"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 6: wildcard --hostname (expect success)"
+TEST_DIR="$TMPDIR/wildcard-hostname"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet --hostname '*.example.com'
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo "  FAIL: sscg exited with $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 7: wildcard with only one remaining label (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/wildcard-toobroad"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name '*.com' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 8: bare wildcard with no dot (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/wildcard-bare"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name '*' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 9: wildcard not alone as a label (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/wildcard-partial"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name '*x.example.com' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 10: double wildcard (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/wildcard-double"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name '*.*.example.com' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 11: wildcard not in first position (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/wildcard-midname"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'foo.*.example.com' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
 echo "===================================="
 if [ "$failed_tests" -gt 0 ]; then
     echo "Failed: $failed_tests"
