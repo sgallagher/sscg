@@ -128,11 +128,19 @@ create_cert (TALLOC_CTX *mem_ctx,
   switch (type)
     {
     case SSCG_CERT_TYPE_SERVER:
-      sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_server_auth));
+      if (!sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_server_auth)))
+        {
+          ret = ENOMEM;
+          goto done;
+        }
       break;
 
     case SSCG_CERT_TYPE_CLIENT:
-      sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_client_auth));
+      if (!sk_ASN1_OBJECT_push (extended, OBJ_nid2obj (NID_client_auth)))
+        {
+          ret = ENOMEM;
+          goto done;
+        }
       break;
 
     default:
