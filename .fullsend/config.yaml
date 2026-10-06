@@ -20,5 +20,5 @@ create_issues:
             - sgallagher/sscg
             - fullsend-ai/fullsend
 inference:
-    project: itpc-ca-0c71264f84
+    project: it-gcp-ymir-fullsend
     wif_provider: projects/923950484420/locations/global/workloadIdentityPools/fullsend-inference/providers/gh-sgallagher-sscg
