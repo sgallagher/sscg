@@ -1,0 +1,24 @@
+# fullsend per-repo configuration
+# https://github.com/fullsend-ai/fullsend
+#
+# This file configures fullsend for per-repo installation mode.
+# See https://fullsend.sh/docs/guides/infrastructure/layered-config-reference
+version: "1"
+roles:
+    - triage
+    - coder
+    - review
+    - fix
+    - retro
+    - prioritize
+allowed_remote_resources:
+    - https://raw.githubusercontent.com/fullsend-ai/fullsend/
+    - https://raw.githubusercontent.com/fullsend-ai/agents/
+create_issues:
+    allow_targets:
+        repos:
+            - sgallagher/sscg
+            - fullsend-ai/fullsend
+inference:
+    project: itpc-ca-0c71264f84
+    wif_provider: projects/923950484420/locations/global/workloadIdentityPools/fullsend-inference/providers/gh-sgallagher-sscg
