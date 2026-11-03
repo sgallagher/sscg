@@ -4,6 +4,7 @@
 */
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <talloc.h>
@@ -58,6 +59,52 @@ run_san_cases (const struct dns_case *cases, size_t n, const char *suite)
       if (got != cases[i].expected)
         {
           printf ("FAILED (got %d, expected %d).\n", got, cases[i].expected);
+          ret = EINVAL;
+        }
+      else
+        {
+          printf ("ok.\n");
+        }
+    }
+  printf ("\n");
+  return ret;
+}
+
+struct netmask_case
+{
+  const char *mask;
+  bool is_ipv6;
+  int expected;
+  int expected_prefix_len;
+};
+
+static int
+run_netmask_cases (const struct netmask_case *cases,
+                   size_t n,
+                   const char *suite)
+{
+  size_t i;
+  int ret = EOK;
+
+  printf ("%s\n", suite);
+  for (i = 0; i < n; i++)
+    {
+      int prefix_len = -1;
+      int got =
+        sscg_parse_ip_netmask (cases[i].mask, cases[i].is_ipv6, &prefix_len);
+
+      printf (
+        "  [%s, %s] ", cases[i].mask, cases[i].is_ipv6 ? "IPv6" : "IPv4");
+      if (got != cases[i].expected)
+        {
+          printf ("FAILED (got %d, expected %d).\n", got, cases[i].expected);
+          ret = EINVAL;
+        }
+      else if (got == EOK && prefix_len != cases[i].expected_prefix_len)
+        {
+          printf ("FAILED (prefix length %d, expected %d).\n",
+                  prefix_len,
+                  cases[i].expected_prefix_len);
           ret = EINVAL;
         }
       else
@@ -169,6 +216,10 @@ main (int argc, char **argv)
     /* CIDR: prefix out of range for address family */
     { "IP:10.0.0.0/33", EINVAL },
     { "IP:::1/129", EINVAL },
+    /* CIDR: overlong suffixes that would wrap with atoi() */
+    { "IP:10.0.0.0/2147483648", EINVAL },
+    { "IP:10.0.0.0/4294967295", EINVAL },
+    { "IP:::1/99999999999999999999", EINVAL },
     /* Dotted netmask: not a valid IPv4 address */
     { "IP:10.0.0.0/255.255.255.256", EINVAL },
     { "IP:10.0.0.0/255.255.255", EINVAL },
@@ -190,5 +241,46 @@ main (int argc, char **argv)
   ret = run_san_cases (reject_san,
                        sizeof (reject_san) / sizeof (reject_san[0]),
                        "sscg_validate_subject_alt_name (reject)");
+  if (ret != EOK)
+    {
+      return ret;
+    }
+
+  const struct netmask_case netmask_cases[] = {
+    /* CIDR prefix lengths */
+    { "0", false, EOK, 0 },
+    { "12", false, EOK, 12 },
+    { "32", false, EOK, 32 },
+    { "0", true, EOK, 0 },
+    { "48", true, EOK, 48 },
+    { "128", true, EOK, 128 },
+    /* Dotted-decimal netmasks */
+    { "0.0.0.0", false, EOK, 0 },
+    { "128.0.0.0", false, EOK, 1 },
+    { "255.240.0.0", false, EOK, 12 },
+    { "255.255.255.0", false, EOK, 24 },
+    { "255.255.255.254", false, EOK, 31 },
+    { "255.255.255.255", false, EOK, 32 },
+    /* Out of range for the address family */
+    { "33", false, EINVAL, 0 },
+    { "129", true, EINVAL, 0 },
+    /* Overlong prefix lengths that would wrap with atoi() */
+    { "2147483648", false, EINVAL, 0 },
+    { "4294967295", false, EINVAL, 0 },
+    { "99999999999999999999", true, EINVAL, 0 },
+    /* Not a number */
+    { "", false, EINVAL, 0 },
+    { "-1", false, EINVAL, 0 },
+    { "+1", false, EINVAL, 0 },
+    { "12x", false, EINVAL, 0 },
+    /* Bad dotted-decimal netmasks */
+    { "0.0.0.1", false, EINVAL, 0 },
+    { "255.0.255.0", false, EINVAL, 0 },
+    { "255.255.255.255", true, EINVAL, 0 },
+  };
+
+  ret = run_netmask_cases (netmask_cases,
+                           sizeof (netmask_cases) / sizeof (netmask_cases[0]),
+                           "sscg_parse_ip_netmask");
   return ret;
 }
