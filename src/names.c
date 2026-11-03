@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "config.h"
@@ -235,6 +236,9 @@ sscg_parse_ip_netmask (const char *mask, bool is_ipv6, int *_prefix_len)
   else
     {
       /* CIDR prefix length */
+      char *end;
+      long value;
+
       for (const char *p = mask; *p; p++)
         {
           if (!isdigit ((unsigned char)*p))
@@ -243,11 +247,17 @@ sscg_parse_ip_netmask (const char *mask, bool is_ipv6, int *_prefix_len)
             }
         }
 
-      prefix_len = atoi (mask);
-      if (prefix_len > (is_ipv6 ? 128 : 32))
+      /* Parse with strtol() rather than atoi() so that overlong digit
+         strings are rejected instead of silently wrapping to a
+         negative or otherwise out-of-range value. */
+      errno = 0;
+      value = strtol (mask, &end, 10);
+      if (errno == ERANGE || *end != '\0' || value < 0
+          || value > (is_ipv6 ? 128 : 32))
         {
           return EINVAL;
         }
+      prefix_len = (int)value;
     }
 
   *_prefix_len = prefix_len;
