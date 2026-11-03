@@ -1,6 +1,13 @@
 name: Continuous Integration (x86_64)
 
-on: [ push, pull_request ]
+# Run the merged results for pull requests. For pushes, only run for
+# the main branch, so that pushes to pull request branches do not
+# trigger a redundant second run of the same tests.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 permissions:
   contents: read
