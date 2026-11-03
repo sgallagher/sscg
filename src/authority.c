@@ -44,6 +44,7 @@
 #include "include/io_utils.h"
 #include "include/x509.h"
 #include "include/key.h"
+#include "include/names.h"
 
 int
 create_private_CA (TALLOC_CTX *mem_ctx,
@@ -167,39 +168,29 @@ create_private_CA (TALLOC_CTX *mem_ctx,
               char ipv6_mask_str
                 [40]; /* "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF" */
 
-              if (slash && strchr (slash + 1, '.'))
+              if (slash)
                 {
-                  /* Explicit dotted-decimal netmask, e.g.
-                     IP:127.0.0.1/255.255.255.255.  The value was
-                     validated by sscg_validate_subject_alt_name(),
-                     which guarantees that it is a contiguous netmask
-                     for an IPv4 address. */
+                  int cidr_bits;
+
+                  /* Extract IP and netmask.  The netmask may be a CIDR
+                     prefix length or a dotted-decimal netmask;
+                     sscg_parse_ip_netmask() converts either form to a
+                     prefix length. */
                   clean_ip =
                     talloc_strndup (tmp_ctx, ip_addr, slash - ip_addr);
                   CHECK_MEM (clean_ip);
 
-                  if (strchr (clean_ip, ':'))
+                  ret = sscg_parse_ip_netmask (
+                    slash + 1, strchr (clean_ip, ':') != NULL, &cidr_bits);
+                  if (ret != EOK)
                     {
-                      /* Defensive: dotted netmasks are valid for IPv4
-                         addresses only.  This is unreachable through the
-                         CLI because validation rejects it. */
-                      ret = EINVAL;
+                      /* Defensive: unreachable through the CLI because
+                         sscg_validate_subject_alt_name() rejects it. */
                       fprintf (stderr,
                                _ ("Invalid name constraint: %s\n"),
                                options->subject_alt_names[i]);
                       goto done;
                     }
-
-                  netmask_str = slash + 1;
-                }
-              else if (slash)
-                {
-                  /* Extract IP and CIDR prefix length */
-                  clean_ip =
-                    talloc_strndup (tmp_ctx, ip_addr, slash - ip_addr);
-                  CHECK_MEM (clean_ip);
-
-                  int cidr_bits = atoi (slash + 1);
 
                   if (strchr (clean_ip, ':'))
                     {
