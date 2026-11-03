@@ -167,11 +167,38 @@ create_private_CA (TALLOC_CTX *mem_ctx,
               char ipv6_mask_str
                 [40]; /* "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF" */
 
-              if (slash)
+              if (slash && strchr (slash + 1, '.'))
+                {
+                  /* Explicit dotted-decimal netmask, e.g.
+                     IP:127.0.0.1/255.255.255.255.  The value was
+                     validated by sscg_validate_subject_alt_name(),
+                     which guarantees that it is a contiguous netmask
+                     for an IPv4 address. */
+                  clean_ip =
+                    talloc_strndup (tmp_ctx, ip_addr, slash - ip_addr);
+                  CHECK_MEM (clean_ip);
+
+                  if (strchr (clean_ip, ':'))
+                    {
+                      /* Defensive: dotted netmasks are valid for IPv4
+                         addresses only.  This is unreachable through the
+                         CLI because validation rejects it. */
+                      ret = EINVAL;
+                      fprintf (stderr,
+                               _ ("Invalid name constraint: %s\n"),
+                               options->subject_alt_names[i]);
+                      goto done;
+                    }
+
+                  netmask_str = slash + 1;
+                }
+              else if (slash)
                 {
                   /* Extract IP and CIDR prefix length */
                   clean_ip =
                     talloc_strndup (tmp_ctx, ip_addr, slash - ip_addr);
+                  CHECK_MEM (clean_ip);
+
                   int cidr_bits = atoi (slash + 1);
 
                   if (strchr (clean_ip, ':'))

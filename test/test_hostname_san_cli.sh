@@ -360,6 +360,113 @@ fi
 popd >/dev/null
 echo
 
+echo "Test 17: IPv4 SAN with dotted netmask (expect success; SAN drops the mask, nameConstraints keeps it)"
+TEST_DIR="$TMPDIR/dotted-netmask"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:127.0.0.1/255.255.255.255'
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo "  FAIL: sscg exited with $exit_code"
+    ((failed_tests++))
+elif ! is_nonzero ca.crt || ! is_nonzero service.pem; then
+    echo "  FAIL: expected output files missing or empty"
+    ((failed_tests++))
+elif ! openssl x509 -in service.pem -text -noout 2>/dev/null | grep -q "IP Address:127.0.0.1"; then
+    echo "  FAIL: expected bare IP Address:127.0.0.1 in subjectAltName"
+    openssl x509 -in service.pem -text -noout 2>/dev/null | grep -A3 "Alternative Name" || true
+    ((failed_tests++))
+elif openssl x509 -in service.pem -noout -ext subjectAltName 2>/dev/null | grep -q "255.255.255.255"; then
+    echo "  FAIL: netmask must not appear in service subjectAltName"
+    openssl x509 -in service.pem -noout -ext subjectAltName 2>/dev/null || true
+    ((failed_tests++))
+elif openssl x509 -in ca.crt -noout -ext subjectAltName 2>/dev/null | grep -q "255.255.255.255"; then
+    echo "  FAIL: netmask must not appear in CA subjectAltName"
+    openssl x509 -in ca.crt -noout -ext subjectAltName 2>/dev/null || true
+    ((failed_tests++))
+elif ! openssl x509 -in ca.crt -text -noout 2>/dev/null | grep -q "127.0.0.1/255.255.255.255"; then
+    echo "  FAIL: expected 127.0.0.1/255.255.255.255 in nameConstraints"
+    openssl x509 -in ca.crt -text -noout 2>/dev/null | grep "IP:" || true
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 18: non-/32 dotted netmask passes through to nameConstraints (expect success)"
+TEST_DIR="$TMPDIR/dotted-netmask-240"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:10.0.0.0/255.240.0.0'
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo "  FAIL: sscg exited with $exit_code"
+    ((failed_tests++))
+elif ! openssl x509 -in service.pem -text -noout 2>/dev/null | grep -q "IP Address:10.0.0.0"; then
+    echo "  FAIL: expected bare IP Address:10.0.0.0 in subjectAltName"
+    openssl x509 -in service.pem -text -noout 2>/dev/null | grep -A3 "Alternative Name" || true
+    ((failed_tests++))
+elif ! openssl x509 -in ca.crt -text -noout 2>/dev/null | grep -q "10.0.0.0/255.240.0.0"; then
+    echo "  FAIL: expected 10.0.0.0/255.240.0.0 in nameConstraints"
+    openssl x509 -in ca.crt -text -noout 2>/dev/null | grep "IP:" || true
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 19: non-contiguous dotted netmask 255.0.255.0 (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/dotted-netmask-noncontiguous"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:10.0.0.0/255.0.255.0' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
+echo "Test 20: dotted netmask with an IPv6 address (expect EINVAL 22)"
+TEST_DIR="$TMPDIR/dotted-netmask-ipv6"
+mkdir -p "$TEST_DIR"
+pushd "$TEST_DIR" >/dev/null
+
+"${SSCG}" --quiet \
+    --hostname server.example.com \
+    --subject-alt-name 'IP:::1/255.255.255.255' >/dev/null 2>&1
+exit_code=$?
+
+if [ $exit_code -ne 22 ]; then
+    echo "  FAIL: expected exit 22, got $exit_code"
+    ((failed_tests++))
+else
+    echo "  PASS"
+fi
+
+popd >/dev/null
+echo
+
 echo "===================================="
 if [ "$failed_tests" -gt 0 ]; then
     echo "Failed: $failed_tests"

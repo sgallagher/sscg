@@ -336,6 +336,10 @@ sscg_handle_arguments (TALLOC_CTX *mem_ctx,
          "In addition to hostnames, this option also accepts explicit values "
          "supported by RFC 5280 such as "
          "IP:xxx.xxx.xxx.xxx "
+         "IP addresses may include an optional netmask, either in CIDR "
+         "prefix-length notation (IP:xxx.xxx.xxx.xxx/nn) or in "
+         "dotted-decimal notation (IP:xxx.xxx.xxx.xxx/xxx.xxx.xxx.xxx); "
+         "dotted-decimal netmasks are accepted for IPv4 addresses only. "
          "May be specified multiple times."),
       _ ("alt.example.com")
     },
