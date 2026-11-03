@@ -149,6 +149,11 @@ main (int argc, char **argv)
     { "IP:2001:db8::/0", EOK },
     { "IP:2001:db8::/48", EOK },
     { "IP:::1/128", EOK },
+    /* Explicit dotted-decimal netmasks (IPv4 only) */
+    { "IP:127.0.0.1/255.255.255.255", EOK },
+    { "IP:10.0.0.0/255.240.0.0", EOK },
+    { "IP:10.0.0.5/255.255.255.0", EOK },
+    { "IP:10.0.0.0/0.0.0.0", EOK },
     { "*.example.com", EOK },
     { "DNS:*.example.com", EOK },
   };
@@ -164,6 +169,14 @@ main (int argc, char **argv)
     /* CIDR: prefix out of range for address family */
     { "IP:10.0.0.0/33", EINVAL },
     { "IP:::1/129", EINVAL },
+    /* Dotted netmask: not a valid IPv4 address */
+    { "IP:10.0.0.0/255.255.255.256", EINVAL },
+    { "IP:10.0.0.0/255.255.255", EINVAL },
+    /* Dotted netmask: valid IPv4 address, but not a contiguous netmask */
+    { "IP:10.0.0.0/255.0.255.0", EINVAL },
+    { "IP:10.0.0.0/1.2.3.4", EINVAL },
+    /* Dotted netmask: not valid for IPv6 addresses */
+    { "IP:::1/255.255.255.255", EINVAL },
   };
 
   ret = run_san_cases (accept_san,

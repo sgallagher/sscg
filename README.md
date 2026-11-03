@@ -47,8 +47,10 @@ Certificate Subject options
       --email=myname@example.com                               Certificate DN: Email Address (Email).
       --hostname=server.example.com                            The valid hostname of the certificate. Must be an FQDN. (default: current system FQDN)
       --subject-alt-name alt.example.com                       Optional additional valid hostnames for the certificate. In addition to hostnames, this option also
-                                                               accepts explicit values supported by RFC 5280 such as IP:xxx.xxx.xxx.xxx May be specified multiple
-                                                               times.
+                                                               accepts explicit values supported by RFC 5280 such as IP:xxx.xxx.xxx.xxx IP addresses may include an
+                                                               optional netmask, either in CIDR prefix-length notation (IP:xxx.xxx.xxx.xxx/nn) or in dotted-decimal
+                                                               notation (IP:xxx.xxx.xxx.xxx/xxx.xxx.xxx.xxx); dotted-decimal netmasks are accepted for IPv4
+                                                               addresses only. May be specified multiple times.
 
 Certificate Key Cryptography Options
       --key-type={rsa,ecdsa[,mldsa]}                           Type of key to use for the certificate private keys. (default: rsa)

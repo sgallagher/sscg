@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -213,24 +214,56 @@ validate_ip_san (const char *value)
           return EINVAL;
         }
 
-      for (const char *p = slash + 1; *p; p++)
+      if (strchr (slash + 1, '.'))
         {
-          if (!isdigit ((unsigned char)*p))
+          /* Explicit dotted-decimal netmask, e.g.
+             IP:127.0.0.1/255.255.255.255.  Only valid for IPv4 addresses
+             and must be a contiguous (CIDR-style) netmask. */
+          struct in_addr netmask;
+          uint32_t mask_bits;
+
+          if (strchr (hostbuf, ':'))
+            {
+              fprintf (stderr, _ ("Invalid subject alternative name.\n"));
+              return EINVAL;
+            }
+
+          if (inet_pton (AF_INET, slash + 1, &netmask) != 1)
+            {
+              fprintf (stderr, _ ("Invalid subject alternative name.\n"));
+              return EINVAL;
+            }
+
+          /* Reject non-contiguous netmasks such as 255.0.255.0 */
+          mask_bits = ntohl (netmask.s_addr);
+          if (mask_bits != 0 && (mask_bits | (mask_bits - 1)) != 0xFFFFFFFFu)
             {
               fprintf (stderr, _ ("Invalid subject alternative name.\n"));
               return EINVAL;
             }
         }
+      else
+        {
+          /* CIDR prefix length */
+          for (const char *p = slash + 1; *p; p++)
+            {
+              if (!isdigit ((unsigned char)*p))
+                {
+                  fprintf (stderr, _ ("Invalid subject alternative name.\n"));
+                  return EINVAL;
+                }
+            }
 
-      {
-        int cidr = atoi (slash + 1);
-        int max_prefix = strchr (hostbuf, ':') ? 128 : 32;
-        if (cidr > max_prefix)
           {
-            fprintf (stderr, _ ("Invalid subject alternative name.\n"));
-            return EINVAL;
+            int cidr = atoi (slash + 1);
+            int max_prefix = strchr (hostbuf, ':') ? 128 : 32;
+            if (cidr > max_prefix)
+              {
+                fprintf (stderr, _ ("Invalid subject alternative name.\n"));
+                return EINVAL;
+              }
           }
-      }
+        }
     }
   else
     {
