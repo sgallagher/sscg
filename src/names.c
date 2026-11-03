@@ -189,12 +189,78 @@ sscg_validate_dns_hostname (const char *name)
   return EOK;
 }
 
+int
+sscg_parse_ip_netmask (const char *mask, bool is_ipv6, int *_prefix_len)
+{
+  int prefix_len;
+
+  if (!mask || mask[0] == '\0')
+    {
+      return EINVAL;
+    }
+
+  if (strchr (mask, '.'))
+    {
+      /* Explicit dotted-decimal netmask, e.g. 255.255.255.255.  Only
+         valid for IPv4 addresses and must be a contiguous (CIDR-style)
+         netmask. */
+      struct in_addr netmask;
+      uint32_t mask_bits;
+
+      if (is_ipv6)
+        {
+          return EINVAL;
+        }
+
+      if (inet_pton (AF_INET, mask, &netmask) != 1)
+        {
+          return EINVAL;
+        }
+
+      /* Reject non-contiguous netmasks such as 255.0.255.0 */
+      mask_bits = ntohl (netmask.s_addr);
+      if (mask_bits != 0 && (mask_bits | (mask_bits - 1)) != 0xFFFFFFFFu)
+        {
+          return EINVAL;
+        }
+
+      /* Count the leading one bits to get the prefix length */
+      prefix_len = 0;
+      while (mask_bits)
+        {
+          prefix_len++;
+          mask_bits <<= 1;
+        }
+    }
+  else
+    {
+      /* CIDR prefix length */
+      for (const char *p = mask; *p; p++)
+        {
+          if (!isdigit ((unsigned char)*p))
+            {
+              return EINVAL;
+            }
+        }
+
+      prefix_len = atoi (mask);
+      if (prefix_len > (is_ipv6 ? 128 : 32))
+        {
+          return EINVAL;
+        }
+    }
+
+  *_prefix_len = prefix_len;
+  return EOK;
+}
+
 static int
 validate_ip_san (const char *value)
 {
   char hostbuf[INET6_ADDRSTRLEN + 1];
   const char *slash;
   size_t hostlen;
+  int prefix_len;
 
   slash = strchr (value, '/');
   if (slash)
@@ -214,55 +280,12 @@ validate_ip_san (const char *value)
           return EINVAL;
         }
 
-      if (strchr (slash + 1, '.'))
+      if (sscg_parse_ip_netmask (
+            slash + 1, strchr (hostbuf, ':') != NULL, &prefix_len)
+          != EOK)
         {
-          /* Explicit dotted-decimal netmask, e.g.
-             IP:127.0.0.1/255.255.255.255.  Only valid for IPv4 addresses
-             and must be a contiguous (CIDR-style) netmask. */
-          struct in_addr netmask;
-          uint32_t mask_bits;
-
-          if (strchr (hostbuf, ':'))
-            {
-              fprintf (stderr, _ ("Invalid subject alternative name.\n"));
-              return EINVAL;
-            }
-
-          if (inet_pton (AF_INET, slash + 1, &netmask) != 1)
-            {
-              fprintf (stderr, _ ("Invalid subject alternative name.\n"));
-              return EINVAL;
-            }
-
-          /* Reject non-contiguous netmasks such as 255.0.255.0 */
-          mask_bits = ntohl (netmask.s_addr);
-          if (mask_bits != 0 && (mask_bits | (mask_bits - 1)) != 0xFFFFFFFFu)
-            {
-              fprintf (stderr, _ ("Invalid subject alternative name.\n"));
-              return EINVAL;
-            }
-        }
-      else
-        {
-          /* CIDR prefix length */
-          for (const char *p = slash + 1; *p; p++)
-            {
-              if (!isdigit ((unsigned char)*p))
-                {
-                  fprintf (stderr, _ ("Invalid subject alternative name.\n"));
-                  return EINVAL;
-                }
-            }
-
-          {
-            int cidr = atoi (slash + 1);
-            int max_prefix = strchr (hostbuf, ':') ? 128 : 32;
-            if (cidr > max_prefix)
-              {
-                fprintf (stderr, _ ("Invalid subject alternative name.\n"));
-                return EINVAL;
-              }
-          }
+          fprintf (stderr, _ ("Invalid subject alternative name.\n"));
+          return EINVAL;
         }
     }
   else
